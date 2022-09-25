@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="fsra-interface-consoles" />
+        <module name="fsra-domain-flight-task-context" />
+        <module name="fsra-domain-bunch-generation-context" />
+        <module name="fsra-interface-io" />
+        <module name="fsra-application-flight-recovery-algorithm-passenger-transport" />
+        <module name="fsra-infrastructure" />
+        <module name="fsra-domain-rule-context" />
+        <module name="fsra-domain-flight-recovery-compilation-context" />
+        <module name="fsra-domain-crew-context" />
+        <module name="fsra-domain-passenger-context" />
+        <module name="fsra-domain-cargo-context" />
+      </profile>
+    </annotationProcessing>
+  </component>
+</project>
