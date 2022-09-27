@@ -17,4 +17,11 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.wintelia.fuookami</groupId>
+            <artifactId>fsra-infrastructure</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 </project>

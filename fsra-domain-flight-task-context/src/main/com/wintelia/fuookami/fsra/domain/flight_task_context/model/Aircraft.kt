@@ -71,6 +71,7 @@ fun <T> Map<RouteFlyTimeKey, T>.get(from: Airport, to: Airport): T? = this[Route
 data class AircraftMinorType internal constructor(
     val type: AircraftType,
     val code: AircraftMinorTypeCode,
+    val costPerHour: Flt64,
     val routeFlyTime: Map<RouteFlyTimeKey, Duration>,
     val connectionTime: Map<Airport, Duration>
 ) {
@@ -111,6 +112,7 @@ class Aircraft(
     val capacity: AircraftCapacity
 ) {
     val type by minorType::type
+    val costPerHour by minorType::costPerHour
     val routeFlyTime by minorType::routeFlyTime
     val maxRouteFlyTime by minorType::maxRouteFlyType
     val connectionTime by minorType::connectionTime

@@ -4,7 +4,7 @@ import kotlin.time.*
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.datetime.*
 import com.wintelia.fuookami.fsra.infrastructure.*
-import fuookami.ospf.kotlin.utils.concept.Indexed
+import fuookami.ospf.kotlin.utils.concept.AutoIndexed
 
 enum class FlightTaskType {
     Flight {
@@ -20,7 +20,7 @@ enum class FlightTaskType {
 }
 
 enum class FlightTaskStatus {
-    NotAhead,                       // 不可提前
+    NotAdvance,                    // 不可提前
     NotDelay,                       // 不可延误
     NotCancel,                      // 不可取消
     NotAircraftChange,              // 不可换飞机
@@ -57,7 +57,7 @@ abstract class FlightTaskPlan(
     }
 
     val cancelEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotCancel)
-    val aheadEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotAhead)
+    val advanceEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotAdvance)
     val delayEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotDelay)
     val aircraftChangeEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotAircraftChange)
     val aircraftTypeChangeEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotAircraftTypeChange)
@@ -67,16 +67,6 @@ abstract class FlightTaskPlan(
     val strongLimitIgnored: Boolean get() = !status.contains(FlightTaskStatus.StrongLimitIgnored)
 }
 
-private object FlightTaskIndexGenerator {
-    var nextIndex = 0
-
-    operator fun invoke(): Int { return nextIndex++; }
-
-    fun flush() {
-        nextIndex = 0
-    }
-}
-
 data class FlightTaskKey(
     val type: FlightTaskType,
     val id: String
@@ -84,9 +74,8 @@ data class FlightTaskKey(
 
 abstract class FlightTask(
     val type: FlightTaskType,
-    private val origin: FlightTask? = null,
-    override val index: Int = FlightTaskIndexGenerator()
-): Indexed {
+    private val origin: FlightTask? = null
+): AutoIndexed(FlightTask::class) {
     val isFlight: Boolean = type.isFlightType
 
     abstract val plan: FlightTaskPlan

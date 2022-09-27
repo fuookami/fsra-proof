@@ -29,6 +29,7 @@
         <kotlin.code.style>official</kotlin.code.style>
         <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
         <kotlin.version>1.7.10</kotlin.version>
+        <ospf.version>1.0.0</ospf.version>
     </properties>
 
     <repositories>
@@ -139,32 +140,32 @@
         <dependency>
             <groupId>fuookami</groupId>
             <artifactId>ospf-kotlin-utils</artifactId>
-            <version>1.0.0</version>
+            <version>${ospf.version}</version>
         </dependency>
         <dependency>
             <groupId>fuookami</groupId>
             <artifactId>ospf-kotlin-core</artifactId>
-            <version>1.0.0</version>
+            <version>${ospf.version}</version>
         </dependency>
         <dependency>
             <groupId>fuookami</groupId>
             <artifactId>ospf-kotlin-core-plugin-gurobi</artifactId>
-            <version>1.0.0</version>
+            <version>${ospf.version}</version>
         </dependency>
         <dependency>
             <groupId>fuookami</groupId>
             <artifactId>ospf-kotlin-core-plugin-cplex</artifactId>
-            <version>1.0.0</version>
+            <version>${ospf.version}</version>
         </dependency>
         <dependency>
             <groupId>fuookami</groupId>
             <artifactId>ospf-kotlin-core-plugin-scip</artifactId>
-            <version>1.0.0</version>
+            <version>${ospf.version}</version>
         </dependency>
         <dependency>
             <groupId>fuookami</groupId>
             <artifactId>ospf-kotlin-framework</artifactId>
-            <version>1.0.0</version>
+            <version>${ospf.version}</version>
         </dependency>
     </dependencies>
 </project>
