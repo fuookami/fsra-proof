@@ -22,7 +22,7 @@ class FlightTaskTime(
 
     fun register(flightTasks: List<FlightTask>, model: LinearMetaModel): Try<Error> {
         if (withRedundancy) {
-            if (this::redundancy.isInitialized) {
+            if (!this::redundancy.isInitialized) {
                 redundancy = UIntVariable1("flight_time_redundancy", Shape1(flightTasks.size))
                 for (task in flightTasks) {
                     redundancy[task]!!.name = "${redundancy.name}_${task.name}"
@@ -31,7 +31,7 @@ class FlightTaskTime(
             model.addVars(redundancy)
         }
 
-        if (this::etd.isInitialized) {
+        if (!this::etd.isInitialized) {
             etd = LinearSymbols1("etd_compilation", Shape1(flightTasks.size))
             for (task in flightTasks) {
                 etd[task] = if (withRedundancy) {
@@ -43,7 +43,7 @@ class FlightTaskTime(
         }
         model.addSymbols(etd)
 
-        if (this::eta.isInitialized) {
+        if (!this::eta.isInitialized) {
             eta = LinearSymbols1("eta_compilation", Shape1(flightTasks.size))
             for (task in flightTasks) {
                 eta[task] = if (withRedundancy) {

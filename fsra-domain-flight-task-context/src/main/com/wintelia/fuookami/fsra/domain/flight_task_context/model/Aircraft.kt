@@ -3,8 +3,8 @@ package com.wintelia.fuookami.fsra.domain.flight_task_context.model
 import kotlin.time.*
 import kotlinx.datetime.*
 import fuookami.ospf.kotlin.utils.math.*
+import fuookami.ospf.kotlin.utils.concept.*
 import com.wintelia.fuookami.fsra.infrastructure.*
-import fuookami.ospf.kotlin.utils.concept.ManualIndexed
 
 enum class AircraftCategory {
     Passenger,
@@ -23,7 +23,7 @@ sealed class AircraftCapacity {
     }
 
     class Cargo(
-        private val capacity: Flt64
+        val capacity: Flt64
     ): AircraftCapacity() {
         override val category get() = AircraftCategory.Cargo
 

@@ -22,7 +22,7 @@ class Compilation {
     lateinit var aircraftCompilation: LinearSymbols1
 
     fun register(flightTasks: List<FlightTask>, aircrafts: List<Aircraft>, model: LinearMetaModel): Try<Error> {
-        if (this::y.isInitialized) {
+        if (!this::y.isInitialized) {
             y = BinVariable1("y", Shape1(flightTasks.size))
             for (task in flightTasks) {
                 y[task]!!.name = "${y.name}_${task.name}"
@@ -30,7 +30,7 @@ class Compilation {
         }
         model.addVars(y)
 
-        if (this::z.isInitialized) {
+        if (!this::z.isInitialized) {
             z = BinVariable1("z", Shape1(aircrafts.size))
             for (aircraft in aircrafts) {
                 z[aircraft]!!.name = "${z.name}_${aircraft.regNo}"
@@ -38,12 +38,12 @@ class Compilation {
         }
         model.addVars(z)
 
-        if (this::bunchCost.isInitialized) {
+        if (!this::bunchCost.isInitialized) {
             bunchCost = LinearSymbol(LinearPolynomial(), "bunchCost")
         }
         model.addSymbol(bunchCost)
 
-        if (this::flightTaskCompilation.isInitialized) {
+        if (!this::flightTaskCompilation.isInitialized) {
             flightTaskCompilation = LinearSymbols1("flight_task_compilation", Shape1(flightTasks.size))
             for (task in flightTasks) {
                 flightTaskCompilation[task]!!.name = "${flightTaskCompilation.name}_${task.name}"
@@ -51,7 +51,7 @@ class Compilation {
         }
         model.addSymbols(flightTaskCompilation)
 
-        if (this::aircraftCompilation.isInitialized) {
+        if (!this::aircraftCompilation.isInitialized) {
             aircraftCompilation = LinearSymbols1("aircraft_compilation", Shape1(aircrafts.size))
             for (aircraft in aircrafts) {
                 aircraftCompilation[aircraft]!!.name = "${aircraftCompilation.name}_${aircraft.regNo}"

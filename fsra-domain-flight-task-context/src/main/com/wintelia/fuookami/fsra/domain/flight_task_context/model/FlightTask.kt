@@ -2,11 +2,12 @@ package com.wintelia.fuookami.fsra.domain.flight_task_context.model
 
 import kotlin.time.*
 import kotlin.time.Duration.Companion.minutes
+import kotlin.reflect.*
 import kotlinx.datetime.*
 import com.wintelia.fuookami.fsra.infrastructure.*
 import fuookami.ospf.kotlin.utils.concept.AutoIndexed
 
-enum class FlightTaskType {
+enum class FlightTaskCategory {
     Flight {
         override val isFlightType: Boolean get() = true
     },
@@ -17,6 +18,38 @@ enum class FlightTaskType {
     AOG;
 
     open val isFlightType: Boolean get() = false
+}
+
+abstract class FlightTaskType(
+    val category: FlightTaskCategory,
+    val cls: KClass<*>
+) {
+    abstract val type: String
+    val isFlightType by category::isFlightType
+
+    override fun hashCode(): Int {
+        return cls.hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as FlightTaskType
+
+        if (cls != other.cls) return false
+
+        return true
+    }
+
+    infix fun eq(type: FlightTaskType) = this.cls == type.cls
+    infix fun neq(type: FlightTaskType) = this.cls != type.cls
+
+    infix fun eq(category: FlightTaskCategory) = this.category == category
+    infix fun neq(category: FlightTaskCategory) = this.category != category
+
+    infix fun eq(cls: KClass<*>) = this.cls == cls
+    infix fun neq(cls: KClass<*>) = this.cls != cls
 }
 
 enum class FlightTaskStatus {
@@ -36,6 +69,10 @@ abstract class FlightTaskPlan(
     val name: String,
     val status: Set<FlightTaskStatus>
 ) {
+    companion object {
+        val NotFlightStaticConnectionTime = 5L.minutes
+    }
+
     abstract val actualId: String
     abstract val displayName: String
 
@@ -43,17 +80,28 @@ abstract class FlightTaskPlan(
     abstract val dep: Airport
     abstract val arr: Airport
 
-    abstract val time: TimeRange?
     abstract val scheduledTime: TimeRange?
+    open val time: TimeRange? get() = scheduledTime
+    open val latestBeginTime: Instant? get() = if (status.contains(FlightTaskStatus.NotDelay)) { scheduledTime?.begin } else { null }
 
     open val duration: Duration? get() = time?.duration ?: scheduledTime?.duration
     open fun duration(aircraft: Aircraft): Duration {
         return aircraft.routeFlyTime[RouteFlyTimeKey(dep, arr)] ?: aircraft.maxRouteFlyTime
     }
 
-    open val connectionTime: Duration? get() = aircraft?.connectionTime?.get(arr)
-    open fun connectionTime(aircraft: Aircraft): Duration {
-        return aircraft.connectionTime[arr] ?: aircraft.maxConnectionTime
+    open fun connectionTime(nextTask: FlightTask?): Duration? {
+        return aircraft?.let { connectionTime(it, nextTask) }
+    }
+    open fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?): Duration {
+        return if (nextTask != null) {
+            if (nextTask.isFlight) {
+                aircraft.connectionTime[arr] ?: aircraft.maxConnectionTime
+            }  else {
+                NotFlightStaticConnectionTime
+            }
+        } else {
+            0L.minutes
+        }
     }
 
     val cancelEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotCancel)
@@ -76,10 +124,6 @@ abstract class FlightTask(
     val type: FlightTaskType,
     private val origin: FlightTask? = null
 ): AutoIndexed(FlightTask::class) {
-    companion object {
-        val NotFlightStaticConnectionTime = 5L.minutes
-    }
-
     val isFlight: Boolean = type.isFlightType
 
     abstract val plan: FlightTaskPlan
@@ -91,6 +135,7 @@ abstract class FlightTask(
     val key: FlightTaskKey get() = FlightTaskKey(type, id)
 
     open val aircraft: Aircraft? get() = plan.aircraft
+    open val capacity: AircraftCapacity? get() = if (isFlight) { aircraft?.capacity } else { null }
     open val dep: Airport get() = plan.dep
     open val arr: Airport get() = plan.arr
     open val depBackup: List<Airport> get() = listOf()
@@ -103,20 +148,8 @@ abstract class FlightTask(
     open fun duration(aircraft: Aircraft): Duration {
         return plan.duration(aircraft)
     }
-    open fun connectionTime(nextTask: FlightTask?): Duration? {
-        return if (nextTask == null || !nextTask.isFlight) {
-            NotFlightStaticConnectionTime
-        } else {
-            plan.connectionTime
-        }
-    }
-    open fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?): Duration {
-        return if (nextTask == null || !nextTask.isFlight) {
-            NotFlightStaticConnectionTime
-        } else {
-            plan.connectionTime(aircraft)
-        }
-    }
+    open fun connectionTime(nextTask: FlightTask?): Duration? = plan.connectionTime(nextTask)
+    open fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?): Duration = plan.connectionTime(aircraft, nextTask)
     open fun latestNormalStartTime(aircraft: Aircraft): Instant {
         return if (scheduledTime != null) {
             scheduledTime!!.begin
@@ -127,12 +160,14 @@ abstract class FlightTask(
 
     // it is disabled to recovery if there is actual time or out time
     // it is necessary to be participated in the problem, but it is unallowed to set recovery policy
-    open fun recoveryEnabled(timeRange: TimeRange): Boolean = true
-    open val maxDelay: Duration? get() = null
+    open fun recoveryEnabled(timeWindow: TimeRange): Boolean = true
+    open val maxDelay: Duration? get() = if (!delayEnabled) { 0L.minutes } else { null }
     open val cancelEnabled get() = plan.cancelEnabled
     open val aircraftChangeEnabled get() = plan.aircraftChangeEnabled
     open val aircraftTypeChangeEnabled get() = plan.aircraftTypeChangeEnabled
     open val aircraftMinorTypeChangeEnabled get() = plan.aircraftMinorTypeChangeEnabled
+    open val delayEnabled get() = plan.delayEnabled
+    open val advanceEnabled get() = plan.advanceEnabled
     open val routeChangeEnabled get() = plan.terminalChangeEnabled
 
     abstract val recovered: Boolean
@@ -213,16 +248,16 @@ abstract class FlightTask(
                 && timeWindow.contains(time!!)
     }
 
-    open fun departedWhen(aircraft: Airport, timeWindow: TimeRange): Boolean {
+    open fun departedWhen(airport: Airport, timeWindow: TimeRange): Boolean {
         return isFlight && time != null
-                && dep == aircraft
+                && dep == airport
                 && timeWindow.contains(time!!)
     }
 
-    open fun locatedWhen(prevTask: FlightTask, aircraft: Airport, timeWindow: TimeRange): Boolean {
+    open fun locatedWhen(prevTask: FlightTask, airport: Airport, timeWindow: TimeRange): Boolean {
         val prevTime = prevTask.time
         return prevTime != null && time != null
-                && prevTask.arr == aircraft
+                && prevTask.arr == airport
                 && timeWindow.contains(TimeRange(
                     begin = prevTime.end,
                     end = (if (isFlight) { time!!.begin } else { time!!.end })

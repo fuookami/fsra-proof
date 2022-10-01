@@ -18,6 +18,7 @@ class FlightTaskBunch(
     val ability: AircraftUsability
 ): ManualIndexed() {
     val size get() = flightTasks.size
+    val empty get() = flightTasks.isEmpty()
     val busyTime: Duration
     val totalDelay: Duration
     val keys: Map<FlightTaskKey, Int>
@@ -81,5 +82,54 @@ class FlightTaskBunch(
         } else {
             null
         }
+    }
+
+    fun arrivedWhen(airport: Airport, timeWindow: TimeRange): Boolean {
+        if (!time.withIntersection(timeWindow)) {
+            return false
+        }
+
+        for (task in flightTasks) {
+            if (task.arrivedWhen(airport, timeWindow)) {
+                return true
+            }
+            if (task.time!!.end >= timeWindow.end) {
+                break
+            }
+        }
+        return false
+    }
+
+    fun departedWhen(airport: Airport, timeWindow: TimeRange): Boolean {
+        if (!time.withIntersection(timeWindow)) {
+            return false
+        }
+
+        for (task in flightTasks) {
+            if (task.departedWhen(airport, timeWindow)) {
+                return true
+            }
+            if (task.time!!.end >= timeWindow.end) {
+                break
+            }
+        }
+        return false
+    }
+
+    fun locatedWhen(airport: Airport, timeWindow: TimeRange): Boolean {
+        if (flightTasks[0].departedWhen(airport, timeWindow)) {
+            return true
+        }
+        if (flightTasks[size - 1].arrivedWhen(airport, timeWindow)) {
+            return true
+        }
+        if (!empty) {
+            for (i in 1 until flightTasks.size) {
+                if (flightTasks[i].locatedWhen(flightTasks[i - 1], airport, timeWindow)) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 }
