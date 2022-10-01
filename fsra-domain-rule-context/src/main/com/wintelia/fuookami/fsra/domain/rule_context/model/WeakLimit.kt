@@ -1,4 +1,4 @@
-package com.wintelia.fuookami.fsra.rule_context.model
+package com.wintelia.fuookami.fsra.domain.rule_context.model
 
 import fuookami.ospf.kotlin.utils.math.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*

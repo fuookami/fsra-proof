@@ -76,6 +76,10 @@ abstract class FlightTask(
     val type: FlightTaskType,
     private val origin: FlightTask? = null
 ): AutoIndexed(FlightTask::class) {
+    companion object {
+        val NotFlightStaticConnectionTime = 5L.minutes
+    }
+
     val isFlight: Boolean = type.isFlightType
 
     abstract val plan: FlightTaskPlan
@@ -99,9 +103,26 @@ abstract class FlightTask(
     open fun duration(aircraft: Aircraft): Duration {
         return plan.duration(aircraft)
     }
-    open val connectionTime: Duration? get() = plan.connectionTime
-    open fun connectionTime(aircraft: Aircraft): Duration {
-        return plan.connectionTime(aircraft)
+    open fun connectionTime(nextTask: FlightTask?): Duration? {
+        return if (nextTask == null || !nextTask.isFlight) {
+            NotFlightStaticConnectionTime
+        } else {
+            plan.connectionTime
+        }
+    }
+    open fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?): Duration {
+        return if (nextTask == null || !nextTask.isFlight) {
+            NotFlightStaticConnectionTime
+        } else {
+            plan.connectionTime(aircraft)
+        }
+    }
+    open fun latestNormalStartTime(aircraft: Aircraft): Instant {
+        return if (scheduledTime != null) {
+            scheduledTime!!.begin
+        } else {
+            timeWindow!!.end - duration(aircraft)
+        }
     }
 
     // it is disabled to recovery if there is actual time or out time
@@ -225,10 +246,10 @@ abstract class FlightTask(
 
     private fun advance(targetTime: TimeRange?): Duration {
         return if (targetTime != null && time != null) {
-            val advance = targetTime.begin.toInstant(TimeZone.currentSystemDefault()) - time!!.begin.toInstant(TimeZone.currentSystemDefault())
+            val advance = targetTime.begin - time!!.begin
             if (advance.isNegative()) { 0.minutes } else { advance }
         } else if (timeWindow != null && time != null) {
-            val advance = timeWindow!!.begin.toInstant(TimeZone.currentSystemDefault()) - time!!.begin.toInstant(TimeZone.currentSystemDefault())
+            val advance = timeWindow!!.begin - time!!.begin
             if (advance.isNegative()) { 0.minutes } else { advance }
         } else {
             0.minutes
@@ -237,10 +258,10 @@ abstract class FlightTask(
 
     private fun delay(targetTime: TimeRange?): Duration {
         return if (targetTime != null && time != null) {
-            val delay = time!!.begin.toInstant(TimeZone.currentSystemDefault()) - targetTime.begin.toInstant(TimeZone.currentSystemDefault())
+            val delay = time!!.begin - targetTime.begin
             if (delay.isNegative()) { 0.minutes } else { delay }
         } else if (timeWindow != null && time != null) {
-            val delay = time!!.begin.toInstant(TimeZone.currentSystemDefault()) - timeWindow!!.end.toInstant(TimeZone.currentSystemDefault())
+            val delay = time!!.begin - timeWindow!!.end
             if (delay.isNegative()) { 0.minutes } else { delay }
         } else {
             0.minutes

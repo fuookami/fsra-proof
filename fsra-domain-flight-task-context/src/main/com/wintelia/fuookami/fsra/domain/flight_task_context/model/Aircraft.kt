@@ -1,10 +1,10 @@
 package com.wintelia.fuookami.fsra.domain.flight_task_context.model
 
 import kotlin.time.*
+import kotlinx.datetime.*
 import fuookami.ospf.kotlin.utils.math.*
 import com.wintelia.fuookami.fsra.infrastructure.*
-import fuookami.ospf.kotlin.utils.math.ordinary.min
-import kotlinx.datetime.LocalDateTime
+import fuookami.ospf.kotlin.utils.concept.ManualIndexed
 
 enum class AircraftCategory {
     Passenger,
@@ -110,7 +110,7 @@ class Aircraft(
     val regNo: AircraftRegisterNumber,
     val minorType: AircraftMinorType,
     val capacity: AircraftCapacity
-) {
+): ManualIndexed() {
     val type by minorType::type
     val costPerHour by minorType::costPerHour
     val routeFlyTime by minorType::routeFlyTime
@@ -133,5 +133,5 @@ class Aircraft(
 data class AircraftUsability(
     val lastTask: FlightTask?,
     val location: Airport,
-    val enabledTime: LocalDateTime,
+    val enabledTime: Instant,
 )

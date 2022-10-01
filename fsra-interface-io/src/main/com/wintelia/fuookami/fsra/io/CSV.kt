@@ -1,9 +1,11 @@
 package com.wintelia.fuookami.fsra.io
 
 import java.io.*
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.serialization.*
 import kotlinx.serialization.builtins.*
 import kotlinx.serialization.csv.*
+import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.infrastructure.dto.*
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -15,10 +17,21 @@ fun <T> readCSVFile(serializer: KSerializer<T>, path: String): List<T> {
     )
 }
 
+fun readRecoveryName(path: String): RecoveryPlan {
+    val map = readCSVFile(RecoveryPlanDTO.serializer(), path).associate { Pair(it.name, it.value) }
+    return RecoveryPlan(
+        id = map["预案ID"]!!,
+        name = map["预案名称"]!!,
+        timeWindow = TimeRange(parseDateTime(map["开始时间"]!!), parseDateTime(map["结束时间"]!!)),
+        freezingTime = map["冻结时间"]!!.toInt().minutes
+    )
+}
+
 fun read(dir: String): Input {
     val path = { fileName: String -> "$dir${File.separator}$fileName" }
 
     return Input(
+        plan = readRecoveryName(path("OperationInfo")),
         parameter = readCSVFile(ParameterDTO.serializer(), path("AutoParameters.txt")).associateBy { it.name },
 
         airports = readCSVFile(AirportDTO.serializer(), path("airports.txt")),

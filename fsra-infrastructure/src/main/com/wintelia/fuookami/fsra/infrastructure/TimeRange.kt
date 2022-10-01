@@ -5,17 +5,17 @@ import kotlinx.datetime.*
 
 // [b, e)
 data class TimeRange(
-    val begin: LocalDateTime,
-    val end: LocalDateTime
+    val begin: Instant,
+    val end: Instant
 ) {
     val empty: Boolean get() = begin == end
-    val duration: Duration get() = end.toInstant(TimeZone.currentSystemDefault()) - begin.toInstant(TimeZone.currentSystemDefault())
+    val duration: Duration get() = end - begin
 
     fun withIntersection(ano: TimeRange): Boolean {
         return begin <= ano.end && ano.begin < end
     }
 
-    fun contains(time: LocalDateTime): Boolean {
+    fun contains(time: Instant): Boolean {
         return begin <= time && time < end;
     }
 

@@ -326,6 +326,14 @@ data class PassengerTransferDTO(
 // other
 
 @Serializable
+data class RecoveryPlanDTO(
+    @SerialName("参数名")
+    val name: String,
+    @SerialName("参数值")
+    val value: String
+)
+
+@Serializable
 data class ParameterDTO(
     @SerialName("param_name")
     val name: String,
