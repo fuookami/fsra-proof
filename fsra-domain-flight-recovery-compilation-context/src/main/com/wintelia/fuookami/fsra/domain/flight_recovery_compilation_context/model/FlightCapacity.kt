@@ -22,37 +22,29 @@ class FlightCapacity(
             if (!this::passenger.isInitialized) {
                 passenger = PassengerClass.values().map { cls ->
                     val passengerCapacity = LinearSymbols1("${cls}_capacity", Shape1(flightTasks.size))
-                    for (task in flightTasks) {
-                        if (task.capacity is AircraftCapacity.Passenger) {
-                            passengerCapacity[task]!!.name = "${passengerCapacity.name}_${task.name}"
+                    flightTasks.asSequence()
+                        .filter { it.capacity is AircraftCapacity.Passenger }
+                        .forEach {
+                            passengerCapacity[it]!!.name = "${passengerCapacity.name}_${it.name}"
                         }
-                    }
                     return@map Pair(cls, passengerCapacity)
                 }.toMap()
             }
-            for (task in flightTasks) {
-                if (task.capacity is AircraftCapacity.Passenger) {
-                    for (cls in PassengerClass.values()) {
-                        model.addSymbol(passenger[cls]!![task]!!)
-                    }
-                }
-            }
+            flightTasks.asSequence()
+                .filter { it.capacity is AircraftCapacity.Passenger }
+                .forEach {PassengerClass.values().forEach { cls -> model.addSymbol(passenger[cls]!![it]!!) } }
         }
 
         if (withCargo) {
             if (!this::cargo.isInitialized) {
                 cargo = LinearSymbols1("cargo_capacity", Shape1(flightTasks.size))
-                for (task in flightTasks) {
-                    if (task.capacity is AircraftCapacity.Cargo) {
-                        cargo[task]!!.name = "${cargo.name}_${task.name}"
-                    }
-                }
+                flightTasks.asSequence()
+                    .filter { it.capacity is AircraftCapacity.Cargo }
+                    .forEach { cargo[it]!!.name = "${cargo.name}_${it.name}" }
             }
-            for (task in flightTasks) {
-                if (task.capacity is AircraftCapacity.Cargo) {
-                    model.addSymbol(cargo[task]!!)
-                }
-            }
+            flightTasks.asSequence()
+                .filter { it.capacity is AircraftCapacity.Cargo }
+                .forEach {  model.addSymbol(cargo[it]!!) }
         }
 
         return Ok(success)
@@ -64,13 +56,13 @@ class FlightCapacity(
         val xi = compilation.x[iteration.toInt()]
 
         if (withPassenger) {
-            for (bunch in bunches) {
-                for (task in flightTasks) {
+            for (task in flightTasks) {
+                for (bunch in bunches) {
                     val actualTask = bunch.get(task) ?: continue
 
                     when (val aircraftCapacity = actualTask.capacity) {
                         is AircraftCapacity.Passenger -> {
-                            for (cls in PassengerClass.values()) {
+                            PassengerClass.values().forEach { cls ->
                                 val capacity = passenger[cls]!![task]!! as LinearSymbol
                                 capacity.flush()
                                 (capacity.polynomial as LinearPolynomial) += aircraftCapacity[cls] * xi[bunch]!!
@@ -83,8 +75,8 @@ class FlightCapacity(
         }
 
         if (withCargo) {
-            for (bunch in bunches) {
-                for (task in flightTasks) {
+            for (task in flightTasks) {
+                for (bunch in bunches) {
                     val actualTask = bunch.get(task) ?: continue
 
                     when (val aircraftCapacity = actualTask.capacity) {

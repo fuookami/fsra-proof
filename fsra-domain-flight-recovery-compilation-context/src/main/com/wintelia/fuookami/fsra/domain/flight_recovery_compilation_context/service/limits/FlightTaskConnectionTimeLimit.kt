@@ -19,7 +19,7 @@ private data class FlightTaskConnectionTimeShadowPriceKey(
     val prevFlightTask: FlightTaskKey,
     val nextFlightTaskKey: FlightTaskKey,
     val aircraft: Aircraft
-): ShadowPriceKey(FlightTaskConnectionTimeShadowPriceKey::class.java)
+): ShadowPriceKey(FlightTaskConnectionTimeShadowPriceKey::class)
 
 private data class FlightTaskPair(
     val bunch: FlightTaskBunch,
@@ -89,7 +89,7 @@ class FlightTaskConnectionTimeLimit(
     override fun extractor(): Extractor<ShadowPriceMap> {
         return { map, args ->
             if (args[0] != null && args[1] != null && args[2] != null) {
-                map.map[FlightTaskConnectionTimeShadowPriceKey(
+                map[FlightTaskConnectionTimeShadowPriceKey(
                     prevFlightTask = (args[0]!! as FlightTask).key,
                     nextFlightTaskKey = (args[1]!! as FlightTask).key,
                     aircraft = args[2]!! as Aircraft

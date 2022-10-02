@@ -11,51 +11,49 @@ import fuookami.ospf.kotlin.framework.model.CGPipeline
 import fuookami.ospf.kotlin.framework.model.Extractor
 import fuookami.ospf.kotlin.framework.model.ShadowPrice
 import fuookami.ospf.kotlin.framework.model.ShadowPriceKey
-import com.wintelia.fuookami.fsra.infrastructure.ShadowPriceMap
+import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
 
-private data class FlightTaskCompilationShadowPriceKey(
-    val flightTask: FlightTaskKey
-): ShadowPriceKey(FlightTaskCompilationShadowPriceKey::class)
+private data class FleetBalanceShadowPriceKey(
+    val checkPoint: FleetBalance.CheckPoint
+): ShadowPriceKey(FleetBalanceShadowPriceKey::class)
 
-private typealias CancelCostCalculator = fuookami.ospf.kotlin.utils.functional.Extractor<Flt64, FlightTask>
-
-class FlightTaskCompilationLimit(
-    private val flightTasks: List<FlightTask>,
-    private val compilation: Compilation,
-    private val cancelCostCalculator: CancelCostCalculator,
-    override val name: String = "flight_task_compilation"
+class FleetBalanceLimit(
+    private val fleetBalance: FleetBalance,
+    private val parameter: Parameter,
+    override val name: String = "fleet_balance"
 ): CGPipeline<LinearMetaModel, ShadowPriceMap> {
+    private val checkPoints: List<FleetBalance.CheckPoint> = fleetBalance.limits.keys.toList()
 
     override fun invoke(model: LinearMetaModel): Try<Error> {
-        val compilation = this.compilation.flightTaskCompilation
-        val y = this.compilation.y
+        val fleet = fleetBalance.fleet
+        val l = fleetBalance.l
 
-        for (flightTask in flightTasks) {
+        for (checkPoint in checkPoints) {
+            val limit = fleetBalance.limits[checkPoint]!!
             model.addConstraint(
-                (compilation[flightTask]!! + y[flightTask]!!) eq Flt64.one,
-                "${name}_${flightTask.name}"
+                (fleet[checkPoint]!! + l[checkPoint]!!) geq limit.amount,
+                "${name}_${checkPoint.airport.icao}_${checkPoint.aircraftMinorType.code}"
             )
         }
 
-        model.minimize(LinearPolynomial(this.compilation.bunchCost))
-
-        val cancelCostPoly = LinearPolynomial()
-        for (flightTask in flightTasks) {
-            cancelCostPoly += cancelCostCalculator(flightTask) * y[flightTask]!!
+        val obj = LinearPolynomial()
+        for (checkPoint in checkPoints) {
+            obj += parameter.fleetBalance * l[checkPoint]!!
         }
-        model.minimize(cancelCostPoly, "flight task cancel")
+        model.minimize(obj, "fleet balance")
 
         return Ok(success)
     }
 
     override fun extractor(): Extractor<ShadowPriceMap> {
         return { map, args ->
-            if (args[1] != null) {
-                map[FlightTaskCompilationShadowPriceKey(
-                    flightTask = (args[1]!! as FlightTask).key
-                )]?.price ?: Flt64.zero
+            if (args[0] != null && args[2] != null && args[1] == null) {
+                map[FleetBalanceShadowPriceKey(FleetBalance.CheckPoint(
+                    airport = (args[0]!! as FlightTask).arr,
+                    aircraftMinorType = (args[2]!! as Aircraft).minorType
+                ))]?.price ?: Flt64.zero
             } else {
                 Flt64.zero
             }
@@ -68,13 +66,13 @@ class FlightTaskCompilationLimit(
             val constraint = model.constraints[j]
             if (constraint.name.startsWith(name)) {
                 map.put(ShadowPrice(
-                    key = FlightTaskCompilationShadowPriceKey(flightTasks[i].key),
+                    key = FleetBalanceShadowPriceKey(checkPoints[i]),
                     price = shadowPrices[j]
                 ))
                 ++i
             }
 
-            if (i == flightTasks.size) {
+            if (i == checkPoints.size) {
                 break
             }
         }

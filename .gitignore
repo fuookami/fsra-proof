@@ -30,5 +30,6 @@ hs_err_pid*
 [Dd]ata/
 [Ll]ibraries/
 .vs/
+.vscode/
 *.opm
 *.lp

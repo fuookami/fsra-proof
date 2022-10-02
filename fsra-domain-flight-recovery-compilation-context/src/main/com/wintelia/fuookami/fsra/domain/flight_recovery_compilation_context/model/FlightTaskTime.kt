@@ -24,20 +24,18 @@ class FlightTaskTime(
         if (withRedundancy) {
             if (!this::redundancy.isInitialized) {
                 redundancy = UIntVariable1("flight_time_redundancy", Shape1(flightTasks.size))
-                for (task in flightTasks) {
-                    redundancy[task]!!.name = "${redundancy.name}_${task.name}"
-                }
+                flightTasks.forEach { redundancy[it]!!.name = "${redundancy.name}_${it.name}" }
             }
             model.addVars(redundancy)
         }
 
         if (!this::etd.isInitialized) {
             etd = LinearSymbols1("etd_compilation", Shape1(flightTasks.size))
-            for (task in flightTasks) {
-                etd[task] = if (withRedundancy) {
-                    LinearSymbol(LinearPolynomial(redundancy[task]!!), "${etd.name}_${task.name}")
+            flightTasks.forEach {
+                etd[it] = if (withRedundancy) {
+                    LinearSymbol(LinearPolynomial(redundancy[it]!!), "${etd.name}_${it.name}")
                 } else {
-                    LinearSymbol(LinearPolynomial(), "${etd.name}_${task.name}")
+                    LinearSymbol(LinearPolynomial(), "${etd.name}_${it.name}")
                 }
             }
         }
@@ -45,11 +43,11 @@ class FlightTaskTime(
 
         if (!this::eta.isInitialized) {
             eta = LinearSymbols1("eta_compilation", Shape1(flightTasks.size))
-            for (task in flightTasks) {
-                eta[task] = if (withRedundancy) {
-                    LinearSymbol(LinearPolynomial(redundancy[task]!!), "${eta.name}_${task.name}")
+            flightTasks.forEach {
+                eta[it] = if (withRedundancy) {
+                    LinearSymbol(LinearPolynomial(redundancy[it]!!), "${eta.name}_${it.name}")
                 } else {
-                    LinearSymbol(LinearPolynomial(), "${eta.name}_${task.name}")
+                    LinearSymbol(LinearPolynomial(), "${eta.name}_${it.name}")
                 }
             }
         }

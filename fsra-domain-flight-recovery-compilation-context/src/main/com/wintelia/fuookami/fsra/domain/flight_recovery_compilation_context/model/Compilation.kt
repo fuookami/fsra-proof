@@ -24,17 +24,13 @@ class Compilation {
     fun register(flightTasks: List<FlightTask>, aircrafts: List<Aircraft>, model: LinearMetaModel): Try<Error> {
         if (!this::y.isInitialized) {
             y = BinVariable1("y", Shape1(flightTasks.size))
-            for (task in flightTasks) {
-                y[task]!!.name = "${y.name}_${task.name}"
-            }
+            flightTasks.forEach { y[it]!!.name = "${y.name}_${it.name}" }
         }
         model.addVars(y)
 
         if (!this::z.isInitialized) {
             z = BinVariable1("z", Shape1(aircrafts.size))
-            for (aircraft in aircrafts) {
-                z[aircraft]!!.name = "${z.name}_${aircraft.regNo}"
-            }
+            aircrafts.forEach { z[it]!!.name = "${z.name}_${it.regNo}" }
         }
         model.addVars(z)
 
@@ -45,17 +41,13 @@ class Compilation {
 
         if (!this::flightTaskCompilation.isInitialized) {
             flightTaskCompilation = LinearSymbols1("flight_task_compilation", Shape1(flightTasks.size))
-            for (task in flightTasks) {
-                flightTaskCompilation[task]!!.name = "${flightTaskCompilation.name}_${task.name}"
-            }
+            flightTasks.forEach { flightTaskCompilation[it]!!.name = "${flightTaskCompilation.name}_${it.name}" }
         }
         model.addSymbols(flightTaskCompilation)
 
         if (!this::aircraftCompilation.isInitialized) {
             aircraftCompilation = LinearSymbols1("aircraft_compilation", Shape1(aircrafts.size))
-            for (aircraft in aircrafts) {
-                aircraftCompilation[aircraft]!!.name = "${aircraftCompilation.name}_${aircraft.regNo}"
-            }
+            aircrafts.forEach { aircraftCompilation[it]!!.name = "${aircraftCompilation.name}_${it.regNo}" }
         }
         model.addSymbols(aircraftCompilation)
 
@@ -67,9 +59,7 @@ class Compilation {
         assert(bunches.isNotEmpty())
 
         val xi = BinVariable1("x_$iteration", Shape1(bunches.size))
-        for (bunch in bunches) {
-            xi[bunch]!!.name = "${xi.name}_${bunch.index}"
-        }
+        bunches.forEach { xi[it]!!.name = "${xi.name}_${it.index}" }
         model.addVars(xi)
         _x.add(xi)
 
@@ -79,23 +69,23 @@ class Compilation {
         }
 
         for (task in flightTasks) {
-            for (bunch in bunches) {
-                if (bunch.contains(task)) {
+            bunches.asSequence()
+                .filter { it.contains(task) }
+                .forEach {
                     val compilation = this.flightTaskCompilation[task]!! as LinearSymbol
                     compilation.flush()
-                    (compilation.polynomial as LinearPolynomial) += xi[bunch]!!
+                    (compilation.polynomial as LinearPolynomial) += xi[it]!!
                 }
-            }
         }
 
         for (aircraft in aircrafts) {
-            for (bunch in bunches) {
-                if (bunch.aircraft == aircraft) {
+            bunches.asSequence()
+                .filter { it.aircraft == aircraft }
+                .forEach {
                     val compilation = this.aircraftCompilation[aircraft]!! as LinearSymbol
                     compilation.flush()
-                    (compilation.polynomial as LinearPolynomial) += xi[bunch]!!
+                    (compilation.polynomial as LinearPolynomial) += xi[it]!!
                 }
-            }
         }
 
         return Ok(success)
