@@ -54,7 +54,13 @@ class Compilation {
         return Ok(success)
     }
 
-    fun addColumns(iteration: UInt64, bunches: List<FlightTaskBunch>, flightTasks: List<FlightTask>, aircrafts: List<Aircraft>, model: LinearMetaModel): Try<Error> {
+    fun addColumns(
+        iteration: UInt64,
+        bunches: List<FlightTaskBunch>,
+        flightTasks: List<FlightTask>,
+        aircrafts: List<Aircraft>,
+        model: LinearMetaModel
+    ): Try<Error> {
         assert(iteration.toInt() == x.size)
         assert(bunches.isNotEmpty())
 

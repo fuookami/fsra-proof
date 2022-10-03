@@ -17,7 +17,7 @@ import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.mod
 
 private data class FlightTaskCompilationShadowPriceKey(
     val flightTask: FlightTaskKey
-): ShadowPriceKey(FlightTaskCompilationShadowPriceKey::class)
+) : ShadowPriceKey(FlightTaskCompilationShadowPriceKey::class)
 
 private typealias CancelCostCalculator = fuookami.ospf.kotlin.utils.functional.Extractor<Flt64, FlightTask>
 
@@ -26,7 +26,7 @@ class FlightTaskCompilationLimit(
     private val compilation: Compilation,
     private val cancelCostCalculator: CancelCostCalculator,
     override val name: String = "flight_task_compilation"
-): CGPipeline<LinearMetaModel, ShadowPriceMap> {
+) : CGPipeline<LinearMetaModel, ShadowPriceMap> {
 
     override fun invoke(model: LinearMetaModel): Try<Error> {
         val compilation = this.compilation.flightTaskCompilation
@@ -67,10 +67,12 @@ class FlightTaskCompilationLimit(
         for (j in model.constraints.indices) {
             val constraint = model.constraints[j]
             if (constraint.name.startsWith(name)) {
-                map.put(ShadowPrice(
-                    key = FlightTaskCompilationShadowPriceKey(flightTasks[i].key),
-                    price = shadowPrices[j]
-                ))
+                map.put(
+                    ShadowPrice(
+                        key = FlightTaskCompilationShadowPriceKey(flightTasks[i].key),
+                        price = shadowPrices[j]
+                    )
+                )
                 ++i
             }
 

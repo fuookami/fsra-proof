@@ -56,7 +56,13 @@ class FlightTaskTime(
         return Ok(success)
     }
 
-    fun addColumns(iteration: UInt64, bunches: List<FlightTaskBunch>, flightTasks: List<FlightTask>, timeWindow: TimeRange, compilation: Compilation): Try<Error> {
+    fun addColumns(
+        iteration: UInt64,
+        bunches: List<FlightTaskBunch>,
+        flightTasks: List<FlightTask>,
+        timeWindow: TimeRange,
+        compilation: Compilation
+    ): Try<Error> {
         assert(bunches.isNotEmpty())
 
         val xi = compilation.x[iteration.toInt()]

@@ -16,7 +16,7 @@ class FlightTaskBunch(
     val cost: Cost,
 
     val ability: AircraftUsability
-): ManualIndexed() {
+) : ManualIndexed() {
     val size get() = flightTasks.size
     val empty get() = flightTasks.isEmpty()
     val busyTime: Duration
@@ -25,11 +25,9 @@ class FlightTaskBunch(
     val redundancy: Map<FlightTaskKey, Pair<Duration, Duration>>
 
     init {
-        var index = 0
         val flightTaskKeys = HashMap<FlightTaskKey, Int>()
-        for (flight in flightTasks) {
+        for ((index, flight) in flightTasks.withIndex()) {
             flightTaskKeys[flight.key] = index
-            index += 1
         }
         keys = flightTaskKeys
 
@@ -47,7 +45,11 @@ class FlightTaskBunch(
             busyTime += flightTasks[i].duration!!
 
             // var prevTask = if (i > 0) { flightTasks[ i - 1 ] } else { null }
-            val nextTask = if (i != (flightTasks.size - 1)) { flightTasks[i + 1] } else { null }
+            val nextTask = if (i != (flightTasks.size - 1)) {
+                flightTasks[i + 1]
+            } else {
+                null
+            }
 
             busyTime += flightTasks[i].connectionTime(aircraft, nextTask)
         }

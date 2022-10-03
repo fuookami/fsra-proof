@@ -39,7 +39,10 @@ fun read(dir: String): Input {
         aircrafts = readCSVFile(AircraftDTO.serializer(), path("aircraft.txt")),
         aircraftTypes = readCSVFile(AircraftTypeDTO.serializer(), path("fleet.txt")),
         aircraftFee = readCSVFile(AircraftFeeDTO.serializer(), path("fee.txt")),
-        aircraftMinorTypeConnectionTime = readCSVFile(AircraftMinorTypeConnectionTimeDTO.serializer(), path("fleetPassTime.txt")),
+        aircraftMinorTypeConnectionTime = readCSVFile(
+            AircraftMinorTypeConnectionTimeDTO.serializer(),
+            path("fleetPassTime.txt")
+        ),
         aircraftMinorTypeRouteFlyTime = readCSVFile(AircraftMinorTypeRouteFlyTimeDTO.serializer(), path("flyTime.txt")),
 
         flights = readCSVFile(FlightDTO.serializer(), path("flights.txt")),

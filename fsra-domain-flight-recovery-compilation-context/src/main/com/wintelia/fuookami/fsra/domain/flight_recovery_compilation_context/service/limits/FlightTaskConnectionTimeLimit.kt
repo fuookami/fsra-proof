@@ -9,17 +9,17 @@ import fuookami.ospf.kotlin.core.frontend.inequality.*
 import fuookami.ospf.kotlin.core.frontend.model.mechanism.*
 import fuookami.ospf.kotlin.framework.model.CGPipeline
 import fuookami.ospf.kotlin.framework.model.Extractor
+import fuookami.ospf.kotlin.framework.model.ShadowPrice
 import fuookami.ospf.kotlin.framework.model.ShadowPriceKey
 import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
-import fuookami.ospf.kotlin.framework.model.ShadowPrice
 
 private data class FlightTaskConnectionTimeShadowPriceKey(
     val prevFlightTask: FlightTaskKey,
     val nextFlightTaskKey: FlightTaskKey,
     val aircraft: Aircraft
-): ShadowPriceKey(FlightTaskConnectionTimeShadowPriceKey::class)
+) : ShadowPriceKey(FlightTaskConnectionTimeShadowPriceKey::class)
 
 private data class FlightTaskPair(
     val bunch: FlightTaskBunch,
@@ -34,7 +34,7 @@ class FlightTaskConnectionTimeLimit(
     private val flightTaskTime: FlightTaskTime,
     private val timeWindow: TimeRange,
     override val name: String = "flight_task_connection_time_${iteration}"
-): CGPipeline<LinearMetaModel, ShadowPriceMap> {
+) : CGPipeline<LinearMetaModel, ShadowPriceMap> {
     private val pairs: List<FlightTaskPair>
 
     init {
@@ -44,10 +44,10 @@ class FlightTaskConnectionTimeLimit(
             for (i in 0 until (bunch.size - 1)) {
                 flightTaskPairs.add(
                     FlightTaskPair(
-                    bunch = bunch,
-                    prevFlightTask = bunch.flightTasks[i],
-                    nextFlightTask = bunch.flightTasks[i + 1]
-                )
+                        bunch = bunch,
+                        prevFlightTask = bunch.flightTasks[i],
+                        nextFlightTask = bunch.flightTasks[i + 1]
+                    )
                 )
             }
         }

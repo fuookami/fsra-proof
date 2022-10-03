@@ -32,7 +32,7 @@ class FlightCapacity(
             }
             flightTasks.asSequence()
                 .filter { it.capacity is AircraftCapacity.Passenger }
-                .forEach {PassengerClass.values().forEach { cls -> model.addSymbol(passenger[cls]!![it]!!) } }
+                .forEach { PassengerClass.values().forEach { cls -> model.addSymbol(passenger[cls]!![it]!!) } }
         }
 
         if (withCargo) {
@@ -44,13 +44,18 @@ class FlightCapacity(
             }
             flightTasks.asSequence()
                 .filter { it.capacity is AircraftCapacity.Cargo }
-                .forEach {  model.addSymbol(cargo[it]!!) }
+                .forEach { model.addSymbol(cargo[it]!!) }
         }
 
         return Ok(success)
     }
 
-    fun addColumns(iteration: UInt64, bunches: List<FlightTaskBunch>, flightTasks: List<FlightTask>, compilation: Compilation): Try<Error> {
+    fun addColumns(
+        iteration: UInt64,
+        bunches: List<FlightTaskBunch>,
+        flightTasks: List<FlightTask>,
+        compilation: Compilation
+    ): Try<Error> {
         assert(bunches.isNotEmpty())
 
         val xi = compilation.x[iteration.toInt()]
@@ -68,7 +73,8 @@ class FlightCapacity(
                                 (capacity.polynomial as LinearPolynomial) += aircraftCapacity[cls] * xi[bunch]!!
                             }
                         }
-                        else -> { }
+
+                        else -> {}
                     }
                 }
             }
@@ -85,7 +91,8 @@ class FlightCapacity(
                             capacity.flush()
                             (capacity.polynomial as LinearPolynomial) += aircraftCapacity.capacity * xi[bunch]!!
                         }
-                        else -> { }
+
+                        else -> {}
                     }
                 }
             }

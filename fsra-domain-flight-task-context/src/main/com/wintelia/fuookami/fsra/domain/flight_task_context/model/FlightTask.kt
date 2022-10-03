@@ -82,7 +82,12 @@ abstract class FlightTaskPlan(
 
     abstract val scheduledTime: TimeRange?
     open val time: TimeRange? get() = scheduledTime
-    open val latestBeginTime: Instant? get() = if (status.contains(FlightTaskStatus.NotDelay)) { scheduledTime?.begin } else { null }
+    open val latestBeginTime: Instant?
+        get() = if (status.contains(FlightTaskStatus.NotDelay)) {
+            scheduledTime?.begin
+        } else {
+            null
+        }
 
     open val duration: Duration? get() = time?.duration ?: scheduledTime?.duration
     open fun duration(aircraft: Aircraft): Duration {
@@ -92,11 +97,12 @@ abstract class FlightTaskPlan(
     open fun connectionTime(nextTask: FlightTask?): Duration? {
         return aircraft?.let { connectionTime(it, nextTask) }
     }
+
     open fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?): Duration {
         return if (nextTask != null) {
             if (nextTask.isFlight) {
                 aircraft.connectionTime[arr] ?: aircraft.maxConnectionTime
-            }  else {
+            } else {
                 NotFlightStaticConnectionTime
             }
         } else {
@@ -123,7 +129,7 @@ data class FlightTaskKey(
 abstract class FlightTask(
     val type: FlightTaskType,
     private val origin: FlightTask? = null
-): AutoIndexed(FlightTask::class) {
+) : AutoIndexed(FlightTask::class) {
     val isFlight: Boolean = type.isFlightType
 
     abstract val plan: FlightTaskPlan
@@ -135,7 +141,12 @@ abstract class FlightTask(
     val key: FlightTaskKey get() = FlightTaskKey(type, id)
 
     open val aircraft: Aircraft? get() = plan.aircraft
-    open val capacity: AircraftCapacity? get() = if (isFlight) { aircraft?.capacity } else { null }
+    open val capacity: AircraftCapacity?
+        get() = if (isFlight) {
+            aircraft?.capacity
+        } else {
+            null
+        }
     open val dep: Airport get() = plan.dep
     open val arr: Airport get() = plan.arr
     open val depBackup: List<Airport> get() = listOf()
@@ -148,8 +159,11 @@ abstract class FlightTask(
     open fun duration(aircraft: Aircraft): Duration {
         return plan.duration(aircraft)
     }
+
     open fun connectionTime(nextTask: FlightTask?): Duration? = plan.connectionTime(nextTask)
-    open fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?): Duration = plan.connectionTime(aircraft, nextTask)
+    open fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?): Duration =
+        plan.connectionTime(aircraft, nextTask)
+
     open fun latestNormalStartTime(aircraft: Aircraft): Instant {
         return if (scheduledTime != null) {
             scheduledTime!!.begin
@@ -161,7 +175,12 @@ abstract class FlightTask(
     // it is disabled to recovery if there is actual time or out time
     // it is necessary to be participated in the problem, but it is unallowed to set recovery policy
     open fun recoveryEnabled(timeWindow: TimeRange): Boolean = true
-    open val maxDelay: Duration? get() = if (!delayEnabled) { 0L.minutes } else { null }
+    open val maxDelay: Duration?
+        get() = if (!delayEnabled) {
+            0L.minutes
+        } else {
+            null
+        }
     open val cancelEnabled get() = plan.cancelEnabled
     open val aircraftChangeEnabled get() = plan.aircraftChangeEnabled
     open val aircraftTypeChangeEnabled get() = plan.aircraftTypeChangeEnabled
@@ -175,9 +194,11 @@ abstract class FlightTask(
     open fun recoveryNeeded(timeWindow: TimeRange): Boolean {
         return time == null || timeWindow.withIntersection(time!!)
     }
+
     open fun recoveryEnabled(policy: RecoveryPolicy): Boolean {
         return true
     }
+
     open val originTask: FlightTask get() = origin ?: this
     abstract fun recovery(policy: RecoveryPolicy): FlightTask
 
@@ -185,64 +206,83 @@ abstract class FlightTask(
     open val actualAdvance: Duration get() = advance(scheduledTime)
     open val delay: Duration get() = delay(plan.time)
     open val actualDelay: Duration get() = delay(scheduledTime)
-    open val overMaxDelay: Duration get() = if (maxDelay == null || delay <= maxDelay!!) { 0.minutes } else { delay - maxDelay!! }
-    open val aircraftChanged: Boolean get() = if (!aircraftChangeEnabled) { false } else { recoveryPolicy.aircraft != null }
+    open val overMaxDelay: Duration
+        get() = if (maxDelay == null || delay <= maxDelay!!) {
+            0.minutes
+        } else {
+            delay - maxDelay!!
+        }
+    open val aircraftChanged: Boolean
+        get() = if (!aircraftChangeEnabled) {
+            false
+        } else {
+            recoveryPolicy.aircraft != null
+        }
     open val aircraftTypeChanged: Boolean get() = false
     open val aircraftMinorTypeChanged: Boolean get() = false
-    open val routeChanged: Boolean get() = if (!routeChangeEnabled) { false } else { recoveryPolicy.route != null }
-    open val aircraftChange: AircraftChange? get() = if (!aircraftChangeEnabled) {
-        null
-    } else {
-        val policy = recoveryPolicy
-        if (plan.aircraft != null
-            && policy.aircraft != null
-            && policy.aircraft != plan.aircraft
-        ) {
-            AircraftChange(plan.aircraft!!, policy.aircraft)
+    open val routeChanged: Boolean
+        get() = if (!routeChangeEnabled) {
+            false
         } else {
-            null
+            recoveryPolicy.route != null
         }
-    }
-    open val aircraftTypeChange: AircraftTypeChange? get() = if (!aircraftTypeChangeEnabled) {
-        null
-    } else {
-        val policy = recoveryPolicy
-        if ((plan.aircraft != null)
-            && (policy.aircraft != null)
-            && (policy.aircraft.type != plan.aircraft!!.type)
-        ) {
-            AircraftTypeChange(plan.aircraft!!.type, policy.aircraft.type)
+    open val aircraftChange: AircraftChange?
+        get() = if (!aircraftChangeEnabled) {
+            null
         } else {
-            null
+            val policy = recoveryPolicy
+            if (plan.aircraft != null
+                && policy.aircraft != null
+                && policy.aircraft != plan.aircraft
+            ) {
+                AircraftChange(plan.aircraft!!, policy.aircraft)
+            } else {
+                null
+            }
         }
-    }
-    open val aircraftMinorTypeChange: AircraftMinorTypeChange? get() = if (!aircraftMinorTypeChangeEnabled) {
-        null
-    } else {
-        val policy = recoveryPolicy
-        if ((plan.aircraft != null)
-            && (policy.aircraft != null)
-            && (policy.aircraft.minorType != plan.aircraft!!.minorType)
-        ) {
-            AircraftMinorTypeChange(plan.aircraft!!.minorType, policy.aircraft.minorType)
+    open val aircraftTypeChange: AircraftTypeChange?
+        get() = if (!aircraftTypeChangeEnabled) {
+            null
         } else {
-            null
+            val policy = recoveryPolicy
+            if ((plan.aircraft != null)
+                && (policy.aircraft != null)
+                && (policy.aircraft.type != plan.aircraft!!.type)
+            ) {
+                AircraftTypeChange(plan.aircraft!!.type, policy.aircraft.type)
+            } else {
+                null
+            }
         }
-    }
-    open val routeChange: RouteChange? get() = if (!routeChangeEnabled) {
-        null
-    } else {
-        val policy = recoveryPolicy
-        if (policy.route != null
-            && (policy.route.first != dep || policy.route.second != arr)
-        ) {
-            RouteChange(Pair(dep, arr), policy.route)
+    open val aircraftMinorTypeChange: AircraftMinorTypeChange?
+        get() = if (!aircraftMinorTypeChangeEnabled) {
+            null
         } else {
-            null
+            val policy = recoveryPolicy
+            if ((plan.aircraft != null)
+                && (policy.aircraft != null)
+                && (policy.aircraft.minorType != plan.aircraft!!.minorType)
+            ) {
+                AircraftMinorTypeChange(plan.aircraft!!.minorType, policy.aircraft.minorType)
+            } else {
+                null
+            }
         }
-    }
+    open val routeChange: RouteChange?
+        get() = if (!routeChangeEnabled) {
+            null
+        } else {
+            val policy = recoveryPolicy
+            if (policy.route != null
+                && (policy.route.first != dep || policy.route.second != arr)
+            ) {
+                RouteChange(Pair(dep, arr), policy.route)
+            } else {
+                null
+            }
+        }
 
-    open fun arrivedWhen(airport: Airport, timeWindow:  TimeRange): Boolean {
+    open fun arrivedWhen(airport: Airport, timeWindow: TimeRange): Boolean {
         return isFlight && time != null
                 && arr == airport
                 && timeWindow.contains(time!!)
@@ -258,10 +298,16 @@ abstract class FlightTask(
         val prevTime = prevTask.time
         return prevTime != null && time != null
                 && prevTask.arr == airport
-                && timeWindow.contains(TimeRange(
-                    begin = prevTime.end,
-                    end = (if (isFlight) { time!!.begin } else { time!!.end })
-                ))
+                && timeWindow.contains(
+            TimeRange(
+                begin = prevTime.end,
+                end = (if (isFlight) {
+                    time!!.begin
+                } else {
+                    time!!.end
+                })
+            )
+        )
     }
 
     override fun hashCode(): Int {
@@ -282,10 +328,18 @@ abstract class FlightTask(
     private fun advance(targetTime: TimeRange?): Duration {
         return if (targetTime != null && time != null) {
             val advance = targetTime.begin - time!!.begin
-            if (advance.isNegative()) { 0.minutes } else { advance }
+            if (advance.isNegative()) {
+                0.minutes
+            } else {
+                advance
+            }
         } else if (timeWindow != null && time != null) {
             val advance = timeWindow!!.begin - time!!.begin
-            if (advance.isNegative()) { 0.minutes } else { advance }
+            if (advance.isNegative()) {
+                0.minutes
+            } else {
+                advance
+            }
         } else {
             0.minutes
         }
@@ -294,10 +348,18 @@ abstract class FlightTask(
     private fun delay(targetTime: TimeRange?): Duration {
         return if (targetTime != null && time != null) {
             val delay = time!!.begin - targetTime.begin
-            if (delay.isNegative()) { 0.minutes } else { delay }
+            if (delay.isNegative()) {
+                0.minutes
+            } else {
+                delay
+            }
         } else if (timeWindow != null && time != null) {
             val delay = time!!.begin - timeWindow!!.end
-            if (delay.isNegative()) { 0.minutes } else { delay }
+            if (delay.isNegative()) {
+                0.minutes
+            } else {
+                delay
+            }
         } else {
             0.minutes
         }

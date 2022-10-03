@@ -17,14 +17,14 @@ import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.mod
 
 private data class AircraftCompilationShadowPriceKey(
     val aircraft: Aircraft
-): ShadowPriceKey(AircraftCompilationShadowPriceKey::class)
+) : ShadowPriceKey(AircraftCompilationShadowPriceKey::class)
 
 class AircraftCompilationLimit(
     val aircrafts: List<Aircraft>,
     val compilation: Compilation,
     val parameter: Parameter,
     override val name: String = "aircraft_compilation"
-): CGPipeline<LinearMetaModel, ShadowPriceMap> {
+) : CGPipeline<LinearMetaModel, ShadowPriceMap> {
     override fun invoke(model: LinearMetaModel): Try<Error> {
         val compilation = this.compilation.aircraftCompilation
         val z = this.compilation.z
@@ -60,10 +60,12 @@ class AircraftCompilationLimit(
         for (j in model.constraints.indices) {
             val constraint = model.constraints[j]
             if (constraint.name.startsWith(name)) {
-                map.put(ShadowPrice(
-                    key = AircraftCompilationShadowPriceKey(aircrafts[i]),
-                    price = shadowPrices[j]
-                ))
+                map.put(
+                    ShadowPrice(
+                        key = AircraftCompilationShadowPriceKey(aircrafts[i]),
+                        price = shadowPrices[j]
+                    )
+                )
                 ++i
             }
 

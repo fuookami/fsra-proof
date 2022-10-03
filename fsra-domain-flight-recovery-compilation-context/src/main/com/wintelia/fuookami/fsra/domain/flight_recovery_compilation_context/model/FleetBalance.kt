@@ -19,7 +19,7 @@ class FleetBalance(
     data class CheckPoint(
         val airport: Airport,
         val aircraftMinorType: AircraftMinorType
-    ): ManualIndexed() {
+    ) : ManualIndexed() {
         operator fun invoke(bunch: FlightTaskBunch) = bunch.aircraft.minorType == aircraftMinorType
                 && bunch.arr == airport
 
@@ -97,7 +97,10 @@ class FleetBalance(
                     for (aircraft in limit.aircrafts) {
                         poly += z[aircraft]!!
                     }
-                    fleet[checkPoint] = LinearSymbol(poly, "${fleet.name}_${checkPoint.airport.icao}_${checkPoint.aircraftMinorType.code}")
+                    fleet[checkPoint] = LinearSymbol(
+                        poly,
+                        "${fleet.name}_${checkPoint.airport.icao}_${checkPoint.aircraftMinorType.code}"
+                    )
                 }
             }
             model.addSymbols(fleet)

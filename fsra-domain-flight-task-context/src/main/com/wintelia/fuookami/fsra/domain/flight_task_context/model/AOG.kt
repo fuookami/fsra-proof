@@ -9,7 +9,7 @@ class AOGPlan(
     private val airport: Airport,
     override val scheduledTime: TimeRange,
     override val actualId: String = UUID.randomUUID().toString()
-): FlightTaskPlan(
+) : FlightTaskPlan(
     id = "${prefix}_${actualId.replace("-", "_")}",
     name = "${aircraft.regNo}_AOG_${scheduledTime.begin.toShortString()}",
     status = stableStatus
@@ -39,21 +39,21 @@ class AOGPlan(
     override fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?) = NotFlightStaticConnectionTime
 }
 
-object AOGFlightTask: FlightTaskType(FlightTaskCategory.Maintenance, AOGFlightTask::class) {
+object AOGFlightTask : FlightTaskType(FlightTaskCategory.Maintenance, AOGFlightTask::class) {
     override val type get() = "AOG"
 }
 
 class AOG internal constructor(
     override val plan: AOGPlan,
     origin: AOG? = null
-): FlightTask(AOGFlightTask, origin) {
+) : FlightTask(AOGFlightTask, origin) {
     companion object {
         operator fun invoke(plan: AOGPlan) = AOG(plan)
     }
 
     override val time: TimeRange = plan.scheduledTime
 
-    override fun recoveryEnabled(timeWindow: TimeRange)= timeWindow.contains(plan.scheduledTime.begin)
+    override fun recoveryEnabled(timeWindow: TimeRange) = timeWindow.contains(plan.scheduledTime.begin)
 
     override val recovered = false
     override val recoveryPolicy = RecoveryPolicy()
@@ -69,6 +69,7 @@ class AOG internal constructor(
         }
         return super.recoveryEnabled(policy)
     }
+
     override fun recovery(policy: RecoveryPolicy): AOG {
         assert(recoveryEnabled(policy))
         return this

@@ -12,53 +12,46 @@ import fuookami.ospf.kotlin.framework.model.Extractor
 import fuookami.ospf.kotlin.framework.model.ShadowPrice
 import fuookami.ospf.kotlin.framework.model.ShadowPriceKey
 import com.wintelia.fuookami.fsra.infrastructure.*
-import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
+import com.wintelia.fuookami.fsra.domain.flight_task_context.model.FlightTask
 
-private data class FleetBalanceShadowPriceKey(
-    val checkPoint: FleetBalance.CheckPoint
-) : ShadowPriceKey(FleetBalanceShadowPriceKey::class)
+class FlowControlShadowPriceKey(
+    val checkPoint: Flow.CheckPoint
+): ShadowPriceKey(FlowControlShadowPriceKey::class)
 
-class FleetBalanceLimit(
-    private val fleetBalance: FleetBalance,
+class FlowControlLimit(
+    private val flow: Flow,
     private val parameter: Parameter,
-    override val name: String = "fleet_balance"
-) : CGPipeline<LinearMetaModel, ShadowPriceMap> {
-    private val checkPoints: List<FleetBalance.CheckPoint> = fleetBalance.limits.keys.toList()
-
+    override val name: String = "flow_control"
+): CGPipeline<LinearMetaModel, ShadowPriceMap> {
     override fun invoke(model: LinearMetaModel): Try<Error> {
-        val fleet = fleetBalance.fleet
-        val l = fleetBalance.l
+        val flow = this.flow.flow
+        val m = this.flow.m
 
-        for (checkPoint in checkPoints) {
-            val limit = fleetBalance.limits[checkPoint]!!
+        for (checkPoint in this.flow.checkPoints) {
             model.addConstraint(
-                (fleet[checkPoint]!! + l[checkPoint]!!) geq limit.amount,
-                "${name}_${checkPoint.airport.icao}_${checkPoint.aircraftMinorType.code}"
+                (flow[checkPoint]!! - m[checkPoint]!!) leq checkPoint.capacity,
+                "${name}_${checkPoint}"
             )
         }
 
         val obj = LinearPolynomial()
-        for (checkPoint in checkPoints) {
-            obj += parameter.fleetBalanceSlack * l[checkPoint]!!
+        for (checkPoint in this.flow.checkPoints) {
+            obj += parameter.flowControlSlack * m[checkPoint]!!
         }
-        model.minimize(obj, "fleet balance")
 
         return Ok(success)
     }
 
     override fun extractor(): Extractor<ShadowPriceMap> {
         return { map, args ->
-            if (args[0] != null && args[2] != null && args[1] == null) {
-                map[FleetBalanceShadowPriceKey(
-                    FleetBalance.CheckPoint(
-                        airport = (args[0]!! as FlightTask).arr,
-                        aircraftMinorType = (args[2]!! as Aircraft).minorType
-                    )
-                )]?.price ?: Flt64.zero
-            } else {
-                Flt64.zero
+            var ret = Flt64.zero
+            for (checkPoint in flow.checkPoints) {
+                if (checkPoint(args[0] as FlightTask?, args[1] as FlightTask?)) {
+                    ret += map[FlowControlShadowPriceKey(checkPoint)]?.price ?: Flt64.zero
+                }
             }
+            ret
         }
     }
 
@@ -69,14 +62,14 @@ class FleetBalanceLimit(
             if (constraint.name.startsWith(name)) {
                 map.put(
                     ShadowPrice(
-                        key = FleetBalanceShadowPriceKey(checkPoints[i]),
+                        key = FlowControlShadowPriceKey(flow.checkPoints[i]),
                         price = shadowPrices[j]
                     )
                 )
                 ++i
             }
 
-            if (i == checkPoints.size) {
+            if (i == flow.checkPoints.size) {
                 break
             }
         }

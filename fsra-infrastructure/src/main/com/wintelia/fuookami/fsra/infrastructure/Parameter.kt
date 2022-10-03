@@ -5,5 +5,7 @@ import fuookami.ospf.kotlin.utils.math.*
 data class Parameter(
     val aircraftLeisure: Flt64,
 
-    val fleetBalance: Flt64,
+    // operation
+    val fleetBalanceSlack: Flt64,
+    val flowControlSlack: Flt64,
 )

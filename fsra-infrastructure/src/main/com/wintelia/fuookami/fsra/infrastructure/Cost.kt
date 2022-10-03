@@ -13,7 +13,7 @@ data class CostItem(
 data class Cost(
     private val _items: MutableList<CostItem> = ArrayList(),
     var sum: Flt64? = Flt64.zero
-): Iterable<CostItem> {
+) : Iterable<CostItem> {
     val items: List<CostItem> get() = _items
     val valid: Boolean get() = sum != null
 

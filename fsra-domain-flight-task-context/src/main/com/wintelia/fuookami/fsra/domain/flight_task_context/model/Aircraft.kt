@@ -14,7 +14,7 @@ enum class AircraftCategory {
 sealed class AircraftCapacity {
     class Passenger(
         private val capacity: Map<PassengerClass, UInt64>
-    ): AircraftCapacity() {
+    ) : AircraftCapacity() {
         operator fun get(cls: PassengerClass) = capacity[cls] ?: UInt64.zero
 
         fun enabled(payload: Map<PassengerClass, UInt64>) = payload.asSequence().all { this[it.key] >= it.value }
@@ -24,7 +24,7 @@ sealed class AircraftCapacity {
 
     class Cargo(
         val capacity: Flt64
-    ): AircraftCapacity() {
+    ) : AircraftCapacity() {
         override val category get() = AircraftCategory.Cargo
 
         fun enabled(payload: Flt64) = capacity geq payload
@@ -81,7 +81,11 @@ data class AircraftMinorType internal constructor(
     companion object {
         private val pool = HashMap<AircraftMinorTypeCode, AircraftMinorType>()
 
-        operator fun invoke(type: AircraftType, code: AircraftMinorTypeCode, standardConnectionTime: Map<Airport, Duration>): AircraftMinorType {
+        operator fun invoke(
+            type: AircraftType,
+            code: AircraftMinorTypeCode,
+            standardConnectionTime: Map<Airport, Duration>
+        ): AircraftMinorType {
             pool[code] = AircraftMinorType(type, code, standardConnectionTime)
             return pool[code]!!
         }
@@ -110,7 +114,7 @@ class Aircraft(
     val regNo: AircraftRegisterNumber,
     val minorType: AircraftMinorType,
     val capacity: AircraftCapacity
-): ManualIndexed() {
+) : ManualIndexed() {
     val type by minorType::type
     val costPerHour by minorType::costPerHour
     val routeFlyTime by minorType::routeFlyTime
@@ -121,7 +125,11 @@ class Aircraft(
     companion object {
         private val pool = HashMap<AircraftRegisterNumber, Aircraft>()
 
-        operator fun invoke(regNo: AircraftRegisterNumber, minorType: AircraftMinorType, capacity: AircraftCapacity): Aircraft {
+        operator fun invoke(
+            regNo: AircraftRegisterNumber,
+            minorType: AircraftMinorType,
+            capacity: AircraftCapacity
+        ): Aircraft {
             pool[regNo] = Aircraft(regNo, minorType, capacity)
             return pool[regNo]!!
         }

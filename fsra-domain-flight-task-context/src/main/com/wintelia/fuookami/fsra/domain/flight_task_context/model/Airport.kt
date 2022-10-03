@@ -8,10 +8,12 @@ enum class AirportType {
         override val isDomainType: Boolean get() = true
         override fun toChineseString() = CString("国内")
     },
+
     // 区域
     Regional {
         override fun toChineseString() = CString("区域")
     },
+
     // 国际
     International {
         override fun toChineseString() = CString("国际")
@@ -24,7 +26,7 @@ enum class AirportType {
     }
 
     open val isDomainType: Boolean get() = false
-    abstract fun toChineseString(): CString;
+    abstract fun toChineseString(): CString
 }
 
 data class Airport internal constructor(
