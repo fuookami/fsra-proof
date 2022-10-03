@@ -22,7 +22,7 @@ class Flow(
         val flowControl: FlowControl,
         val time: TimeRange,
         val indexInRule: UInt64,
-    ): AutoIndexed(CheckPoint::class) {
+    ) : AutoIndexed(CheckPoint::class) {
         val airport by flowControl::airport
         val scene by flowControl::scene
         val condition by flowControl::condition
@@ -37,7 +37,8 @@ class Flow(
             return scene(bunch, airport, time, condition)
         }
 
-        override fun toString() = "${flowControl.name}_${((time.begin - flowControl.time.begin) / interval).roundToInt()}"
+        override fun toString() =
+            "${flowControl.name}_${((time.begin - flowControl.time.begin) / interval).roundToInt()}"
     }
 
     val checkPoints: List<CheckPoint>

@@ -16,7 +16,8 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
 
 private data class FleetBalanceShadowPriceKey(
-    val checkPoint: FleetBalance.CheckPoint
+    val airport: Airport,
+    val aircraftMinorType: AircraftMinorType
 ) : ShadowPriceKey(FleetBalanceShadowPriceKey::class)
 
 class FleetBalanceLimit(
@@ -51,10 +52,8 @@ class FleetBalanceLimit(
         return { map, args ->
             if (args[0] != null && args[2] != null && args[1] == null) {
                 map[FleetBalanceShadowPriceKey(
-                    FleetBalance.CheckPoint(
-                        airport = (args[0]!! as FlightTask).arr,
-                        aircraftMinorType = (args[2]!! as Aircraft).minorType
-                    )
+                    (args[0]!! as FlightTask).arr,
+                    (args[2]!! as Aircraft).minorType
                 )]?.price ?: Flt64.zero
             } else {
                 Flt64.zero
@@ -69,7 +68,7 @@ class FleetBalanceLimit(
             if (constraint.name.startsWith(name)) {
                 map.put(
                     ShadowPrice(
-                        key = FleetBalanceShadowPriceKey(checkPoints[i]),
+                        key = FleetBalanceShadowPriceKey(checkPoints[i].airport, checkPoints[i].aircraftMinorType),
                         price = shadowPrices[j]
                     )
                 )

@@ -8,38 +8,42 @@ import fuookami.ospf.kotlin.core.frontend.expression.polynomial.*
 import fuookami.ospf.kotlin.core.frontend.inequality.*
 import fuookami.ospf.kotlin.core.frontend.model.mechanism.*
 import fuookami.ospf.kotlin.framework.model.CGPipeline
-import fuookami.ospf.kotlin.framework.model.Extractor
 import fuookami.ospf.kotlin.framework.model.ShadowPrice
 import fuookami.ospf.kotlin.framework.model.ShadowPriceKey
 import com.wintelia.fuookami.fsra.infrastructure.*
+import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.FlightTask
+import fuookami.ospf.kotlin.framework.model.Extractor
 
-class FlowControlShadowPriceKey(
-    val checkPoint: Flow.CheckPoint
-) : ShadowPriceKey(FlowControlShadowPriceKey::class)
+data class ConnectingFlightShadowPriceKey(
+    val prevTask: FlightTask,
+    val nextTask: FlightTask
+) : ShadowPriceKey(ConnectingFlightShadowPriceKey::class)
 
-class FlowControlLimit(
-    private val flow: Flow,
+class ConnectingFlightLimit(
+    private val connectedFlightPairs: List<ConnectingFlightPair>,
+    private val connection: FlightConnection,
     private val parameter: Parameter,
-    override val name: String = "flow_control"
+    override val name: String = "connecting_flight"
 ) : CGPipeline<LinearMetaModel, ShadowPriceMap> {
     override fun invoke(model: LinearMetaModel): Try<Error> {
-        val flow = this.flow.flow
-        val m = this.flow.m
+        val connection = this.connection.connection
+        val k = this.connection.k
 
-        if (this.flow.checkPoints.isNotEmpty()) {
-            for (checkPoint in this.flow.checkPoints) {
+        if (connectedFlightPairs.isNotEmpty()) {
+            for (pair in connectedFlightPairs) {
                 model.addConstraint(
-                    (flow[checkPoint]!! - m[checkPoint]!!) leq checkPoint.capacity,
-                    "${name}_${checkPoint}"
+                    (connection[pair]!! + k[pair]!!) eq UInt64.one,
+                    "${name}_${pair}"
                 )
             }
 
             val obj = LinearPolynomial()
-            for (checkPoint in this.flow.checkPoints) {
-                obj += parameter.flowControlSlack * m[checkPoint]!!
+            for (pair in connectedFlightPairs) {
+                obj += parameter.connectingFlightSplit * k[pair]!!
             }
+            model.minimize(obj)
         }
 
         return Ok(success)
@@ -47,13 +51,14 @@ class FlowControlLimit(
 
     override fun extractor(): Extractor<ShadowPriceMap> {
         return { map, args ->
-            var ret = Flt64.zero
-            for (checkPoint in flow.checkPoints) {
-                if (checkPoint(args[0] as FlightTask?, args[1] as FlightTask?)) {
-                    ret += map[FlowControlShadowPriceKey(checkPoint)]?.price ?: Flt64.zero
-                }
+            if (args[0] != null && args[1] != null) {
+                map[ConnectingFlightShadowPriceKey(
+                    args[0] as FlightTask,
+                    args[1] as FlightTask
+                )]?.price ?: Flt64.zero
+            } else {
+                Flt64.zero
             }
-            ret
         }
     }
 
@@ -64,14 +69,17 @@ class FlowControlLimit(
             if (constraint.name.startsWith(name)) {
                 map.put(
                     ShadowPrice(
-                        key = FlowControlShadowPriceKey(flow.checkPoints[i]),
+                        key = ConnectingFlightShadowPriceKey(
+                            connectedFlightPairs[i].prevTask,
+                            connectedFlightPairs[i].nextTask
+                        ),
                         price = shadowPrices[j]
                     )
                 )
                 ++i
             }
 
-            if (i == flow.checkPoints.size) {
+            if (i == connectedFlightPairs.size) {
                 break
             }
         }
