@@ -6,6 +6,7 @@ import kotlin.reflect.*
 import kotlinx.datetime.*
 import com.wintelia.fuookami.fsra.infrastructure.*
 import fuookami.ospf.kotlin.utils.concept.AutoIndexed
+import fuookami.ospf.kotlin.utils.math.UInt64
 
 enum class FlightTaskCategory {
     Flight {
@@ -151,6 +152,7 @@ abstract class FlightTask(
     open val arr: Airport get() = plan.arr
     open val depBackup: List<Airport> get() = listOf()
     open val arrBackup: List<Airport> get() = listOf()
+    open fun actualArr(dep: Airport): Airport? = arr
 
     open val timeWindow: TimeRange? get() = null
     open val scheduledTime: TimeRange? get() = plan.scheduledTime
@@ -159,6 +161,9 @@ abstract class FlightTask(
     open fun duration(aircraft: Aircraft): Duration {
         return plan.duration(aircraft)
     }
+    open val flightHour: FlightHour? get() = if (isFlight) { duration?.let { FlightHour(it) } } else { null }
+    open fun flightHour(aircraft: Aircraft) = FlightHour(if (isFlight) { duration(aircraft) } else { Duration.ZERO })
+    open val flightCycle get() = FlightCycle(if (isFlight) { UInt64.one } else { UInt64.zero })
 
     open fun connectionTime(nextTask: FlightTask?): Duration? = plan.connectionTime(nextTask)
     open fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?): Duration =

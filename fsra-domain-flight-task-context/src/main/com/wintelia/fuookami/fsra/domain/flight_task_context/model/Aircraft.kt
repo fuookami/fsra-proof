@@ -138,8 +138,39 @@ class Aircraft(
     }
 }
 
+data class FlightHour(
+    val hours: Duration
+) {
+    companion object {
+        val zero = FlightHour(Duration.ZERO)
+    }
+
+    operator fun plus(rhs: FlightHour) = FlightHour(hours + rhs.hours)
+    operator fun minus(rhs: FlightHour) = FlightHour(hours - rhs.hours)
+    infix fun leq(rhs: FlightHour) = hours <= rhs.hours
+}
+
+data class FlightCycle(
+    val cycles: UInt64
+) {
+    companion object {
+        val zero = FlightCycle(UInt64.zero)
+    }
+
+    operator fun plus(rhs: FlightCycle) = FlightCycle(cycles + rhs.cycles)
+    operator fun minus(rhs: FlightCycle) = FlightCycle(cycles - rhs.cycles)
+    infix fun leq(rhs: FlightCycle) = cycles leq rhs.cycles
+}
+
+data class FlightCyclePeriod(
+    val expirationTime: Instant,
+    val remainingFlightHour: FlightHour,
+    val remainingFlightCycle: FlightCycle
+)
+
 data class AircraftUsability(
     val lastTask: FlightTask?,
     val location: Airport,
     val enabledTime: Instant,
+    val flightCyclePeriods: List<FlightCyclePeriod>
 )

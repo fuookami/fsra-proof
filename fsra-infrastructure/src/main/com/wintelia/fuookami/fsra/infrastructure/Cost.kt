@@ -25,5 +25,13 @@ data class Cost(
         }
     }
 
+    operator fun plusAssign(rhs: Cost) {
+        _items.addAll(rhs._items)
+
+        if (this.valid && rhs.valid) {
+            sum = sum!! + rhs.sum!!
+        }
+    }
+
     override fun iterator() = _items.iterator()
 }

@@ -6,7 +6,9 @@ data class RecoveryPolicy(
     val aircraft: Aircraft? = null,
     val time: TimeRange? = null,
     val route: Pair<Airport, Airport>? = null
-)
+) {
+    val empty: Boolean = aircraft == null && time == null && route == null
+}
 
 data class AircraftChange(
     val from: Aircraft,

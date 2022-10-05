@@ -2,6 +2,7 @@ package com.wintelia.fuookami.fsra.domain.flight_task_context.model
 
 import kotlin.time.*
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.datetime.*
 import fuookami.ospf.kotlin.utils.concept.*
 import fuookami.ospf.kotlin.utils.math.*
 import com.wintelia.fuookami.fsra.infrastructure.*
@@ -19,10 +20,33 @@ class FlightTaskBunch(
 ) : ManualIndexed() {
     val size get() = flightTasks.size
     val empty get() = flightTasks.isEmpty()
+    val lastTask by ability::lastTask
     val busyTime: Duration
     val totalDelay: Duration
     val keys: Map<FlightTaskKey, Int>
     val redundancy: Map<FlightTaskKey, Pair<Duration, Duration>>
+
+    constructor(aircraft: Aircraft, airport: Airport, time: Instant, ability: AircraftUsability, iteration: UInt64): this(
+        aircraft = aircraft,
+        time = TimeRange(time, time + 1.minutes),
+        dep = airport,
+        arr = airport,
+        flightTasks = emptyList(),
+        iteration = iteration,
+        cost = Cost(),
+        ability = ability
+    )
+
+    constructor(aircraft: Aircraft, ability: AircraftUsability, flightTasks: List<FlightTask>, iteration: UInt64, cost: Cost): this(
+        aircraft = aircraft,
+        time = TimeRange(flightTasks.first().time!!.begin, flightTasks.last().time!!.end),
+        dep = flightTasks.first().dep,
+        arr = flightTasks.last().arr,
+        flightTasks = flightTasks,
+        iteration = iteration,
+        cost = cost,
+        ability = ability
+    )
 
     init {
         val flightTaskKeys = HashMap<FlightTaskKey, Int>()
@@ -119,10 +143,10 @@ class FlightTaskBunch(
     }
 
     fun locatedWhen(airport: Airport, timeWindow: TimeRange): Boolean {
-        if (flightTasks[0].departedWhen(airport, timeWindow)) {
+        if (flightTasks.first().departedWhen(airport, timeWindow)) {
             return true
         }
-        if (flightTasks[size - 1].arrivedWhen(airport, timeWindow)) {
+        if (flightTasks.last().arrivedWhen(airport, timeWindow)) {
             return true
         }
         if (!empty) {

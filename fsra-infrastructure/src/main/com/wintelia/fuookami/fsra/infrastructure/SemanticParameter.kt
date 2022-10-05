@@ -1,7 +1,7 @@
 package com.wintelia.fuookami.fsra.infrastructure
 
 import kotlin.time.*
-import kotlinx.datetime.*
+import kotlin.time.Duration.Companion.hours
 import kotlinx.serialization.*
 import fuookami.ospf.kotlin.utils.math.*
 

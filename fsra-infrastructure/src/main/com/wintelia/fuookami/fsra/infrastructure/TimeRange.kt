@@ -22,4 +22,12 @@ data class TimeRange(
     fun contains(time: TimeRange): Boolean {
         return begin <= time.begin && time.end <= end;
     }
+
+    operator fun plus(rhs: Duration): TimeRange {
+        return TimeRange(begin + rhs, end + rhs)
+    }
+
+    operator fun minus(rhs: Duration): TimeRange {
+        return TimeRange(begin - rhs, end - rhs)
+    }
 }
