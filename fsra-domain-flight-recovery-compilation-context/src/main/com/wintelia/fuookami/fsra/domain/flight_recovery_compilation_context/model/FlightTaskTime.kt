@@ -16,17 +16,32 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 class FlightTaskTime(
     private val withRedundancy: Boolean
 ) {
-    lateinit var redundancy: UIntVariable1
     lateinit var etd: LinearSymbols1
     lateinit var eta: LinearSymbols1
+    lateinit var redundancy: IntVariable1
+    lateinit var delay: UIntVariable1
 
     fun register(flightTasks: List<FlightTask>, model: LinearMetaModel): Try<Error> {
         if (withRedundancy) {
             if (!this::redundancy.isInitialized) {
-                redundancy = UIntVariable1("flight_time_redundancy", Shape1(flightTasks.size))
-                flightTasks.forEach { redundancy[it]!!.name = "${redundancy.name}_${it.name}" }
+                redundancy = IntVariable1("time_redundancy", Shape1(flightTasks.size))
+                flightTasks.forEach {
+                    redundancy[it]!!.name = "${redundancy.name}_${it.name}"
+                    if (!it.advanceEnabled) {
+                        redundancy[it]!!.range.geq(Int64.zero)
+                    }
+                    if (!it.delayEnabled) {
+                        redundancy[it]!!.range.leq(Int64.zero)
+                    }
+                }
             }
             model.addVars(redundancy)
+
+            if (!this::delay.isInitialized) {
+                delay = UIntVariable1("delay", Shape1(flightTasks.size))
+                flightTasks.forEach { delay[it]!!.name = "${delay.name}_${it.name}" }
+            }
+            model.addVars(delay)
         }
 
         if (!this::etd.isInitialized) {

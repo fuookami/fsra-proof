@@ -27,6 +27,7 @@ private data class FlightTaskPair(
     val nextFlightTask: FlightTask
 )
 
+// with redundancy
 class FlightTaskConnectionTimeLimit(
     private val iteration: Int,
     bunches: List<FlightTaskBunch>,
