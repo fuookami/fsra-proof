@@ -35,7 +35,7 @@ class FlightTaskDelayLimit(
         val delay = flightTaskTime.delay
 
         for (task in flightTasks) {
-            assert((task.scheduledTime != null) or (task.timeWindow != null))
+            assert((task.scheduledTime != null) xor (task.timeWindow != null))
 
             val std = if (task.scheduledTime != null) {
                 (task.scheduledTime!!.begin - timeWindow.begin).toLong(DurationUnit.MINUTES).toULong()

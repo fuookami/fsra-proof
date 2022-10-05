@@ -71,34 +71,61 @@ private data class Label(
 
     val reducedCost get() = cost.sum!! - shadowPrice
     val aircraftChange: UInt64 = (prevLabel?.aircraftChange ?: UInt64.zero) +
-            if (flightTask?.aircraftChanged == true) { UInt64.one } else { UInt64.zero }
+            if (flightTask?.aircraftChanged == true) {
+                UInt64.one
+            } else {
+                UInt64.zero
+            }
     val trace: List<UInt64>
     val isBetterBunch get() = reducedCost leq Flt64.zero
     val originFlightTask get() = flightTask?.originTask
 
     init {
-        assert(when(node){
-            is TaskNode -> { flightTask != null }
-            is RootNode -> { flightTask == null && prevLabel == null }
-            is EndNode -> { flightTask == null}
-        })
+        assert(
+            when (node) {
+                is TaskNode -> {
+                    flightTask != null
+                }
+
+                is RootNode -> {
+                    flightTask == null && prevLabel == null
+                }
+
+                is EndNode -> {
+                    flightTask == null
+                }
+            }
+        )
 
         val trace = prevLabel?.trace?.toMutableList() ?: ArrayList()
         when (node) {
-            is TaskNode -> { trace.add(node.index) }
-            else -> { }
+            is TaskNode -> {
+                trace.add(node.index)
+            }
+
+            else -> {}
         }
         this.trace = trace
     }
 
     fun visited(node: Node): Boolean {
         return when (node) {
-            is RootNode, is EndNode -> { false }
-            is TaskNode -> { return trace.contains(node.index) }
+            is RootNode, is EndNode -> {
+                false
+            }
+
+            is TaskNode -> {
+                return trace.contains(node.index)
+            }
         }
     }
 
-    fun generateBunch(iteration: UInt64, aircraft: Aircraft, aircraftUsability: AircraftUsability, totalCostCalculator: TotalCostCalculator): FlightTaskBunch? {
+    fun generateBunch(
+        iteration: UInt64,
+        aircraft: Aircraft,
+        aircraftUsability: AircraftUsability,
+        totalCostCalculator: TotalCostCalculator
+    ): FlightTaskBunch? {
         assert(node is EndNode)
         // in beginning, it should be the succ node of root node at the top of the stack
         // it means that nodes in the stack is in descending order
@@ -118,15 +145,15 @@ private data class Label(
             flightTasks.add(label.flightTask!!)
         }
         val totalCost = totalCostCalculator(aircraft, flightTasks)
-        return totalCost?.let { FlightTaskBunch(aircraft, aircraftUsability, flightTasks, iteration, it)}
+        return totalCost?.let { FlightTaskBunch(aircraft, aircraftUsability, flightTasks, iteration, it) }
     }
 
     infix fun ls(rhs: Label): Boolean {
         return reducedCost ls rhs.reducedCost
                 && delay <= rhs.delay
                 && ((node is EndNode) || (aircraftChange > rhs.aircraftChange))
-                // && flightHour leq rhs.flightHour
-                // && flightCycle leq rhs.flightCycle
+        // && flightHour leq rhs.flightHour
+        // && flightCycle leq rhs.flightCycle
     }
 }
 
@@ -155,7 +182,7 @@ class FlightTaskBunchGenerator(
             }
             for ((_, node) in graph.nodes) {
                 for (edge in graph[node]) {
-                    inDegree[edge.to] = (inDegree[edge.to]?: UInt64.zero) + UInt64.one
+                    inDegree[edge.to] = (inDegree[edge.to] ?: UInt64.zero) + UInt64.one
                 }
             }
 
@@ -240,7 +267,7 @@ class FlightTaskBunchGenerator(
         }
 
         val succTask = (succNode as TaskNode).task
-        assert((succTask.scheduledTime != null) or (succTask.timeWindow != null))
+        assert((succTask.scheduledTime != null) xor (succTask.timeWindow != null))
 
         val minDepTime = getMinDepartureTime(prevLabel, succNode)
         val duration = succTask.duration(aircraft)
@@ -253,7 +280,11 @@ class FlightTaskBunchGenerator(
             TimeRange(minDepTime, minDepTime + duration)
         }
 
-        val prevArr = if (prevLabel.node is RootNode) { succTask.dep } else { prevLabel.flightTask!!.arr }
+        val prevArr = if (prevLabel.node is RootNode) {
+            succTask.dep
+        } else {
+            prevLabel.flightTask!!.arr
+        }
         val recoveryTask = generateRecoveryFlightTask(prevArr, succTask, time) ?: return null
 
         val flightHour = prevLabel.flightHour + recoveryTask.flightHour!!
@@ -340,7 +371,7 @@ class FlightTaskBunchGenerator(
     // because there is no connection between virtual node and flight node
     private fun getMinDepartureTime(prevLabel: Label, succNode: Node): Instant {
         assert(succNode is TaskNode)
-        return if (prevLabel.node is RootNode && aircraftUsability.lastTask  == null) {
+        return if (prevLabel.node is RootNode && aircraftUsability.lastTask == null) {
             aircraftUsability.enabledTime
         } else {
             val prevFlightTask = prevLabel.flightTask!!

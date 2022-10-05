@@ -13,11 +13,11 @@ sealed class Node(val index: UInt64) {
     abstract val time: Instant
 }
 
-object RootNode: Node(root) {
+object RootNode : Node(root) {
     override val time = Instant.DISTANT_PAST
 }
 
-object EndNode: Node(end) {
+object EndNode : Node(end) {
     override val time = Instant.DISTANT_FUTURE
 }
 
@@ -25,7 +25,7 @@ class TaskNode(
     val task: FlightTask,
     override val time: Instant,
     index: UInt64
-): Node(index)
+) : Node(index)
 
 data class Edge(
     val from: Node,
@@ -52,7 +52,7 @@ class Graph(
     }
 
     operator fun get(node: Node): Set<Edge> {
-        return edges[node]?: emptySet()
+        return edges[node] ?: emptySet()
     }
 
     fun connected(from: Node, to: Node): Boolean {
