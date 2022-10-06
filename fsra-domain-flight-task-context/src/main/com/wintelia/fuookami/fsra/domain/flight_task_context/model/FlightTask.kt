@@ -80,6 +80,9 @@ abstract class FlightTaskPlan(
     abstract val aircraft: Aircraft?
     abstract val dep: Airport
     abstract val arr: Airport
+    open val depBackup: List<Airport> get() = listOf()
+    open val arrBackup: List<Airport> get() = listOf()
+    open fun actualArr(dep: Airport): Airport? = arr
 
     abstract val scheduledTime: TimeRange?
     open val time: TimeRange? get() = scheduledTime
@@ -150,9 +153,9 @@ abstract class FlightTask(
         }
     open val dep: Airport get() = plan.dep
     open val arr: Airport get() = plan.arr
-    open val depBackup: List<Airport> get() = listOf()
-    open val arrBackup: List<Airport> get() = listOf()
-    open fun actualArr(dep: Airport): Airport? = arr
+    open val depBackup: List<Airport> get() = plan.depBackup
+    open val arrBackup: List<Airport> get() = plan.arrBackup
+    open fun actualArr(dep: Airport): Airport? = plan.actualArr(dep)
 
     open val timeWindow: TimeRange? get() = null
     open val scheduledTime: TimeRange? get() = plan.scheduledTime
@@ -161,9 +164,30 @@ abstract class FlightTask(
     open fun duration(aircraft: Aircraft): Duration {
         return plan.duration(aircraft)
     }
-    open val flightHour: FlightHour? get() = if (isFlight) { duration?.let { FlightHour(it) } } else { null }
-    open fun flightHour(aircraft: Aircraft) = FlightHour(if (isFlight) { duration(aircraft) } else { Duration.ZERO })
-    open val flightCycle get() = FlightCycle(if (isFlight) { UInt64.one } else { UInt64.zero })
+
+    open val flightHour: FlightHour?
+        get() = if (isFlight) {
+            duration?.let { FlightHour(it) }
+        } else {
+            null
+        }
+
+    open fun flightHour(aircraft: Aircraft) = FlightHour(
+        if (isFlight) {
+            duration(aircraft)
+        } else {
+            Duration.ZERO
+        }
+    )
+
+    open val flightCycle
+        get() = FlightCycle(
+            if (isFlight) {
+                UInt64.one
+            } else {
+                UInt64.zero
+            }
+        )
 
     open fun connectionTime(nextTask: FlightTask?): Duration? = plan.connectionTime(nextTask)
     open fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?): Duration =
@@ -223,8 +247,8 @@ abstract class FlightTask(
         } else {
             recoveryPolicy.aircraft != null
         }
-    open val aircraftTypeChanged: Boolean get() = false
-    open val aircraftMinorTypeChanged: Boolean get() = false
+    open val aircraftTypeChanged: Boolean get() = aircraftTypeChange != null
+    open val aircraftMinorTypeChanged: Boolean get() = aircraftMinorTypeChange != null
     open val routeChanged: Boolean
         get() = if (!routeChangeEnabled) {
             false

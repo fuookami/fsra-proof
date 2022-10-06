@@ -66,7 +66,7 @@ data class RouteFlyTimeKey(
     val to: Airport
 )
 
-fun <T> Map<RouteFlyTimeKey, T>.get(from: Airport, to: Airport): T? = this[RouteFlyTimeKey(from, to)]
+operator fun <T> Map<RouteFlyTimeKey, T>.get(from: Airport, to: Airport): T? = this[RouteFlyTimeKey(from, to)]
 
 data class AircraftMinorType internal constructor(
     val type: AircraftType,

@@ -26,7 +26,13 @@ class FlightTaskBunch(
     val keys: Map<FlightTaskKey, Int>
     val redundancy: Map<FlightTaskKey, Pair<Duration, Duration>>
 
-    constructor(aircraft: Aircraft, airport: Airport, time: Instant, ability: AircraftUsability, iteration: UInt64): this(
+    constructor(
+        aircraft: Aircraft,
+        airport: Airport,
+        time: Instant,
+        ability: AircraftUsability,
+        iteration: UInt64
+    ) : this(
         aircraft = aircraft,
         time = TimeRange(time, time + 1.minutes),
         dep = airport,
@@ -37,7 +43,13 @@ class FlightTaskBunch(
         ability = ability
     )
 
-    constructor(aircraft: Aircraft, ability: AircraftUsability, flightTasks: List<FlightTask>, iteration: UInt64, cost: Cost): this(
+    constructor(
+        aircraft: Aircraft,
+        ability: AircraftUsability,
+        flightTasks: List<FlightTask>,
+        iteration: UInt64,
+        cost: Cost
+    ) : this(
         aircraft = aircraft,
         time = TimeRange(flightTasks.first().time!!.begin, flightTasks.last().time!!.end),
         dep = flightTasks.first().dep,

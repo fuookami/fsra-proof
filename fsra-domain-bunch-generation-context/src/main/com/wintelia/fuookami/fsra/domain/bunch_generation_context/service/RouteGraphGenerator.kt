@@ -8,8 +8,8 @@ import kotlin.time.Duration.Companion.minutes
 typealias FeasibilityJudger = (Aircraft, FlightTask?, FlightTask) -> Boolean
 
 class RouteGraphGenerator(
-    val reverse: FlightTaskReverse,
-    val feasibilityJudger: FeasibilityJudger
+    private val reverse: FlightTaskReverse,
+    private val feasibilityJudger: FeasibilityJudger
 ) {
     operator fun invoke(
         aircraft: Aircraft,

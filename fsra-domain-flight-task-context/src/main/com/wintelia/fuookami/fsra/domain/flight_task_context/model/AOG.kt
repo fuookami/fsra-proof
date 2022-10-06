@@ -1,8 +1,7 @@
 package com.wintelia.fuookami.fsra.domain.flight_task_context.model
 
-import com.wintelia.fuookami.fsra.infrastructure.*
 import java.util.*
-import kotlin.time.Duration
+import com.wintelia.fuookami.fsra.infrastructure.*
 
 class AOGPlan(
     override val aircraft: Aircraft,
@@ -10,7 +9,7 @@ class AOGPlan(
     override val scheduledTime: TimeRange,
     override val actualId: String = UUID.randomUUID().toString()
 ) : FlightTaskPlan(
-    id = "${prefix}_${actualId.replace("-", "_")}",
+    id = "${prefix}_${actualId.replace("-", "")}",
     name = "${aircraft.regNo}_AOG_${scheduledTime.begin.toShortString()}",
     status = stableStatus
 ) {
@@ -25,7 +24,7 @@ class AOGPlan(
             FlightTaskStatus.NotTerminalChange
         )
 
-        val prefix = "a"
+        private const val prefix = "a"
     }
 
     override val displayName = "AOG"
@@ -51,12 +50,11 @@ class AOG internal constructor(
         operator fun invoke(plan: AOGPlan) = AOG(plan)
     }
 
-    override val time: TimeRange = plan.scheduledTime
+    override fun recoveryEnabled(timeWindow: TimeRange) = true
+    override fun recoveryNeeded(timeWindow: TimeRange) = true
 
-    override fun recoveryEnabled(timeWindow: TimeRange) = timeWindow.contains(plan.scheduledTime.begin)
-
-    override val recovered = false
-    override val recoveryPolicy = RecoveryPolicy()
+    override val recovered get() = false
+    override val recoveryPolicy get() = RecoveryPolicy()
     override fun recoveryEnabled(policy: RecoveryPolicy): Boolean {
         if (policy.aircraft != null && aircraft!! != policy.aircraft) {
             return false

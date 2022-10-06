@@ -27,10 +27,10 @@ class FlightTaskTime(
                 redundancy = IntVariable1("time_redundancy", Shape1(flightTasks.size))
                 flightTasks.forEach {
                     redundancy[it]!!.name = "${redundancy.name}_${it.name}"
-                    if (!it.advanceEnabled) {
+                    if (it.scheduledTime != null && !it.advanceEnabled) {
                         redundancy[it]!!.range.geq(Int64.zero)
                     }
-                    if (!it.delayEnabled) {
+                    if (it.scheduledTime != null && !it.delayEnabled) {
                         redundancy[it]!!.range.leq(Int64.zero)
                     }
                 }
@@ -45,7 +45,7 @@ class FlightTaskTime(
         }
 
         if (!this::etd.isInitialized) {
-            etd = LinearSymbols1("etd_compilation", Shape1(flightTasks.size))
+            etd = LinearSymbols1("etd", Shape1(flightTasks.size))
             flightTasks.forEach {
                 etd[it] = if (withRedundancy) {
                     LinearSymbol(LinearPolynomial(redundancy[it]!!), "${etd.name}_${it.name}")
@@ -57,7 +57,7 @@ class FlightTaskTime(
         model.addSymbols(etd)
 
         if (!this::eta.isInitialized) {
-            eta = LinearSymbols1("eta_compilation", Shape1(flightTasks.size))
+            eta = LinearSymbols1("eta", Shape1(flightTasks.size))
             flightTasks.forEach {
                 eta[it] = if (withRedundancy) {
                     LinearSymbol(LinearPolynomial(redundancy[it]!!), "${eta.name}_${it.name}")
