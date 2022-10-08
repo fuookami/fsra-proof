@@ -6,7 +6,7 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 data class ConnectingFlightPair(
     val prevTask: FlightTask,
     val nextTask: FlightTask
-): AutoIndexed(ConnectingFlightPair::class) {
+) : AutoIndexed(ConnectingFlightPair::class) {
     override fun toString() = "${prevTask.name}_${nextTask.name}"
 
     init {

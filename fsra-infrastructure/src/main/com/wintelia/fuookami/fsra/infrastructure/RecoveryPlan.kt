@@ -7,4 +7,6 @@ data class RecoveryPlan(
     val name: String,
     val timeWindow: TimeRange,
     val freezingTime: Duration
-)
+) {
+    val recoveryTime get() = TimeRange(timeWindow.begin + freezingTime, timeWindow.end)
+}

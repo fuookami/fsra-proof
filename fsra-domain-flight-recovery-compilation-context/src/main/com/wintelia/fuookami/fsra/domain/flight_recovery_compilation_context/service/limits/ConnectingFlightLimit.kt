@@ -63,8 +63,7 @@ class ConnectingFlightLimit(
     }
 
     override fun refresh(map: ShadowPriceMap, model: LinearMetaModel, shadowPrices: List<Flt64>): Try<Error> {
-        var i = 0
-        for (j in model.constraints.indices) {
+        for ((i, j) in model.indicesOfConstraintGroup(name)!!.withIndex()) {
             val constraint = model.constraints[j]
             if (constraint.name.startsWith(name)) {
                 map.put(
@@ -76,11 +75,6 @@ class ConnectingFlightLimit(
                         price = shadowPrices[j]
                     )
                 )
-                ++i
-            }
-
-            if (i == connectedFlightPairs.size) {
-                break
             }
         }
 

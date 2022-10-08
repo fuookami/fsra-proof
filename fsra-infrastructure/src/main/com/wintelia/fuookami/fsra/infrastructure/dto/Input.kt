@@ -8,7 +8,8 @@ import com.wintelia.fuookami.fsra.infrastructure.*
 
 @Serializable
 data class AirportDTO(
-    val airport: ICAO,
+    @SerialName("airport")
+    val icao: ICAO,
     @SerialName("airport_type")
     val type: CString                   // "国内" 或 "国外"
 )
@@ -60,15 +61,6 @@ data class AircraftFeeDTO(
 )
 
 @Serializable
-data class AircraftMinorTypeConnectionTimeDTO(
-    val airport: ICAO,
-    @SerialName("ac_type")
-    val minorType: AircraftMinorTypeCode,
-    @SerialName("pass_time")
-    val connectionTime: UInt64
-)
-
-@Serializable
 data class AircraftMinorTypeRouteFlyTimeDTO(
     @SerialName("ac_type")
     val minorType: AircraftMinorTypeCode,
@@ -80,6 +72,15 @@ data class AircraftMinorTypeRouteFlyTimeDTO(
     val routeFlyTime: UInt64
 )
 
+@Serializable
+data class AircraftMinorTypeConnectionTimeDTO(
+    val airport: ICAO,
+    @SerialName("ac_type")
+    val minorType: AircraftMinorTypeCode,
+    @SerialName("pass_time")
+    val connectionTime: UInt64
+)
+
 // Flight
 
 @Serializable
@@ -89,7 +90,7 @@ data class FlightDTO(
     @SerialName("flight_date")
     val date: String,                   // Date
     @SerialName("region")
-    val region: String,                 // "国内" 或 "国外"
+    val region: CString,                // "国内" 或 "国外"
     @SerialName("flight_code")
     val no: String,
     @SerialName("dep_airport")
@@ -98,6 +99,10 @@ data class FlightDTO(
     val arr: ICAO,
     val std: String,                    // DateTime
     val sta: String,                    // DateTime
+    @SerialName("ac_reg")
+    val acReg: AircraftRegisterNumber,
+    @SerialName("ac_type")
+    val acType: AircraftMinorTypeCode,
     @SerialName("order_num")
     val orderNum: UInt64,
     @SerialName("seat_num")
@@ -359,7 +364,7 @@ data class Input(
     val lineMaintenances: List<LineMaintenanceDTO>,
     val scheduleMaintenances: List<ScheduleMaintenanceDTO>,
     val aogs: List<AOGDTO>,
-    val transferFlight: List<TransferFlightDTO>,
+    val transferFlights: List<TransferFlightDTO>,
 
     val stopoverFlightPairs: List<StopoverFlightPairDTO>,
     val strongRestrictions: List<StrongRestrictionDTO>,

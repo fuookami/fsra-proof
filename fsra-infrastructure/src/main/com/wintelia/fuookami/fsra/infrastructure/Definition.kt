@@ -24,6 +24,10 @@ data class Date(
     fun toShortString(): String = shortDateFormat.format(value.toJavaInstant())
 }
 
+fun parseDate(str: String): Date {
+    return Date(Instant.parse(str).toJavaInstant().truncatedTo(ChronoUnit.DAYS).toKotlinInstant())
+}
+
 fun parseDateTime(str: String): Instant {
     return Instant.parse(str).toJavaInstant().truncatedTo(ChronoUnit.MINUTES).toKotlinInstant()
 }

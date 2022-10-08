@@ -18,7 +18,7 @@ import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.mod
 
 data class FlightTaskDelayShadowPriceKey(
     val flightTask: FlightTaskKey
-): ShadowPriceKey(FlightTaskDelayShadowPriceKey::class)
+) : ShadowPriceKey(FlightTaskDelayShadowPriceKey::class)
 
 typealias DelayCostCalculator = fuookami.ospf.kotlin.utils.functional.Extractor<Flt64, FlightTask>
 
@@ -29,7 +29,7 @@ class FlightTaskDelayLimit(
     private val timeWindow: TimeRange,
     private val delayCostCalculator: DelayCostCalculator,
     override val name: String = "flight_task_delay"
-): CGPipeline<LinearMetaModel, ShadowPriceMap> {
+) : CGPipeline<LinearMetaModel, ShadowPriceMap> {
     override fun invoke(model: LinearMetaModel): Try<Error> {
         val etd = flightTaskTime.etd
         val delay = flightTaskTime.delay
@@ -71,8 +71,7 @@ class FlightTaskDelayLimit(
     }
 
     override fun refresh(map: ShadowPriceMap, model: LinearMetaModel, shadowPrices: List<Flt64>): Try<Error> {
-        var i = 0
-        for (j in model.constraints.indices) {
+        for ((i, j) in model.indicesOfConstraintGroup(name)!!.withIndex()) {
             val constraint = model.constraints[j]
             if (constraint.name.startsWith(name)) {
                 map.put(
@@ -81,11 +80,6 @@ class FlightTaskDelayLimit(
                         price = shadowPrices[j]
                     )
                 )
-                ++i
-            }
-
-            if (i == flightTasks.size) {
-                break
             }
         }
 

@@ -31,5 +31,6 @@ hs_err_pid*
 [Ll]ibraries/
 .vs/
 .vscode/
+.idea/
 *.opm
 *.lp

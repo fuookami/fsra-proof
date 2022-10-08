@@ -56,6 +56,7 @@ class FlightTaskConnectionTimeLimit(
     }
 
     override fun invoke(model: LinearMetaModel): Try<Error> {
+        model.registerConstraintGroup(name)
         val m = Flt64(timeWindow.duration.toDouble(DurationUnit.MINUTES))
 
         val xi = compilation.x[iteration]
@@ -102,8 +103,7 @@ class FlightTaskConnectionTimeLimit(
     }
 
     override fun refresh(map: ShadowPriceMap, model: LinearMetaModel, shadowPrices: List<Flt64>): Try<Error> {
-        var i = 0
-        for (j in model.constraints.indices) {
+        for ((i, j) in model.indicesOfConstraintGroup(name)!!.withIndex()) {
             val constraint = model.constraints[j]
             if (constraint.name.startsWith(name)) {
                 val key = FlightTaskConnectionTimeShadowPriceKey(
@@ -115,11 +115,6 @@ class FlightTaskConnectionTimeLimit(
                     key = key,
                     price = (map.map[key]?.price ?: Flt64.zero) + shadowPrices[j]
                 )
-                ++i
-            }
-
-            if (i == pairs.size) {
-                break
             }
         }
 

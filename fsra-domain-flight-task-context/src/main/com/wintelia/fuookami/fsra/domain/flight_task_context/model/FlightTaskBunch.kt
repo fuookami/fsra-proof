@@ -26,6 +26,10 @@ class FlightTaskBunch(
     val keys: Map<FlightTaskKey, Int>
     val redundancy: Map<FlightTaskKey, Pair<Duration, Duration>>
 
+    companion object {
+        val originIteration = UInt64.maximum
+    }
+
     constructor(
         aircraft: Aircraft,
         airport: Airport,
@@ -48,7 +52,7 @@ class FlightTaskBunch(
         ability: AircraftUsability,
         flightTasks: List<FlightTask>,
         iteration: UInt64,
-        cost: Cost
+        cost: Cost = Cost()
     ) : this(
         aircraft = aircraft,
         time = TimeRange(flightTasks.first().time!!.begin, flightTasks.last().time!!.end),

@@ -38,13 +38,21 @@ class Transfer internal constructor(
             )
         }
 
-        operator fun invoke(dep: Airport, arr: Airport, timeWindow: TimeRange, aircraft: Aircraft, duration: Duration? = null): Transfer {
+        operator fun invoke(
+            dep: Airport,
+            arr: Airport,
+            timeWindow: TimeRange,
+            aircraft: Aircraft,
+            duration: Duration? = null
+        ): Transfer {
             val status = stableStatus.toHashSet()
-            status.addAll(arrayOf(
-                FlightTaskStatus.NotAircraftChange,
-                FlightTaskStatus.NotAircraftTypeChange,
-                FlightTaskStatus.NotAircraftMinorTypeChange
-            ))
+            status.addAll(
+                arrayOf(
+                    FlightTaskStatus.NotAircraftChange,
+                    FlightTaskStatus.NotAircraftTypeChange,
+                    FlightTaskStatus.NotAircraftMinorTypeChange
+                )
+            )
             return Transfer(
                 dep = dep,
                 arr = arr,
@@ -56,7 +64,13 @@ class Transfer internal constructor(
         }
 
         @JvmName("constructByAircrafts")
-        operator fun invoke(dep: Airport, arr: Airport, timeWindow: TimeRange, aircrafts: Set<Aircraft>, duration: Duration? = null): Transfer {
+        operator fun invoke(
+            dep: Airport,
+            arr: Airport,
+            timeWindow: TimeRange,
+            aircrafts: Set<Aircraft>,
+            duration: Duration? = null
+        ): Transfer {
             return if (aircrafts.size == 1) {
                 invoke(dep, arr, timeWindow, aircrafts.first(), duration)
             } else {
@@ -72,7 +86,13 @@ class Transfer internal constructor(
         }
 
         @JvmName("constructByAircraftMinorTypes")
-        operator fun invoke(dep: Airport, arr: Airport, timeWindow: TimeRange, aircraftMinorTypes: Set<AircraftMinorType>, duration: Duration? = null): Transfer {
+        operator fun invoke(
+            dep: Airport,
+            arr: Airport,
+            timeWindow: TimeRange,
+            aircraftMinorTypes: Set<AircraftMinorType>,
+            duration: Duration? = null
+        ): Transfer {
             return Transfer(
                 dep = dep,
                 arr = arr,

@@ -172,5 +172,5 @@ data class AircraftUsability(
     val lastTask: FlightTask?,
     val location: Airport,
     val enabledTime: Instant,
-    val flightCyclePeriods: List<FlightCyclePeriod>
+    val flightCyclePeriods: List<FlightCyclePeriod> = emptyList()
 )

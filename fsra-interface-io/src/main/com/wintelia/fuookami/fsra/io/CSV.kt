@@ -49,7 +49,7 @@ fun read(dir: String): Input {
         lineMaintenances = readCSVFile(LineMaintenanceDTO.serializer(), path("groundTaskA.txt")),
         scheduleMaintenances = readCSVFile(ScheduleMaintenanceDTO.serializer(), path("groundTaskB.txt")),
         aogs = readCSVFile(AOGDTO.serializer(), path("AircraftFault.txt")),
-        transferFlight = readCSVFile(TransferFlightDTO.serializer(), path("allowEmptyFly.txt")),
+        transferFlights = readCSVFile(TransferFlightDTO.serializer(), path("allowEmptyFly.txt")),
 
         stopoverFlightPairs = readCSVFile(StopoverFlightPairDTO.serializer(), path("connects.txt")),
         strongRestrictions = readCSVFile(StrongRestrictionDTO.serializer(), path("StrongLimit.txt")),
