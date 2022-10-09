@@ -149,7 +149,7 @@ class AggregationInitializer {
                 logger.warn { "Could not find fee of aircraft minor type: ${type.minorType}." }
                 continue
             }
-            val routeFlyTime = HashMap<RouteFlyTimeKey, Duration>()
+            val routeFlyTime = HashMap<Route, Duration>()
             for (routeFlyTimeDTO in aircraftRouteFlyTimeDTOList.asSequence()
                 .filter { it.minorType == type.minorType }) {
                 val dep = Airport(routeFlyTimeDTO.dep)
@@ -164,7 +164,7 @@ class AggregationInitializer {
                     continue
                 }
 
-                routeFlyTime[RouteFlyTimeKey(dep, arr)] = routeFlyTimeDTO.routeFlyTime.toInt().minutes
+                routeFlyTime[Route(dep, arr)] = routeFlyTimeDTO.routeFlyTime.toInt().minutes
             }
             val connectionTime = HashMap<Airport, Duration>()
             for (connectionTimeDTO in aircraftConnectionTimeDTOList) {

@@ -6,6 +6,7 @@ import kotlin.reflect.*
 import kotlinx.datetime.*
 import com.wintelia.fuookami.fsra.infrastructure.*
 import fuookami.ospf.kotlin.utils.concept.AutoIndexed
+import fuookami.ospf.kotlin.utils.concept.ManualIndexed
 import fuookami.ospf.kotlin.utils.math.UInt64
 
 enum class FlightTaskCategory {
@@ -95,7 +96,7 @@ abstract class FlightTaskPlan(
 
     open val duration: Duration? get() = time?.duration ?: scheduledTime?.duration
     open fun duration(aircraft: Aircraft): Duration {
-        return aircraft.routeFlyTime[RouteFlyTimeKey(dep, arr)] ?: aircraft.maxRouteFlyTime
+        return aircraft.routeFlyTime[dep, arr] ?: aircraft.maxRouteFlyTime
     }
 
     open fun connectionTime(nextTask: FlightTask?): Duration? {
@@ -133,7 +134,7 @@ data class FlightTaskKey(
 abstract class FlightTask(
     val type: FlightTaskType,
     private val origin: FlightTask? = null
-) : AutoIndexed(FlightTask::class) {
+) : ManualIndexed() {
     val isFlight: Boolean = type.isFlightType
 
     abstract val plan: FlightTaskPlan
@@ -303,9 +304,9 @@ abstract class FlightTask(
         } else {
             val policy = recoveryPolicy
             if (policy.route != null
-                && (policy.route.first != dep || policy.route.second != arr)
+                && (policy.route.dep != dep || policy.route.arr != arr)
             ) {
-                RouteChange(Pair(dep, arr), policy.route)
+                RouteChange(Route(dep, arr), policy.route)
             } else {
                 null
             }

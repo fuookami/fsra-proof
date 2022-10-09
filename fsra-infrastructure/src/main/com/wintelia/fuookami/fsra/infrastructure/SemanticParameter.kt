@@ -1,14 +1,13 @@
 package com.wintelia.fuookami.fsra.infrastructure
 
-import kotlin.time.*
-import kotlin.time.Duration.Companion.hours
 import kotlinx.serialization.*
-import fuookami.ospf.kotlin.utils.math.*
 
 // Chinese
 @JvmInline
 @Serializable
-value class CString(val str: String)
+value class CString(val str: String) {
+    override fun toString() = str
+}
 
 @JvmInline
 @Serializable
@@ -16,6 +15,8 @@ value class IATA(val code: String) {
     init {
         assert(code.length == 3)
     }
+
+    override fun toString() = code
 }
 
 @JvmInline
@@ -24,28 +25,42 @@ value class ICAO(val code: String) {
     init {
         assert(code.length == 4)
     }
+
+    override fun toString() = code
 }
 
 @JvmInline
 @Serializable
-value class AircraftTypeName(val name: String)
+value class AircraftTypeName(val name: String) {
+    override fun toString() = name
+}
 
 @JvmInline
 @Serializable
-value class AircraftTypeCode(val code: String)
+value class AircraftTypeCode(val code: String) {
+    override fun toString() = code
+}
 
 @JvmInline
 @Serializable
-value class AircraftMinorTypeName(val name: String)
+value class AircraftMinorTypeName(val name: String) {
+    override fun toString() = name
+}
 
 @JvmInline
 @Serializable
-value class AircraftMinorTypeCode(val code: String)
+value class AircraftMinorTypeCode(val code: String) {
+    override fun toString() = code
+}
 
 @JvmInline
 @Serializable
-value class WingAircraftTypeCode(val code: String)
+value class WingAircraftTypeCode(val code: String) {
+    override fun toString() = code
+}
 
 @JvmInline
 @Serializable
-value class AircraftRegisterNumber(val no: String)
+value class AircraftRegisterNumber(val no: String) {
+    override fun toString() = no
+}

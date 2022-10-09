@@ -8,26 +8,29 @@ import fuookami.ospf.kotlin.core.frontend.variable.*
 import fuookami.ospf.kotlin.core.frontend.model.mechanism.*
 import fuookami.ospf.kotlin.core.frontend.expression.symbol.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
-import com.wintelia.fuookami.fsra.domain.rule_context.model.*
+import com.wintelia.fuookami.fsra.domain.rule_context.model.FlightLink
 import fuookami.ospf.kotlin.core.frontend.expression.polynomial.LinearPolynomial
 
-class FlightConnection {
-    lateinit var connection: LinearSymbols1
+class FlightLink(
+    linkPairs: List<FlightLink>
+) {
+    val linkPairs: List<FlightLink> = linkPairs.filter { it.prevTask.indexed && it.nextTask.indexed }
+    lateinit var link: LinearSymbols1
     lateinit var k: UIntVariable1
 
-    fun register(connectingFlightPairs: List<ConnectingFlightPair>, model: LinearMetaModel): Try<Error> {
-        if (connectingFlightPairs.isNotEmpty()) {
-            if (!this::connection.isInitialized) {
-                connection = LinearSymbols1("connection", Shape1(connectingFlightPairs.size))
-                for (pair in connectingFlightPairs) {
-                    connection[pair] = LinearSymbol(LinearPolynomial(), "${connection.name}_${pair}")
+    fun register(model: LinearMetaModel): Try<Error> {
+        if (linkPairs.isNotEmpty()) {
+            if (!this::link.isInitialized) {
+                link = LinearSymbols1("link", Shape1(linkPairs.size))
+                for (pair in linkPairs) {
+                    link[pair] = LinearSymbol(LinearPolynomial(), "${link.name}_${pair}")
                 }
             }
-            model.addSymbols(connection)
+            model.addSymbols(link)
 
-            if (!this::connection.isInitialized) {
-                k = UIntVariable1("k", Shape1(connectingFlightPairs.size))
-                for (pair in connectingFlightPairs) {
+            if (!this::link.isInitialized) {
+                k = UIntVariable1("k", Shape1(linkPairs.size))
+                for (pair in linkPairs) {
                     k[pair]!!.name = "${k.name}_${pair}"
                 }
             }
@@ -40,20 +43,19 @@ class FlightConnection {
     fun addColumns(
         iteration: UInt64,
         bunches: List<FlightTaskBunch>,
-        connectingFlightPairs: List<ConnectingFlightPair>,
         compilation: Compilation
     ): Try<Error> {
         assert(bunches.isNotEmpty())
 
         val xi = compilation.x[iteration.toInt()]
 
-        for (pair in connectingFlightPairs) {
+        for (pair in linkPairs) {
             bunches.asSequence()
                 .filter { it.contains(Pair(pair.prevTask, pair.nextTask)) }
                 .forEach {
-                    val connection = this.connection[pair]!! as LinearSymbol
-                    connection.flush()
-                    (connection.polynomial as LinearPolynomial) += xi[it]!!
+                    val link = this.link[pair]!! as LinearSymbol
+                    link.flush()
+                    (link.polynomial as LinearPolynomial) += xi[it]!!
                 }
         }
 

@@ -5,7 +5,7 @@ import com.wintelia.fuookami.fsra.infrastructure.*
 data class RecoveryPolicy(
     val aircraft: Aircraft? = null,
     val time: TimeRange? = null,
-    val route: Pair<Airport, Airport>? = null
+    val route: Route? = null
 ) {
     val empty: Boolean = aircraft == null && time == null && route == null
 }
@@ -26,8 +26,8 @@ data class AircraftMinorTypeChange(
 )
 
 data class RouteChange(
-    val from: Pair<Airport, Airport>,
-    val to: Pair<Airport, Airport>
+    val from: Route,
+    val to: Route
 )
 
 data class RecoveryFlightTaskKey(

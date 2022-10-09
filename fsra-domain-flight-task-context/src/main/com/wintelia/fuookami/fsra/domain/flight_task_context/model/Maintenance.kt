@@ -129,11 +129,11 @@ class Maintenance internal constructor(
                 recoveryPolicy.time
             }
             val recoveryAirport =
-                if (recoveryPolicy.route == null || (recoveryPolicy.route.first == origin.dep && recoveryPolicy.route.second == origin.arr)) {
+                if (recoveryPolicy.route == null || (recoveryPolicy.route.dep == origin.dep && recoveryPolicy.route.arr == origin.arr)) {
                     null
                 } else {
-                    assert(recoveryPolicy.route.first == recoveryPolicy.route.second)
-                    recoveryPolicy.route.first
+                    assert(recoveryPolicy.route.dep == recoveryPolicy.route.arr)
+                    recoveryPolicy.route.dep
                 }
 
             assert(origin.recoveryEnabled(recoveryPolicy))
@@ -162,7 +162,7 @@ class Maintenance internal constructor(
     }
 
     override val recovered get() = recoveryTime != null || recoveryAirport != null
-    override val recoveryPolicy get() = RecoveryPolicy(null, recoveryTime, recoveryAirport?.let { Pair(it, it) })
+    override val recoveryPolicy get() = RecoveryPolicy(null, recoveryTime, recoveryAirport?.let { Route(it, it) })
     override fun recoveryEnabled(policy: RecoveryPolicy): Boolean {
         if (policy.aircraft != null && aircraft!! != policy.aircraft) {
             return false
@@ -173,8 +173,8 @@ class Maintenance internal constructor(
         if (!advanceEnabled && policy.time != null && scheduledTime!!.begin > policy.time.begin) {
             return false
         }
-        if (!routeChangeEnabled && policy.route != null && (policy.route.first != policy.route.second) && (dep != policy.route.first || !depBackup.contains(
-                (policy.route.first)
+        if (!routeChangeEnabled && policy.route != null && (policy.route.dep != policy.route.arr) && (dep != policy.route.dep || !depBackup.contains(
+                (policy.route.dep)
             ))
         ) {
             return false
@@ -191,8 +191,8 @@ class Maintenance internal constructor(
     override val routeChange
         get() = recoveryAirport?.let {
             RouteChange(
-                Pair(plan.airport, plan.airport),
-                Pair(it, it)
+                Route(plan.airport, plan.airport),
+                Route(it, it)
             )
         }
 }

@@ -7,6 +7,6 @@ import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.*
 
 class AggregationInitializer {
     operator fun invoke(input: Input): Result<Aggregation, Error> {
-
+        return Ok(Aggregation())
     }
 }

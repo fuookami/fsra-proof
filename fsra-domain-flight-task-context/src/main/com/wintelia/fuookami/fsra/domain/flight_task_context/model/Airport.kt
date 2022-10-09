@@ -66,3 +66,8 @@ data class Airport internal constructor(
         return true
     }
 }
+
+data class Route(
+    val dep: Airport,
+    val arr: Airport
+)

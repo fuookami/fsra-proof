@@ -62,7 +62,7 @@ class AOG internal constructor(
         if (policy.time != null && time != policy.time) {
             return false
         }
-        if (policy.route != null && (dep != policy.route.first || arr != policy.route.second)) {
+        if (policy.route != null && (dep != policy.route.dep || arr != policy.route.arr)) {
             return false
         }
         return super.recoveryEnabled(policy)

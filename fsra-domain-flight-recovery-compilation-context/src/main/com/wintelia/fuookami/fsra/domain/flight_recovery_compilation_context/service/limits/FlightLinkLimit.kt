@@ -11,37 +11,36 @@ import fuookami.ospf.kotlin.framework.model.CGPipeline
 import fuookami.ospf.kotlin.framework.model.ShadowPrice
 import fuookami.ospf.kotlin.framework.model.ShadowPriceKey
 import com.wintelia.fuookami.fsra.infrastructure.*
-import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.FlightTask
 import fuookami.ospf.kotlin.framework.model.Extractor
 
-data class ConnectingFlightShadowPriceKey(
+data class FlightLinkShadowPriceKey(
     val prevTask: FlightTask,
     val nextTask: FlightTask
-) : ShadowPriceKey(ConnectingFlightShadowPriceKey::class)
+) : ShadowPriceKey(FlightLinkShadowPriceKey::class)
 
 class ConnectingFlightLimit(
-    private val connectedFlightPairs: List<ConnectingFlightPair>,
-    private val connection: FlightConnection,
+    private val link: FlightLink,
     private val parameter: Parameter,
-    override val name: String = "connecting_flight"
+    override val name: String = "flight_link"
 ) : CGPipeline<LinearMetaModel, ShadowPriceMap> {
     override fun invoke(model: LinearMetaModel): Try<Error> {
-        val connection = this.connection.connection
-        val k = this.connection.k
+        val linkPairs = link.linkPairs
+        val link = this.link.link
+        val k = this.link.k
 
-        if (connectedFlightPairs.isNotEmpty()) {
-            for (pair in connectedFlightPairs) {
+        if (linkPairs.isNotEmpty()) {
+            for (pair in linkPairs) {
                 model.addConstraint(
-                    (connection[pair]!! + k[pair]!!) eq UInt64.one,
+                    (link[pair]!! + k[pair]!!) eq UInt64.one,
                     "${name}_${pair}"
                 )
             }
 
             val obj = LinearPolynomial()
-            for (pair in connectedFlightPairs) {
-                obj += parameter.connectingFlightSplit * k[pair]!!
+            for (pair in linkPairs) {
+                obj += pair.splitCost * k[pair]!!
             }
             model.minimize(obj)
         }
@@ -52,7 +51,7 @@ class ConnectingFlightLimit(
     override fun extractor(): Extractor<ShadowPriceMap> {
         return { map, args ->
             if (args[0] != null && args[1] != null) {
-                map[ConnectingFlightShadowPriceKey(
+                map[FlightLinkShadowPriceKey(
                     args[0] as FlightTask,
                     args[1] as FlightTask
                 )]?.price ?: Flt64.zero
@@ -63,14 +62,15 @@ class ConnectingFlightLimit(
     }
 
     override fun refresh(map: ShadowPriceMap, model: LinearMetaModel, shadowPrices: List<Flt64>): Try<Error> {
+        val connectingFlightPairs = link.linkPairs
         for ((i, j) in model.indicesOfConstraintGroup(name)!!.withIndex()) {
             val constraint = model.constraints[j]
             if (constraint.name.startsWith(name)) {
                 map.put(
                     ShadowPrice(
-                        key = ConnectingFlightShadowPriceKey(
-                            connectedFlightPairs[i].prevTask,
-                            connectedFlightPairs[i].nextTask
+                        key = FlightLinkShadowPriceKey(
+                            connectingFlightPairs[i].prevTask,
+                            connectingFlightPairs[i].nextTask
                         ),
                         price = shadowPrices[j]
                     )

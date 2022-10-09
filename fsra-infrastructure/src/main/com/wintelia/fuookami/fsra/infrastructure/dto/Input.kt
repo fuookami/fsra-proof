@@ -256,7 +256,7 @@ data class AirportFlowControlDTO(
     @SerialName("end_close_time")
     val endTime: String,            // DateTime
     @SerialName("affect_time")
-    val type: String,               // ”起飞“、”降落“、”停机“ 或 "起降"
+    val type: CString,              // ”起飞“、”降落“、”停机“ 或 "起降"
     val capacity: UInt64
 )
 

@@ -1,6 +1,8 @@
 package com.wintelia.fuookami.fsra.domain.rule_context.model
 
+import java.util.*
 import kotlin.time.*
+import kotlin.time.Duration.Companion.minutes
 import fuookami.ospf.kotlin.utils.math.*
 import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
@@ -133,7 +135,7 @@ data class FlowControlCondition(
         if (flightTypes.isNotEmpty()) {
             val type = when (flightTask) {
                 is Flight -> {
-                    flightTask.type
+                    flightTask.plan.type
                 }
 
                 else -> {
@@ -159,17 +161,23 @@ data class FlowControlCapacity(
     val amount: UInt64,
     val interval: Duration,
 ) {
+    companion object {
+        val close = FlowControlCapacity(UInt64.zero, 30.minutes)
+    }
+
     val closed = amount == UInt64.zero
 
     override fun toString() = if (closed) "closed" else "${amount}_${interval.toInt(DurationUnit.MINUTES)}m"
 }
 
 class FlowControl(
-    val id: String,
+    val id: String = UUID.randomUUID().toString(),
     val airport: Airport,
     val time: TimeRange,
-    val condition: FlowControlCondition,
+    val condition: FlowControlCondition = FlowControlCondition(),
     val scene: FlowControlScene,
     val capacity: FlowControlCapacity,
     val name: String = "${airport.icao}_${scene}_${capacity}_${time.begin.toShortString()}_${time.end.toShortString()}"
-)
+) {
+    val closed by capacity::closed
+}

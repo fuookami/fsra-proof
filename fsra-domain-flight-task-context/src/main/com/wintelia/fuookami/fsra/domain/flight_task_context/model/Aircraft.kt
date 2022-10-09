@@ -61,18 +61,15 @@ data class AircraftType internal constructor(
     }
 }
 
-data class RouteFlyTimeKey(
-    val from: Airport,
-    val to: Airport
-)
-
-operator fun <T> Map<RouteFlyTimeKey, T>.get(from: Airport, to: Airport): T? = this[RouteFlyTimeKey(from, to)]
+operator fun Map<Route, Duration>.get(dep: Airport, arr: Airport): Duration? {
+    return this[Route(dep, arr)]
+}
 
 data class AircraftMinorType internal constructor(
     val type: AircraftType,
     val code: AircraftMinorTypeCode,
     val costPerHour: Flt64,
-    val routeFlyTime: Map<RouteFlyTimeKey, Duration>,
+    val routeFlyTime: Map<Route, Duration>,
     val connectionTime: Map<Airport, Duration>
 ) {
     val maxRouteFlyType: Duration = routeFlyTime.asSequence().maxOf { it.value }
