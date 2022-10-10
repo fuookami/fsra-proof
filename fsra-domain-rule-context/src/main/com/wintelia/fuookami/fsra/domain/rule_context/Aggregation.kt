@@ -7,13 +7,15 @@ class Aggregation(
     val enabledAircrafts: Set<Aircraft>,
     val flowControls: List<FlowControl>,
     val relationRestrictions: List<RelationRestriction>,
+    val generalRestrictions: List<GeneralRestriction>,
     val linkMap: FlightLinkMap
 ) {
-    val restriction: List<Restriction>
+    val restrictions: List<Restriction>
 
     init {
-        val restriction = ArrayList<Restriction>()
-        restriction.addAll(relationRestrictions)
-        this.restriction = restriction
+        val restrictions = ArrayList<Restriction>()
+        restrictions.addAll(relationRestrictions)
+        restrictions.addAll(generalRestrictions)
+        this.restrictions = restrictions
     }
 }

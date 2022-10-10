@@ -5,8 +5,8 @@ import kotlinx.datetime.*
 
 // [b, e)
 data class TimeRange(
-    val begin: Instant,
-    val end: Instant
+    val begin: Instant = Instant.DISTANT_PAST,
+    val end: Instant = Instant.DISTANT_FUTURE
 ) {
     val empty: Boolean get() = begin == end
     val duration: Duration get() = end - begin

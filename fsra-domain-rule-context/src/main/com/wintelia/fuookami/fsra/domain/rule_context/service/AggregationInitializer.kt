@@ -24,7 +24,7 @@ class AggregationInitializer {
             is Ok -> { ret.value }
             is Failed -> { return Failed(ret.error) }
         }
-        val relationRestrictions = when (val ret = initRelationRestrictions(input.weakRestriction, input.strongRestrictions, parameter)) {
+        val generalRestrictions = when (val ret = initGeneralRestrictions(input.weakRestriction, input.strongRestrictions, parameter)) {
             is Ok -> { ret.value }
             is Failed -> { return Failed(ret.error) }
         }
@@ -40,7 +40,8 @@ class AggregationInitializer {
         return Ok(Aggregation(
             enabledAircrafts = enabledAircrafts,
             flowControls = flowControls,
-            relationRestrictions = relationRestrictions,
+            relationRestrictions = emptyList(),
+            generalRestrictions = generalRestrictions,
             linkMap = FlightLinkMap(connectingFlightPairs, stopoverFlightPairs)
         ))
     }
@@ -101,9 +102,8 @@ class AggregationInitializer {
         return Ok(flowControls)
     }
 
-    // todo: it should be general restrictions
-    private fun initRelationRestrictions(weakRestrictionDTOList: List<WeakRestrictionDTO>, strongRestrictionDTOList: List<StrongRestrictionDTO>, parameter: Parameter): Result<List<RelationRestriction>, Error> {
-        val map = HashMap<Pair<Route, RestrictionType>, HashSet<Aircraft>>()
+    private fun initGeneralRestrictions(weakRestrictionDTOList: List<WeakRestrictionDTO>, strongRestrictionDTOList: List<StrongRestrictionDTO>, parameter: Parameter): Result<List<GeneralRestriction>, Error> {
+        val restrictions = ArrayList<GeneralRestriction>()
         for (weakRestrictionDTO in weakRestrictionDTOList) {
             val dep = Airport(weakRestrictionDTO.dep)
             if (dep == null) {
@@ -120,11 +120,16 @@ class AggregationInitializer {
                 logger.warn { "Found unknown aircraft: ${weakRestrictionDTO.acReg}." }
                 continue
             }
-            val key = Pair(Route(dep, arr), RestrictionType.Weak)
-            if (map.containsKey(key)) {
-                map[key] = HashSet()
-            }
-            map[key]!!.add(aircraft)
+            val condition = GeneralRestrictionCondition(
+                departureAirports = setOf(dep),
+                arrivalAirports = setOf(arr),
+                disabledAircrafts = setOf(aircraft)
+            )
+            restrictions.add(GeneralRestriction(
+                type = RestrictionType.Weak,
+                condition = condition,
+                cost = weakRestrictionDTO.weight
+            ))
         }
         for (strongRestrictionDTO in strongRestrictionDTOList) {
             val dep = Airport(strongRestrictionDTO.dep)
@@ -142,25 +147,15 @@ class AggregationInitializer {
                 logger.warn { "Found unknown aircraft: ${strongRestrictionDTO.acReg}." }
                 continue
             }
-            val key = Pair(Route(dep, arr), RestrictionType.Strong)
-            if (map.containsKey(key)) {
-                map[key] = HashSet()
-            }
-            map[key]!!.add(aircraft)
-        }
-        val restrictions = ArrayList<RelationRestriction>()
-        for ((key, aircrafts) in map) {
-            val (route, type) = key
-            restrictions.add(RelationRestriction(
-                type = type,
-                category = RelationRestrictionCategory.BlackList,
-                dep = route.dep,
-                arr = route.arr,
-                aircrafts = aircrafts,
-                cost = when (type) {
-                    RestrictionType.Weak -> parameter.weakRestrictionViolation
-                    else -> parameter.inviolableStrongRestrictionViolation ?: Flt64.infinity
-                }
+            val condition = GeneralRestrictionCondition(
+                departureAirports = setOf(dep),
+                arrivalAirports = setOf(arr),
+                disabledAircrafts = setOf(aircraft)
+            )
+            restrictions.add(GeneralRestriction(
+                type = RestrictionType.ViolableStrong,
+                condition = condition,
+                cost = strongRestrictionDTO.weight
             ))
         }
         return Ok(restrictions)

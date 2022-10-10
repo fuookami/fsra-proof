@@ -71,3 +71,8 @@ data class Route(
     val dep: Airport,
     val arr: Airport
 )
+
+enum class ArrivalAirportScope {
+    Master,
+    Alternate
+}

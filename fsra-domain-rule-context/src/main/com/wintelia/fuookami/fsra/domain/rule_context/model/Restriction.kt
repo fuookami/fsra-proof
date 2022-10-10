@@ -4,7 +4,7 @@ import fuookami.ospf.kotlin.utils.math.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.infrastructure.*
 
-enum class RestrictionType{
+enum class RestrictionType {
     Weak,
     ViolableStrong,
     Strong,
@@ -13,7 +13,7 @@ enum class RestrictionType{
 sealed class RestrictionCheckingResult
 object NotMatter : RestrictionCheckingResult()
 object Violate : RestrictionCheckingResult()
-data class ViolableViolate(val cost: Flt64): RestrictionCheckingResult()
+data class ViolableViolate(val cost: Flt64) : RestrictionCheckingResult()
 
 sealed interface Restriction {
     val type: RestrictionType
@@ -23,7 +23,7 @@ sealed interface Restriction {
     fun check(flightTask: FlightTask, recoveryPolicy: RecoveryPolicy, parameter: Parameter): RestrictionCheckingResult
 }
 
-enum class RelationRestrictionCategory{
+enum class RelationRestrictionCategory {
     BlackList,
     WhiteList
 }
@@ -36,7 +36,7 @@ class RelationRestriction(
     val aircrafts: Set<Aircraft>,
     val weight: Flt64 = Flt64.one,
     val cost: Flt64? = null
-): Restriction {
+) : Restriction {
     override fun check(flightTask: FlightTask, parameter: Parameter): RestrictionCheckingResult {
         assert(flightTask.isFlight)
         return check(flightTask.dep, flightTask.arr, flightTask.aircraft, parameter)
@@ -74,6 +74,7 @@ class RelationRestriction(
                     ViolableViolate(Flt64.zero)
                 }
             }
+
             RestrictionType.ViolableStrong -> {
                 if (violated(hit)) {
                     if (cost != null) {
@@ -85,6 +86,7 @@ class RelationRestriction(
                     ViolableViolate(Flt64.zero)
                 }
             }
+
             RestrictionType.Strong -> {
                 if (violated(hit)) {
                     if (cost != null) {
@@ -109,4 +111,173 @@ class RelationRestriction(
     }
 }
 
-// todo: impl general restriction
+data class GeneralRestrictionCondition(
+    val time: TimeRange = TimeRange(),
+    val departureAirports: Set<Airport>? = null,
+    val arrivalAirports: Set<Airport>? = null,
+    val bidirectional: Boolean? = null,
+    val enabledAircrafts: Set<Aircraft>? = null,
+    val disabledAircrafts: Set<Aircraft>? = null
+) {
+    fun departureValid(time: TimeRange): Boolean = this.time.contains(time.begin)
+    fun arrivalValid(time: TimeRange): Boolean = this.time.contains(time.end)
+    fun valid(time: TimeRange): Boolean = this.time.withIntersection(time)
+}
+
+private typealias Condition = GeneralRestrictionCondition
+
+private sealed interface Policy {
+    fun ifValid(condition: Condition): Boolean
+    fun check(condition: Condition, flightTask: FlightTask, recoveryPolicy: RecoveryPolicy?): Boolean
+}
+
+private object DepartureAirportPolicy : Policy {
+    override fun ifValid(condition: Condition): Boolean {
+        return !BidirectionalAirportPolicy.ifValid(condition)
+                && condition.departureAirports?.isNotEmpty() == true
+    }
+
+    override fun check(condition: Condition, flightTask: FlightTask, recoveryPolicy: RecoveryPolicy?): Boolean {
+        assert(ArrivalAirportPolicy.ifValid(condition))
+        val time = recoveryPolicy?.time ?: flightTask.time
+        val dep = recoveryPolicy?.route?.dep ?: flightTask.dep
+        return time != null && condition.departureValid(time) && condition.departureAirports!!.contains(dep)
+    }
+}
+
+private object ArrivalAirportPolicy : Policy {
+    override fun ifValid(condition: Condition): Boolean {
+        return !BidirectionalAirportPolicy.ifValid(condition)
+                && condition.arrivalAirports?.isNotEmpty() == true
+    }
+
+    override fun check(condition: Condition, flightTask: FlightTask, recoveryPolicy: RecoveryPolicy?): Boolean {
+        assert(ifValid(condition))
+        val time = recoveryPolicy?.time ?: flightTask.time
+        val arr = recoveryPolicy?.route?.arr ?: flightTask.arr
+        return time != null && condition.arrivalValid(time) && condition.arrivalAirports!!.contains(arr)
+    }
+}
+
+private object BidirectionalAirportPolicy : Policy {
+    override fun ifValid(condition: Condition): Boolean {
+        return condition.departureAirports?.isNotEmpty() == true
+                && condition.arrivalAirports?.isNotEmpty() == true
+                && condition.bidirectional == true
+    }
+
+    override fun check(condition: Condition, flightTask: FlightTask, recoveryPolicy: RecoveryPolicy?): Boolean {
+        assert(ifValid(condition))
+        val time = recoveryPolicy?.time ?: flightTask.time
+        val dep = recoveryPolicy?.route?.dep ?: flightTask.dep
+        val arr = recoveryPolicy?.route?.arr ?: flightTask.arr
+        return time != null && condition.valid(time)
+                && ((condition.departureAirports!!.contains(dep) && condition.arrivalAirports!!.contains(arr))
+                    || (condition.arrivalAirports!!.contains(dep) && condition.departureAirports!!.contains(arr))
+                )
+    }
+}
+
+private object EnabledAircraftPolicy : Policy {
+    override fun ifValid(condition: Condition): Boolean {
+        return condition.enabledAircrafts?.isNotEmpty() == true
+    }
+
+    override fun check(condition: Condition, flightTask: FlightTask, recoveryPolicy: RecoveryPolicy?): Boolean {
+        val time = recoveryPolicy?.time ?: flightTask.time
+        val aircraft = recoveryPolicy?.aircraft ?: flightTask.aircraft
+        return time != null && aircraft != null && condition.valid(time) && !condition.enabledAircrafts!!.contains(aircraft)
+    }
+}
+
+private object DisabledAircraft : Policy {
+    override fun ifValid(condition: Condition): Boolean {
+        return condition.disabledAircrafts?.isNotEmpty() == true
+    }
+
+    override fun check(condition: Condition, flightTask: FlightTask, recoveryPolicy: RecoveryPolicy?): Boolean {
+        val time = recoveryPolicy?.time ?: flightTask.time
+        val aircraft = recoveryPolicy?.aircraft ?: flightTask.aircraft
+        return time != null && aircraft != null && condition.valid(time) && condition.disabledAircrafts!!.contains(aircraft)
+    }
+}
+
+private object PolicyFactory {
+    operator fun invoke(condition: Condition): List<Policy> {
+        val ret = ArrayList<Policy>()
+        val addIfValid = { it: Policy ->
+            if (it.ifValid(condition)) {
+                ret.add(it)
+            }
+        }
+        addIfValid(DepartureAirportPolicy)
+        addIfValid(ArrivalAirportPolicy)
+        addIfValid(BidirectionalAirportPolicy)
+        addIfValid(EnabledAircraftPolicy)
+        addIfValid(DisabledAircraft)
+        return ret
+    }
+}
+
+class GeneralRestriction(
+    override val type: RestrictionType,
+    val condition: Condition,
+    val weight: Flt64 = Flt64.one,
+    val cost: Flt64? = null
+): Restriction {
+    private val policies = PolicyFactory(condition)
+
+    override fun check(flightTask: FlightTask, parameter: Parameter): RestrictionCheckingResult {
+        return check(flightTask, RecoveryPolicy(), parameter)
+    }
+
+    override fun check(flightTask: FlightTask, aircraft: Aircraft, parameter: Parameter): RestrictionCheckingResult {
+        return check(flightTask, RecoveryPolicy(aircraft = aircraft), parameter)
+    }
+
+    override fun check(flightTask: FlightTask, recoveryPolicy: RecoveryPolicy, parameter: Parameter): RestrictionCheckingResult {
+        val hit = check(flightTask, recoveryPolicy)
+        return dump(hit, parameter)
+    }
+
+    private fun check(flightTask: FlightTask, recoveryPolicy: RecoveryPolicy): Boolean {
+        for (policy in policies) {
+            if (!policy.check(condition, flightTask, recoveryPolicy)) {
+                return false
+            }
+        }
+        return true
+    }
+
+    private fun dump(hit: Boolean, parameter: Parameter): RestrictionCheckingResult {
+        return if (!hit) {
+            NotMatter
+        } else {
+            when (type) {
+                RestrictionType.Weak -> {
+                    if (cost != null) {
+                        ViolableViolate(cost * weight)
+                    } else {
+                        ViolableViolate(parameter.weakRestrictionViolation * weight)
+                    }
+                }
+                RestrictionType.ViolableStrong -> {
+                    if (cost != null) {
+                        ViolableViolate(cost * weight)
+                    } else {
+                        ViolableViolate(parameter.strongRestrictionViolation * weight)
+                    }
+                }
+                RestrictionType.Strong -> {
+                    if (cost != null) {
+                        ViolableViolate(cost * weight)
+                    } else if (parameter.inviolableStrongRestrictionViolation != null) {
+                        ViolableViolate(parameter.inviolableStrongRestrictionViolation!! * weight)
+                    } else {
+                        Violate
+                    }
+                }
+            }
+        }
+    }
+}
