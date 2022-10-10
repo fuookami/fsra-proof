@@ -13,6 +13,7 @@ import fuookami.ospf.kotlin.framework.model.ShadowPrice
 import fuookami.ospf.kotlin.framework.model.ShadowPriceKey
 import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
+import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
 
 private data class FleetBalanceShadowPriceKey(
@@ -20,7 +21,7 @@ private data class FleetBalanceShadowPriceKey(
     val aircraftMinorType: AircraftMinorType
 ) : ShadowPriceKey(FleetBalanceShadowPriceKey::class)
 
-class FleetBalanceLimit(
+class  FleetBalanceLimit(
     private val fleetBalance: FleetBalance,
     private val parameter: Parameter,
     override val name: String = "fleet_balance"
@@ -49,11 +50,11 @@ class FleetBalanceLimit(
     }
 
     override fun extractor(): Extractor<ShadowPriceMap> {
-        return { map, args ->
-            if (args[0] != null && args[2] != null && args[1] == null) {
+        return wrap { map, prevFlightTask: FlightTask?, flightTask: FlightTask?, aircraft: Aircraft? ->
+            if (prevFlightTask != null && aircraft != null && flightTask == null) {
                 map[FleetBalanceShadowPriceKey(
-                    (args[0]!! as FlightTask).arr,
-                    (args[2]!! as Aircraft).minorType
+                    airport = prevFlightTask.arr,
+                    aircraftMinorType = aircraft.minorType
                 )]?.price ?: Flt64.zero
             } else {
                 Flt64.zero

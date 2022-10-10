@@ -13,6 +13,7 @@ import fuookami.ospf.kotlin.framework.model.ShadowPrice
 import fuookami.ospf.kotlin.framework.model.ShadowPriceKey
 import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
+import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
 
 private data class AircraftCompilationShadowPriceKey(
@@ -46,9 +47,9 @@ class AircraftCompilationLimit(
     }
 
     override fun extractor(): Extractor<ShadowPriceMap> {
-        return { map, args ->
-            if (args[2] != null && args[0] == null && args[1] == null) {
-                map[AircraftCompilationShadowPriceKey(args[2] as Aircraft)]?.price ?: Flt64.zero
+        return wrap { map, prevFlightTask: FlightTask?, flightTask: FlightTask?, aircraft: Aircraft? ->
+            if (aircraft != null && prevFlightTask == null && flightTask == null) {
+                map[AircraftCompilationShadowPriceKey(aircraft)]?.price ?: Flt64.zero
             } else {
                 Flt64.zero
             }

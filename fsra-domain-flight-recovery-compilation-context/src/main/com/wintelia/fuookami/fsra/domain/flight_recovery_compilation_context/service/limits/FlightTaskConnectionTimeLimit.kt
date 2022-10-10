@@ -13,11 +13,12 @@ import fuookami.ospf.kotlin.framework.model.ShadowPrice
 import fuookami.ospf.kotlin.framework.model.ShadowPriceKey
 import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
+import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
 
 private data class FlightTaskConnectionTimeShadowPriceKey(
     val prevFlightTask: FlightTaskKey,
-    val nextFlightTaskKey: FlightTaskKey,
+    val succFlightTask: FlightTaskKey,
     val aircraft: Aircraft
 ) : ShadowPriceKey(FlightTaskConnectionTimeShadowPriceKey::class)
 
@@ -89,12 +90,12 @@ class FlightTaskConnectionTimeLimit(
     }
 
     override fun extractor(): Extractor<ShadowPriceMap> {
-        return { map, args ->
-            if (args[0] != null && args[1] != null && args[2] != null) {
+        return wrap { map, prevFlightTask: FlightTask?, flightTask: FlightTask?, aircraft: Aircraft? ->
+            if (prevFlightTask != null && flightTask != null && aircraft != null) {
                 map[FlightTaskConnectionTimeShadowPriceKey(
-                    prevFlightTask = (args[0]!! as FlightTask).key,
-                    nextFlightTaskKey = (args[1]!! as FlightTask).key,
-                    aircraft = args[2]!! as Aircraft
+                    prevFlightTask = prevFlightTask.key,
+                    succFlightTask = flightTask.key,
+                    aircraft = aircraft
                 )]?.price ?: Flt64.zero
             } else {
                 Flt64.zero
@@ -108,7 +109,7 @@ class FlightTaskConnectionTimeLimit(
             if (constraint.name.startsWith(name)) {
                 val key = FlightTaskConnectionTimeShadowPriceKey(
                     prevFlightTask = pairs[i].prevFlightTask.key,
-                    nextFlightTaskKey = pairs[i].nextFlightTask.key,
+                    succFlightTask = pairs[i].nextFlightTask.key,
                     aircraft = pairs[i].bunch.aircraft
                 )
                 map.map[key] = ShadowPrice(

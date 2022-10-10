@@ -12,8 +12,9 @@ import fuookami.ospf.kotlin.framework.model.Extractor
 import fuookami.ospf.kotlin.framework.model.ShadowPrice
 import fuookami.ospf.kotlin.framework.model.ShadowPriceKey
 import com.wintelia.fuookami.fsra.infrastructure.*
+import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
+import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
-import com.wintelia.fuookami.fsra.domain.flight_task_context.model.FlightTask
 
 class FlowControlShadowPriceKey(
     val checkPoint: Flow.CheckPoint
@@ -46,10 +47,10 @@ class FlowControlLimit(
     }
 
     override fun extractor(): Extractor<ShadowPriceMap> {
-        return { map, args ->
+        return wrap { map, prevFlightTask: FlightTask?, flightTask: FlightTask?, _: Aircraft? ->
             var ret = Flt64.zero
             for (checkPoint in flow.checkPoints) {
-                if (checkPoint(args[0] as FlightTask?, args[1] as FlightTask?)) {
+                if (checkPoint(prevFlightTask, flightTask)) {
                     ret += map[FlowControlShadowPriceKey(checkPoint)]?.price ?: Flt64.zero
                 }
             }

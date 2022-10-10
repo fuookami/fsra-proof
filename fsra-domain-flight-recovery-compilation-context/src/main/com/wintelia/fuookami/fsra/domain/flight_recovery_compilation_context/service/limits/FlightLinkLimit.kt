@@ -8,16 +8,17 @@ import fuookami.ospf.kotlin.core.frontend.expression.polynomial.*
 import fuookami.ospf.kotlin.core.frontend.inequality.*
 import fuookami.ospf.kotlin.core.frontend.model.mechanism.*
 import fuookami.ospf.kotlin.framework.model.CGPipeline
+import fuookami.ospf.kotlin.framework.model.Extractor
 import fuookami.ospf.kotlin.framework.model.ShadowPrice
 import fuookami.ospf.kotlin.framework.model.ShadowPriceKey
 import com.wintelia.fuookami.fsra.infrastructure.*
-import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
-import com.wintelia.fuookami.fsra.domain.flight_task_context.model.FlightTask
-import fuookami.ospf.kotlin.framework.model.Extractor
+import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
+import com.wintelia.fuookami.fsra.domain.rule_context.model.*
+import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.FlightLink
 
 data class FlightLinkShadowPriceKey(
-    val prevTask: FlightTask,
-    val nextTask: FlightTask
+    val prevTask: FlightTaskKey,
+    val succTask: FlightTaskKey
 ) : ShadowPriceKey(FlightLinkShadowPriceKey::class)
 
 class ConnectingFlightLimit(
@@ -49,11 +50,11 @@ class ConnectingFlightLimit(
     }
 
     override fun extractor(): Extractor<ShadowPriceMap> {
-        return { map, args ->
-            if (args[0] != null && args[1] != null) {
+        return wrap { map, prevFlightTask: FlightTask?, flightTask: FlightTask?, _: Aircraft? ->
+            if (prevFlightTask != null && flightTask != null) {
                 map[FlightLinkShadowPriceKey(
-                    args[0] as FlightTask,
-                    args[1] as FlightTask
+                    prevTask = prevFlightTask.key,
+                    succTask = flightTask.key
                 )]?.price ?: Flt64.zero
             } else {
                 Flt64.zero
@@ -69,8 +70,8 @@ class ConnectingFlightLimit(
                 map.put(
                     ShadowPrice(
                         key = FlightLinkShadowPriceKey(
-                            connectingFlightPairs[i].prevTask,
-                            connectingFlightPairs[i].nextTask
+                            connectingFlightPairs[i].prevTask.key,
+                            connectingFlightPairs[i].succTask.key
                         ),
                         price = shadowPrices[j]
                     )
