@@ -34,8 +34,8 @@ class AOGPlan(
     override val duration get() = scheduledTime.duration
     override fun duration(aircraft: Aircraft) = scheduledTime.duration
 
-    override fun connectionTime(nextTask: FlightTask?) = NotFlightStaticConnectionTime
-    override fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?) = NotFlightStaticConnectionTime
+    override fun connectionTime(succTask: FlightTask?) = NotFlightStaticConnectionTime
+    override fun connectionTime(aircraft: Aircraft, succTask: FlightTask?) = NotFlightStaticConnectionTime
 }
 
 object AOGFlightTask : FlightTaskType(FlightTaskCategory.Maintenance, AOGFlightTask::class) {

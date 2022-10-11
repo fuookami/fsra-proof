@@ -85,13 +85,13 @@ class FlightTaskBunch(
             busyTime += flightTasks[i].duration!!
 
             // var prevTask = if (i > 0) { flightTasks[ i - 1 ] } else { null }
-            val nextTask = if (i != (flightTasks.size - 1)) {
+            val succTask = if (i != (flightTasks.size - 1)) {
                 flightTasks[i + 1]
             } else {
                 null
             }
 
-            busyTime += flightTasks[i].connectionTime(aircraft, nextTask)
+            busyTime += flightTasks[i].connectionTime(aircraft, succTask)
         }
         this.busyTime = busyTime
 
@@ -108,9 +108,9 @@ class FlightTaskBunch(
 
     fun contains(taskPair: Pair<FlightTask, FlightTask>): Boolean {
         val prevTask = keys[taskPair.first.key]
-        val nextTask = keys[taskPair.second.key]
-        return if (prevTask != null && nextTask != null) {
-            (nextTask - prevTask) == 1
+        val succTask = keys[taskPair.second.key]
+        return if (prevTask != null && succTask != null) {
+            (succTask - prevTask) == 1
         } else {
             false
         }

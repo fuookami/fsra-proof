@@ -99,13 +99,13 @@ abstract class FlightTaskPlan(
         return aircraft.routeFlyTime[dep, arr] ?: aircraft.maxRouteFlyTime
     }
 
-    open fun connectionTime(nextTask: FlightTask?): Duration? {
-        return aircraft?.let { connectionTime(it, nextTask) }
+    open fun connectionTime(succTask: FlightTask?): Duration? {
+        return aircraft?.let { connectionTime(it, succTask) }
     }
 
-    open fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?): Duration {
-        return if (nextTask != null) {
-            if (nextTask.isFlight) {
+    open fun connectionTime(aircraft: Aircraft, succTask: FlightTask?): Duration {
+        return if (succTask != null) {
+            if (succTask.isFlight) {
                 aircraft.connectionTime[arr] ?: aircraft.maxConnectionTime
             } else {
                 NotFlightStaticConnectionTime
@@ -190,9 +190,9 @@ abstract class FlightTask(
             }
         )
 
-    open fun connectionTime(nextTask: FlightTask?): Duration? = plan.connectionTime(nextTask)
-    open fun connectionTime(aircraft: Aircraft, nextTask: FlightTask?): Duration =
-        plan.connectionTime(aircraft, nextTask)
+    open fun connectionTime(succTask: FlightTask?): Duration? = plan.connectionTime(succTask)
+    open fun connectionTime(aircraft: Aircraft, succTask: FlightTask?): Duration =
+        plan.connectionTime(aircraft, succTask)
 
     open fun latestNormalStartTime(aircraft: Aircraft): Instant {
         return if (scheduledTime != null) {
@@ -218,6 +218,7 @@ abstract class FlightTask(
     open val delayEnabled get() = plan.delayEnabled
     open val advanceEnabled get() = plan.advanceEnabled
     open val routeChangeEnabled get() = plan.terminalChangeEnabled
+    open val strongLimitIgnored: Boolean get() = plan.strongLimitIgnored
 
     abstract val recovered: Boolean
     abstract val recoveryPolicy: RecoveryPolicy

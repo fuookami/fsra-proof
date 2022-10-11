@@ -25,7 +25,7 @@ private data class FlightTaskConnectionTimeShadowPriceKey(
 private data class FlightTaskPair(
     val bunch: FlightTaskBunch,
     val prevFlightTask: FlightTask,
-    val nextFlightTask: FlightTask
+    val succFlightTask: FlightTask
 )
 
 // with redundancy
@@ -48,7 +48,7 @@ class FlightTaskConnectionTimeLimit(
                     FlightTaskPair(
                         bunch = bunch,
                         prevFlightTask = bunch.flightTasks[i],
-                        nextFlightTask = bunch.flightTasks[i + 1]
+                        succFlightTask = bunch.flightTasks[i + 1]
                     )
                 )
             }
@@ -68,21 +68,21 @@ class FlightTaskConnectionTimeLimit(
         for (pair in pairs) {
             val bunch = pair.bunch
             val prevTask = pair.prevFlightTask
-            val nextTask = pair.nextFlightTask
+            val succTask = pair.succFlightTask
             val aircraft = pair.bunch.aircraft
 
             val lhs = LinearPolynomial()
-            lhs += etd[nextTask]!!
+            lhs += etd[succTask]!!
             lhs -= eta[prevTask]!!
-            lhs += redundancy[nextTask]!!
+            lhs += redundancy[succTask]!!
 
             val rhs = LinearPolynomial()
             rhs += m * (UInt64.one - xi[bunch]!!)
-            rhs += Flt64(prevTask.connectionTime(aircraft, nextTask).toDouble(DurationUnit.MINUTES))
+            rhs += Flt64(prevTask.connectionTime(aircraft, succTask).toDouble(DurationUnit.MINUTES))
 
             model.addConstraint(
                 lhs geq rhs,
-                "${name}_${aircraft.regNo}_${prevTask.name}_${nextTask.name}"
+                "${name}_${aircraft.regNo}_${prevTask.name}_${succTask.name}"
             )
         }
 
@@ -109,7 +109,7 @@ class FlightTaskConnectionTimeLimit(
             if (constraint.name.startsWith(name)) {
                 val key = FlightTaskConnectionTimeShadowPriceKey(
                     prevFlightTask = pairs[i].prevFlightTask.key,
-                    succFlightTask = pairs[i].nextFlightTask.key,
+                    succFlightTask = pairs[i].succFlightTask.key,
                     aircraft = pairs[i].bunch.aircraft
                 )
                 map.map[key] = ShadowPrice(

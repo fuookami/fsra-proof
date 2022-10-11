@@ -4,8 +4,9 @@ import kotlin.time.*
 import kotlinx.datetime.*
 import fuookami.ospf.kotlin.utils.math.*
 import com.wintelia.fuookami.fsra.infrastructure.*
-import com.wintelia.fuookami.fsra.domain.bunch_generation_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
+import com.wintelia.fuookami.fsra.domain.rule_context.model.*
+import com.wintelia.fuookami.fsra.domain.bunch_generation_context.model.*
 
 private data class LabelBuilder(
     var cost: Cost = Cost(),
@@ -321,7 +322,7 @@ class FlightTaskBunchGenerator(
         val recoveryPolicy = RecoveryPolicy(
             aircraft = aircraft,
             time = time,
-            route = Pair(dep, arr)
+            route = Route(dep, arr)
         )
 
         return if (recoveryPolicy.empty) {
@@ -374,7 +375,7 @@ class FlightTaskBunchGenerator(
         return if (prevLabel.node is RootNode && aircraftUsability.lastTask == null) {
             aircraftUsability.enabledTime
         } else {
-            val prevFlightTask = prevLabel.flightTask!!
+            val prevFlightTask = if (prevLabel.node is RootNode) { aircraftUsability.lastTask!! } else { prevLabel.flightTask!! }
             val thisFlightTask = (succNode as TaskNode).task
             val connectionTime = connectionTimeCalculator(aircraft, prevFlightTask, thisFlightTask)
             minimumDepartureTimeCalculator(prevLabel.arrivalTime, aircraft, thisFlightTask, connectionTime)

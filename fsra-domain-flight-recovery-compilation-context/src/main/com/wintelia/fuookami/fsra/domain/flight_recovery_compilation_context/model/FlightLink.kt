@@ -14,7 +14,7 @@ import fuookami.ospf.kotlin.core.frontend.expression.polynomial.LinearPolynomial
 class FlightLink(
     linkPairs: List<FlightLink>
 ) {
-    val linkPairs: List<FlightLink> = linkPairs.filter { it.prevTask.indexed && it.nextTask.indexed }
+    val linkPairs: List<FlightLink> = linkPairs.filter { it.prevTask.indexed && it.succTask.indexed }
     lateinit var link: LinearSymbols1
     lateinit var k: UIntVariable1
 
@@ -51,7 +51,7 @@ class FlightLink(
 
         for (pair in linkPairs) {
             bunches.asSequence()
-                .filter { it.contains(Pair(pair.prevTask, pair.nextTask)) }
+                .filter { it.contains(Pair(pair.prevTask, pair.succTask)) }
                 .forEach {
                     val link = this.link[pair]!! as LinearSymbol
                     link.flush()

@@ -42,7 +42,7 @@ class AggregationInitializer {
             flowControls = flowControls,
             relationRestrictions = emptyList(),
             generalRestrictions = generalRestrictions,
-            linkMap = FlightLinkMap(connectingFlightPairs, stopoverFlightPairs)
+            linkMap = FlightLinkMap(connectingFlightPairs, stopoverFlightPairs, emptyList())
         ))
     }
 
