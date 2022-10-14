@@ -14,4 +14,23 @@ class ShadowPriceMap: OriginShadowPriceMap<ShadowPriceMap>() {
     operator fun invoke(prevFlightTask: FlightTask?, thisFlightTask: FlightTask?, aircraft: Aircraft): Flt64 {
         return super.invoke(arrayOf(prevFlightTask, thisFlightTask, aircraft))
     }
+
+    fun reducedCost(bunch: FlightTaskBunch): Flt64 {
+        var ret = bunch.cost.sum!!
+        if (bunch.aircraft.indexed) {
+            ret -= this(null, null, bunch.aircraft)
+            for ((index, flightTask) in bunch.flightTasks.withIndex()) {
+                val prevFlightTask = if (index != 0) {
+                    bunch.flightTasks[index - 1]
+                } else {
+                    bunch.lastTask
+                }
+                ret -= this(prevFlightTask, flightTask, bunch.aircraft)
+            }
+            if (bunch.flightTasks.isNotEmpty()) {
+                ret -= this(bunch.flightTasks.last(), null, bunch.aircraft)
+            }
+        }
+        return ret
+    }
 }

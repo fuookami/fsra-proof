@@ -8,7 +8,8 @@ class Aggregation(
     val flowControls: List<FlowControl>,
     val relationRestrictions: List<RelationRestriction>,
     val generalRestrictions: List<GeneralRestriction>,
-    val linkMap: FlightLinkMap
+    val linkMap: FlightLinkMap,
+    val lock: Lock
 ) {
     val restrictions: List<Restriction>
 

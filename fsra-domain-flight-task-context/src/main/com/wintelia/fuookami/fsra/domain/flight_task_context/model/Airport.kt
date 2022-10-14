@@ -31,7 +31,8 @@ enum class AirportType {
 
 data class Airport internal constructor(
     val icao: ICAO,
-    val type: AirportType
+    val type: AirportType,
+    val base: Boolean = false
 ) {
     companion object {
         private val pool = HashMap<ICAO, Airport>()

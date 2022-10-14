@@ -13,7 +13,9 @@ import com.wintelia.fuookami.fsra.domain.rule_context.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 
 class AggregationInitializer {
-    private val logger = logger()
+    companion object {
+        private val logger = logger()
+    }
 
     operator fun invoke(originFlightBunches: List<FlightTaskBunch>, input: Input, parameter: Parameter): Result<Aggregation, Error> {
         val enabledAircrafts = when (val ret = initEnabledAircrafts(input.aircrafts)) {
@@ -42,7 +44,8 @@ class AggregationInitializer {
             flowControls = flowControls,
             relationRestrictions = emptyList(),
             generalRestrictions = generalRestrictions,
-            linkMap = FlightLinkMap(connectingFlightPairs, stopoverFlightPairs, emptyList())
+            linkMap = FlightLinkMap(connectingFlightPairs, stopoverFlightPairs, emptyList()),
+            lock = Lock()
         ))
     }
 

@@ -4,14 +4,14 @@ import kotlin.time.*
 import kotlinx.datetime.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
-import kotlinx.coroutines.flow.flow
 
 class MinimumDepartureTimeCalculator(
+    lock: Lock,
     flowControls: List<FlowControl>
 ) {
     private val departureCloses: Map<Airport, List<FlowControl>>
     private val arrivalCloses: Map<Airport, List<FlowControl>>
-    private val lockedTime: Map<FlightTaskKey, Instant> = emptyMap()
+    private val lockedTime: Map<FlightTaskKey, Instant>
 
     init {
         val departureCloses = HashMap<Airport, ArrayList<FlowControl>>()
@@ -54,6 +54,12 @@ class MinimumDepartureTimeCalculator(
 
         this.departureCloses = departureCloses
         this.arrivalCloses = arrivalCloses
+
+        val lockedTime = HashMap<FlightTaskKey, Instant>()
+        for (recoveryLock in lock.recoveryLocks) {
+            recoveryLock.value.lockedTime?.let { lockedTime[recoveryLock.key] = it }
+        }
+        this.lockedTime = lockedTime
     }
 
     operator fun invoke(lastArrivalTime: Instant, aircraft: Aircraft, flightTask: FlightTask, connectionTime: Duration): Instant {

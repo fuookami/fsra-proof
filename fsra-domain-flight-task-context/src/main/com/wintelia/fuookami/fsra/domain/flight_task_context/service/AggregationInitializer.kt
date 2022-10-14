@@ -12,7 +12,9 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 
 class AggregationInitializer {
-    private val logger = logger()
+    companion object {
+        private val logger = logger()
+    }
 
     operator fun invoke(input: Input): Result<Aggregation, Error> {
         val airports = when (val result = initAirports(input.airports)) {
@@ -90,7 +92,7 @@ class AggregationInitializer {
                     return Failed(result.error)
                 }
             }
-        val originFlightTaskBunches =
+        val originBunches =
             when (val result = initOriginFlightTaskBunch(aircraftUsability, flightTasks, input.plan)) {
                 is Ok -> {
                     result.value
@@ -110,7 +112,7 @@ class AggregationInitializer {
                 maintenances = maintenances,
                 aogs = aogs,
                 transferFlights = transferFlights,
-                originFlightTaskBunches = originFlightTaskBunches
+                originBunches = originBunches
             )
         )
     }

@@ -158,10 +158,6 @@ private data class Label(
     }
 }
 
-typealias ConnectionTimeCalculator = (Aircraft, FlightTask, FlightTask?) -> Duration
-typealias MinimumDepartureTimeCalculator = (Instant, Aircraft, FlightTask, Duration) -> Instant
-typealias CostCalculator = (Aircraft, FlightTask?, FlightTask, FlightHour, FlightCycle) -> Cost?
-typealias TotalCostCalculator = (Aircraft, List<FlightTask>) -> Cost?
 private typealias LabelMap = MutableMap<Node, MutableList<Label>>
 
 class FlightTaskBunchGenerator(

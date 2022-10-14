@@ -12,7 +12,7 @@ class Aggregation(
     val aogs: List<AOG>,
     val transferFlights: List<TransferFlight>,
 
-    val originFlightTaskBunches: List<FlightTaskBunch>
+    val originBunches: List<FlightTaskBunch>
 ) {
     val flightTasks: List<FlightTask>
 

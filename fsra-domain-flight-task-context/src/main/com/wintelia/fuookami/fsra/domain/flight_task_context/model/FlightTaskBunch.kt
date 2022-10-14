@@ -106,14 +106,18 @@ class FlightTaskBunch(
         return keys.contains(task.key)
     }
 
-    fun contains(taskPair: Pair<FlightTask, FlightTask>): Boolean {
-        val prevTask = keys[taskPair.first.key]
-        val succTask = keys[taskPair.second.key]
+    fun contains(prevFlightTask: FlightTask, succFlightTask: FlightTask): Boolean {
+        val prevTask = keys[prevFlightTask.key]
+        val succTask = keys[succFlightTask.key]
         return if (prevTask != null && succTask != null) {
             (succTask - prevTask) == 1
         } else {
             false
         }
+    }
+
+    fun contains(taskPair: Pair<FlightTask, FlightTask>): Boolean {
+        return contains(taskPair.first, taskPair.second)
     }
 
     fun get(originTask: FlightTask): FlightTask? {

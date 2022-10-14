@@ -13,7 +13,7 @@ import fuookami.ospf.kotlin.core.frontend.model.mechanism.LinearMetaModel
 
 class FleetBalance(
     aircrafts: List<Aircraft>,
-    originFlightTaskBunch: List<FlightTaskBunch>,
+    originBunches: List<FlightTaskBunch>,
     aircraftUsability: Map<Aircraft, AircraftUsability>
 ) {
     data class CheckPoint(
@@ -56,7 +56,7 @@ class FleetBalance(
     init {
         val balanceLimit = HashMap<CheckPoint, Limit>()
         for (aircraft in aircrafts) {
-            val bunch = originFlightTaskBunch.find { it.aircraft == aircraft }
+            val bunch = originBunches.find { it.aircraft == aircraft }
             val key = if (bunch != null && !bunch.empty) {
                 CheckPoint(bunch.arr, aircraft.minorType)
             } else {

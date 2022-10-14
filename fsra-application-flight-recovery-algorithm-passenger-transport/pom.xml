@@ -15,6 +15,35 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <kotlin.version>1.7.10</kotlin.version>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.wintelia.fuookami</groupId>
+            <artifactId>fsra-infrastructure</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wintelia.fuookami</groupId>
+            <artifactId>fsra-domain-flight-task-context</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wintelia.fuookami</groupId>
+            <artifactId>fsra-domain-rule-context</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wintelia.fuookami</groupId>
+            <artifactId>fsra-domain-flight-recovery-compilation-context</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wintelia.fuookami</groupId>
+            <artifactId>fsra-domain-bunch-generation-context</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 
 </project>

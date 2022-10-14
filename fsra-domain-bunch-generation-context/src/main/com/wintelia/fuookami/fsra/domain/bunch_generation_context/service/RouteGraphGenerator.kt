@@ -1,9 +1,11 @@
 package com.wintelia.fuookami.fsra.domain.bunch_generation_context.service
 
+import kotlin.time.Duration.Companion.minutes
 import fuookami.ospf.kotlin.utils.math.*
+import fuookami.ospf.kotlin.utils.error.*
+import fuookami.ospf.kotlin.utils.functional.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.bunch_generation_context.model.*
-import kotlin.time.Duration.Companion.minutes
 
 typealias FeasibilityJudger = (Aircraft, FlightTask?, FlightTask) -> Boolean
 
@@ -15,7 +17,7 @@ class RouteGraphGenerator(
         aircraft: Aircraft,
         aircraftUsability: AircraftUsability,
         flightTasks: Map<Airport, List<FlightTask>>
-    ): Graph {
+    ): Result<Graph, Error> {
         val graph = Graph()
         graph.put(RootNode)
         graph.put(EndNode)
@@ -34,7 +36,7 @@ class RouteGraphGenerator(
             searchAndInsertFlightTasks(graph, nodes, nodeMap, node, aircraft, flightTasks[airport]!!)
         }
         searchAndInsertReverseFlightTasks(graph, nodeMap, aircraft)
-        return graph
+        return Ok(graph)
     }
 
     private fun searchAndInsertFlightTasks(
