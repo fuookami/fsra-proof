@@ -2,19 +2,39 @@ package com.wintelia.fuookami.fsra.domain.rule_context
 
 import kotlin.time.*
 import kotlinx.datetime.*
+import fuookami.ospf.kotlin.utils.error.*
+import fuookami.ospf.kotlin.utils.functional.*
 import com.wintelia.fuookami.fsra.infrastructure.*
+import com.wintelia.fuookami.fsra.infrastructure.dto.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.service.*
 
 class RuleContext(
-    val flightTaskContext: FlightTaskContext
+    private val flightTaskContext: FlightTaskContext
 ) {
     lateinit var aggregation: Aggregation
-    lateinit var feasibilityJudger: FlightTaskFeasibilityJudger
-    lateinit var connectionTimeCalculator: ConnectionTimeCalculator
-    lateinit var minimumDepartureTimeCalculator: MinimumDepartureTimeCalculator
-    lateinit var costCalculator: CostCalculator
+    private lateinit var feasibilityJudger: FlightTaskFeasibilityJudger
+    private lateinit var connectionTimeCalculator: ConnectionTimeCalculator
+    private lateinit var minimumDepartureTimeCalculator: MinimumDepartureTimeCalculator
+    private lateinit var costCalculator: CostCalculator
+
+    fun init(input: Input, parameter: Parameter): Try<Error> {
+        val flightTaskAggregation = flightTaskContext.aggregation
+
+        val initializer = AggregationInitializer()
+        aggregation = when (val ret = initializer(flightTaskAggregation.originBunches, input, parameter)) {
+            is Ok -> { ret.value }
+            is Failed -> { return Failed(ret.error) }
+        }
+
+        feasibilityJudger = FlightTaskFeasibilityJudger(aggregation)
+        connectionTimeCalculator = ConnectionTimeCalculator(aggregation.linkMap)
+        minimumDepartureTimeCalculator = MinimumDepartureTimeCalculator(aggregation.lock, aggregation.flowControls)
+        costCalculator = CostCalculator(aggregation, connectionTimeCalculator, minimumDepartureTimeCalculator, flightTaskAggregation.aircraftUsability, aggregation.linkMap, parameter)
+
+        return Ok(success)
+    }
 
     fun feasible(aircraft: Aircraft, prevFlightTask: FlightTask?, flightTask: FlightTask): Boolean {
         return feasibilityJudger(aircraft, prevFlightTask, flightTask)

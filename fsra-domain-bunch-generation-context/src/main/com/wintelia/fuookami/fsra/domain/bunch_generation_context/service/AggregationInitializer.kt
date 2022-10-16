@@ -15,13 +15,26 @@ import com.wintelia.fuookami.fsra.domain.bunch_generation_context.*
 import com.wintelia.fuookami.fsra.domain.bunch_generation_context.model.*
 
 class AggregationInitializer {
-    val logger = logger()
+    private val logger = logger()
 
     @OptIn(DelicateCoroutinesApi::class)
-    operator fun invoke(aircrafts: List<Aircraft>, aircraftUsability: Map<Aircraft, AircraftUsability>, flightTasks: List<FlightTask>, originBunches: List<FlightTaskBunch>, lock: Lock, flightTaskFeasibilityJudger: FlightTaskFeasibilityJudger, initialFlightTaskBunchGenerator: InitialFlightTaskBunchGenerator): Result<Aggregation, Error> {
+    operator fun invoke(
+        aircrafts: List<Aircraft>,
+        aircraftUsability: Map<Aircraft, AircraftUsability>,
+        flightTasks: List<FlightTask>,
+        originBunches: List<FlightTaskBunch>,
+        lock: Lock,
+        flightTaskFeasibilityJudger: FlightTaskFeasibilityJudger,
+        initialFlightTaskBunchGenerator: InitialFlightTaskBunchGenerator
+    ): Result<Aggregation, Error> {
         val reverse = when (val ret = initReverseEnabledFlight(flightTasks, originBunches, lock)) {
-            is Ok -> { ret.value }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         val flightTaskGroups = groupFlightTasks(flightTasks)
         val promises = ArrayList<Pair<Aircraft, ChannelGuard<Result<Graph, Error>>>>()
@@ -39,23 +52,35 @@ class AggregationInitializer {
             }
             promises.add(Pair(aircraft, ChannelGuard(promise)))
         }
-        val initialFlightBunches = when(val ret = generateInitialFlightTaskBunches(aircrafts, aircraftUsability, flightTasks, originBunches, initialFlightTaskBunchGenerator)) {
-            is Ok -> { ret.value }
-            is Failed -> { return Failed(ret.error) }
+        val initialFlightBunches = when (val ret = generateInitialFlightTaskBunches(aircrafts, aircraftUsability, flightTasks, originBunches, initialFlightTaskBunchGenerator)) {
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
 
         val graphs = HashMap<Aircraft, Graph>()
         for ((aircraft, promise) in promises) {
             when (val ret = runBlocking { promise.receive() }) {
-                is Ok -> { graphs[aircraft] = ret.value }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {
+                    graphs[aircraft] = ret.value
+                }
+
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
-        return Ok(Aggregation(
-            graphs = graphs,
-            reverse = reverse,
-            initialFlightBunches = initialFlightBunches
-        ))
+        return Ok(
+            Aggregation(
+                graphs = graphs,
+                reverse = reverse,
+                initialFlightBunches = initialFlightBunches
+            )
+        )
     }
 
     private fun groupFlightTasks(flightTasks: List<FlightTask>): Map<Airport, List<FlightTask>> {
@@ -73,7 +98,7 @@ class AggregationInitializer {
                 flightTaskGroups[flightTask.dep]!!.add(flightTask)
             }
         }
-        for ((airport, thisFlightTasks) in flightTaskGroups) {
+        for ((_, thisFlightTasks) in flightTaskGroups) {
             thisFlightTasks.sortBy { it.scheduledTime?.begin ?: it.timeWindow?.begin ?: Instant.DISTANT_FUTURE }
         }
         return flightTaskGroups
@@ -106,7 +131,13 @@ class AggregationInitializer {
         return Ok(FlightTaskReverse(pairs, originBunches, lock, timeDifferenceLimit))
     }
 
-    private fun generateInitialFlightTaskBunches(aircrafts: List<Aircraft>, aircraftUsability: Map<Aircraft, AircraftUsability>, flightTasks: List<FlightTask>, originBunches: List<FlightTaskBunch>, generator: InitialFlightTaskBunchGenerator): Result<List<FlightTaskBunch>, Error> {
+    private fun generateInitialFlightTaskBunches(
+        aircrafts: List<Aircraft>,
+        aircraftUsability: Map<Aircraft, AircraftUsability>,
+        flightTasks: List<FlightTask>,
+        originBunches: List<FlightTaskBunch>,
+        generator: InitialFlightTaskBunchGenerator
+    ): Result<List<FlightTaskBunch>, Error> {
         val generatedAircraft = HashSet<Aircraft>()
         val bunches = ArrayList<FlightTaskBunch>()
 

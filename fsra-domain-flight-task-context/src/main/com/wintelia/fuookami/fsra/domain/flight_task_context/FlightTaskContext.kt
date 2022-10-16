@@ -15,6 +15,7 @@ class FlightTaskContext {
                 aggregation = ret.value
                 Ok(success)
             }
+
             is Failed -> {
                 Failed(ret.error)
             }

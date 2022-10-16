@@ -29,7 +29,8 @@ class OriginFlightBunchTidier {
                     .filter { it.scheduledTime != null }
                     .sortedBy { it.scheduledTime!!.begin },
                 iteration = FlightTaskBunch.originIteration,
-            ))
+            )
+            )
         }
         return Ok(flightBunches)
     }

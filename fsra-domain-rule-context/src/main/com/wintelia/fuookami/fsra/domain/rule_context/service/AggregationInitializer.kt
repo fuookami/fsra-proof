@@ -19,34 +19,61 @@ class AggregationInitializer {
 
     operator fun invoke(originFlightBunches: List<FlightTaskBunch>, input: Input, parameter: Parameter): Result<Aggregation, Error> {
         val enabledAircrafts = when (val ret = initEnabledAircrafts(input.aircrafts)) {
-            is Ok -> { ret.value }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         val flowControls = when (val ret = initFlowControls(input.airportCloses, input.airportFlowControls)) {
-            is Ok -> { ret.value }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         val generalRestrictions = when (val ret = initGeneralRestrictions(input.weakRestriction, input.strongRestrictions, parameter)) {
-            is Ok -> { ret.value }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         val connectingFlightPairs = when (val ret = initConnectingFlightPairs(originFlightBunches, parameter)) {
-            is Ok -> { ret.value }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         val stopoverFlightPairs = when (val ret = initStopoverFlightPairs(input.flights, originFlightBunches, parameter)) {
-            is Ok -> { ret.value }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
 
-        return Ok(Aggregation(
-            enabledAircrafts = enabledAircrafts,
-            flowControls = flowControls,
-            relationRestrictions = emptyList(),
-            generalRestrictions = generalRestrictions,
-            linkMap = FlightLinkMap(connectingFlightPairs, stopoverFlightPairs, emptyList()),
-            lock = Lock()
-        ))
+        return Ok(
+            Aggregation(
+                enabledAircrafts = enabledAircrafts,
+                flowControls = flowControls,
+                relationRestrictions = emptyList(),
+                generalRestrictions = generalRestrictions,
+                linkMap = FlightLinkMap(connectingFlightPairs, stopoverFlightPairs, emptyList()),
+                lock = Lock()
+            )
+        )
     }
 
     private fun initEnabledAircrafts(aircraftDTOList: List<AircraftDTO>): Result<Set<Aircraft>, Error> {
@@ -75,12 +102,14 @@ class AggregationInitializer {
             }
             val begin = LocalDate.parse(airportCloseDTO.beginDate).atTime(LocalTime.parse(airportCloseDTO.beginCloseTime)).toInstant(TimeZone.currentSystemDefault())
             val end = LocalDate.parse(airportCloseDTO.endDate).atTime(LocalTime.parse(airportCloseDTO.endCloseTime)).toInstant(TimeZone.currentSystemDefault())
-            flowControls.add(FlowControl(
-                airport = airport,
-                time = TimeRange(begin, end),
-                scene = FlowControlScene.DepartureArrival,
-                capacity = FlowControlCapacity.close
-            ))
+            flowControls.add(
+                FlowControl(
+                    airport = airport,
+                    time = TimeRange(begin, end),
+                    scene = FlowControlScene.DepartureArrival,
+                    capacity = FlowControlCapacity.close
+                )
+            )
         }
         for (airportFlowControlDTO in airportFlowControlDTOList) {
             val airport = Airport(airportFlowControlDTO.airport)
@@ -95,17 +124,23 @@ class AggregationInitializer {
             }
             val begin = Instant.parse(airportFlowControlDTO.beginTime)
             val end = Instant.parse(airportFlowControlDTO.endTime)
-            flowControls.add(FlowControl(
-                airport = airport,
-                time = TimeRange(begin, end),
-                scene = scene,
-                capacity = FlowControlCapacity(airportFlowControlDTO.capacity, 1.hours)
-            ))
+            flowControls.add(
+                FlowControl(
+                    airport = airport,
+                    time = TimeRange(begin, end),
+                    scene = scene,
+                    capacity = FlowControlCapacity(airportFlowControlDTO.capacity, 1.hours)
+                )
+            )
         }
         return Ok(flowControls)
     }
 
-    private fun initGeneralRestrictions(weakRestrictionDTOList: List<WeakRestrictionDTO>, strongRestrictionDTOList: List<StrongRestrictionDTO>, parameter: Parameter): Result<List<GeneralRestriction>, Error> {
+    private fun initGeneralRestrictions(
+        weakRestrictionDTOList: List<WeakRestrictionDTO>,
+        strongRestrictionDTOList: List<StrongRestrictionDTO>,
+        parameter: Parameter
+    ): Result<List<GeneralRestriction>, Error> {
         val restrictions = ArrayList<GeneralRestriction>()
         for (weakRestrictionDTO in weakRestrictionDTOList) {
             val dep = Airport(weakRestrictionDTO.dep)
@@ -128,11 +163,13 @@ class AggregationInitializer {
                 arrivalAirports = setOf(arr),
                 disabledAircrafts = setOf(aircraft)
             )
-            restrictions.add(GeneralRestriction(
-                type = RestrictionType.Weak,
-                condition = condition,
-                cost = weakRestrictionDTO.weight
-            ))
+            restrictions.add(
+                GeneralRestriction(
+                    type = RestrictionType.Weak,
+                    condition = condition,
+                    cost = weakRestrictionDTO.weight
+                )
+            )
         }
         for (strongRestrictionDTO in strongRestrictionDTOList) {
             val dep = Airport(strongRestrictionDTO.dep)
@@ -155,11 +192,13 @@ class AggregationInitializer {
                 arrivalAirports = setOf(arr),
                 disabledAircrafts = setOf(aircraft)
             )
-            restrictions.add(GeneralRestriction(
-                type = RestrictionType.ViolableStrong,
-                condition = condition,
-                cost = strongRestrictionDTO.weight
-            ))
+            restrictions.add(
+                GeneralRestriction(
+                    type = RestrictionType.ViolableStrong,
+                    condition = condition,
+                    cost = strongRestrictionDTO.weight
+                )
+            )
         }
         return Ok(restrictions)
     }

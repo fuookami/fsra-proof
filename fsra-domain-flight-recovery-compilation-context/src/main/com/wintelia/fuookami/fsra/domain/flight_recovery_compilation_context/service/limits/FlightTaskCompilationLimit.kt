@@ -14,12 +14,11 @@ import fuookami.ospf.kotlin.framework.model.ShadowPriceKey
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
+import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.service.*
 
 private data class FlightTaskCompilationShadowPriceKey(
     val flightTask: FlightTaskKey
 ) : ShadowPriceKey(FlightTaskCompilationShadowPriceKey::class)
-
-private typealias CancelCostCalculator = fuookami.ospf.kotlin.utils.functional.Extractor<Flt64, FlightTask>
 
 class FlightTaskCompilationLimit(
     private val flightTasks: List<FlightTask>,

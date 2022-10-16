@@ -18,6 +18,10 @@ data class ViolableViolate(val cost: Flt64) : RestrictionCheckingResult()
 sealed interface Restriction {
     val type: RestrictionType
 
+    fun check(flightTask: FlightTask): Boolean
+    fun check(flightTask: FlightTask, aircraft: Aircraft): Boolean
+    fun check(flightTask: FlightTask, recoveryPolicy: RecoveryPolicy): Boolean
+
     fun check(flightTask: FlightTask, parameter: Parameter): RestrictionCheckingResult
     fun check(flightTask: FlightTask, aircraft: Aircraft, parameter: Parameter): RestrictionCheckingResult
     fun check(flightTask: FlightTask, recoveryPolicy: RecoveryPolicy, parameter: Parameter): RestrictionCheckingResult
@@ -37,6 +41,23 @@ class RelationRestriction(
     val weight: Flt64 = Flt64.one,
     val cost: Flt64? = null
 ) : Restriction {
+    override fun check(flightTask: FlightTask): Boolean {
+        assert(flightTask.isFlight)
+        return check(flightTask.dep, flightTask.arr, flightTask.aircraft)
+    }
+
+    override fun check(flightTask: FlightTask, aircraft: Aircraft): Boolean {
+        assert(flightTask.isFlight)
+        return check(flightTask.dep, flightTask.arr, aircraft)
+    }
+
+    override fun check(flightTask: FlightTask, recoveryPolicy: RecoveryPolicy): Boolean {
+        val dep = recoveryPolicy.route?.dep ?: flightTask.dep
+        val arr = recoveryPolicy.route?.arr ?: flightTask.arr
+        val aircraft = recoveryPolicy.aircraft ?: flightTask.aircraft
+        return check(dep, arr, aircraft)
+    }
+
     override fun check(flightTask: FlightTask, parameter: Parameter): RestrictionCheckingResult {
         assert(flightTask.isFlight)
         return check(flightTask.dep, flightTask.arr, flightTask.aircraft, parameter)
@@ -48,10 +69,18 @@ class RelationRestriction(
     }
 
     override fun check(flightTask: FlightTask, recoveryPolicy: RecoveryPolicy, parameter: Parameter): RestrictionCheckingResult {
+        assert(flightTask.isFlight)
         val dep = recoveryPolicy.route?.dep ?: flightTask.dep
         val arr = recoveryPolicy.route?.arr ?: flightTask.arr
         val aircraft = recoveryPolicy.aircraft ?: flightTask.aircraft
         return check(dep, arr, aircraft, parameter)
+    }
+
+    private fun check(dep: Airport, arr: Airport, aircraft: Aircraft?): Boolean {
+        if (dep != this.dep || arr != this.arr) {
+            return true
+        }
+        return aircraft?.let { !violated(aircrafts.contains(aircraft)) } ?: true
     }
 
     private fun check(dep: Airport, arr: Airport, aircraft: Aircraft?, parameter: Parameter): RestrictionCheckingResult {
@@ -59,6 +88,13 @@ class RelationRestriction(
             return NotMatter
         }
         return aircraft?.let { dump(aircrafts.contains(aircraft), parameter) } ?: NotMatter
+    }
+
+    private fun violated(hit: Boolean): Boolean {
+        return when (category) {
+            RelationRestrictionCategory.BlackList -> hit
+            RelationRestrictionCategory.WhiteList -> !hit
+        }
     }
 
     private fun dump(hit: Boolean, parameter: Parameter): RestrictionCheckingResult {
@@ -100,13 +136,6 @@ class RelationRestriction(
                     ViolableViolate(Flt64.zero)
                 }
             }
-        }
-    }
-
-    private fun violated(hit: Boolean): Boolean {
-        return when (category) {
-            RelationRestrictionCategory.BlackList -> hit
-            RelationRestrictionCategory.WhiteList -> !hit
         }
     }
 }
@@ -173,7 +202,7 @@ private object BidirectionalAirportPolicy : Policy {
         val arr = recoveryPolicy?.route?.arr ?: flightTask.arr
         return time != null && condition.valid(time)
                 && ((condition.departureAirports!!.contains(dep) && condition.arrivalAirports!!.contains(arr))
-                    || (condition.arrivalAirports!!.contains(dep) && condition.departureAirports!!.contains(arr))
+                || (condition.arrivalAirports!!.contains(dep) && condition.departureAirports.contains(arr))
                 )
     }
 }
@@ -224,23 +253,40 @@ class GeneralRestriction(
     val condition: Condition,
     val weight: Flt64 = Flt64.one,
     val cost: Flt64? = null
-): Restriction {
+) : Restriction {
     private val policies = PolicyFactory(condition)
 
+    override fun check(flightTask: FlightTask): Boolean {
+        assert(flightTask.isFlight)
+        return check(flightTask, RecoveryPolicy())
+    }
+
+    override fun check(flightTask: FlightTask, aircraft: Aircraft): Boolean {
+        assert(flightTask.isFlight)
+        return check(flightTask, RecoveryPolicy(aircraft = aircraft))
+    }
+
+    override fun check(flightTask: FlightTask, recoveryPolicy: RecoveryPolicy): Boolean {
+        assert(flightTask.isFlight)
+        return !violated(flightTask, recoveryPolicy)
+    }
+
     override fun check(flightTask: FlightTask, parameter: Parameter): RestrictionCheckingResult {
+        assert(flightTask.isFlight)
         return check(flightTask, RecoveryPolicy(), parameter)
     }
 
     override fun check(flightTask: FlightTask, aircraft: Aircraft, parameter: Parameter): RestrictionCheckingResult {
+        assert(flightTask.isFlight)
         return check(flightTask, RecoveryPolicy(aircraft = aircraft), parameter)
     }
 
     override fun check(flightTask: FlightTask, recoveryPolicy: RecoveryPolicy, parameter: Parameter): RestrictionCheckingResult {
-        val hit = check(flightTask, recoveryPolicy)
-        return dump(hit, parameter)
+        assert(flightTask.isFlight)
+        return dump(violated(flightTask, recoveryPolicy), parameter)
     }
 
-    private fun check(flightTask: FlightTask, recoveryPolicy: RecoveryPolicy): Boolean {
+    private fun violated(flightTask: FlightTask, recoveryPolicy: RecoveryPolicy): Boolean {
         for (policy in policies) {
             if (!policy.check(condition, flightTask, recoveryPolicy)) {
                 return false
@@ -249,8 +295,8 @@ class GeneralRestriction(
         return true
     }
 
-    private fun dump(hit: Boolean, parameter: Parameter): RestrictionCheckingResult {
-        return if (!hit) {
+    private fun dump(violated: Boolean, parameter: Parameter): RestrictionCheckingResult {
+        return if (!violated) {
             NotMatter
         } else {
             when (type) {
@@ -261,6 +307,7 @@ class GeneralRestriction(
                         ViolableViolate(parameter.weakRestrictionViolation * weight)
                     }
                 }
+
                 RestrictionType.ViolableStrong -> {
                     if (cost != null) {
                         ViolableViolate(cost * weight)
@@ -268,6 +315,7 @@ class GeneralRestriction(
                         ViolableViolate(parameter.strongRestrictionViolation * weight)
                     }
                 }
+
                 RestrictionType.Strong -> {
                     if (cost != null) {
                         ViolableViolate(cost * weight)

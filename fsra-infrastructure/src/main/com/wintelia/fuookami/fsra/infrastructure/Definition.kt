@@ -1,9 +1,16 @@
 package com.wintelia.fuookami.fsra.infrastructure
 
+import java.time.format.*
 import java.time.temporal.*
 import kotlinx.datetime.*
-import kotlinx.datetime.TimeZone
-import java.time.format.DateTimeFormatter
+import fuookami.ospf.kotlin.utils.math.*
+
+val precision = Flt64(1e-5)
+val ls = Less<Flt64, Flt64>(precision)
+val leq = LessEqual<Flt64, Flt64>(precision)
+val gr = Greater<Flt64, Flt64>(precision)
+val geq = GreaterEqual<Flt64, Flt64>(precision)
+val eq = Equal<Flt64, Flt64>(precision)
 
 val shortDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("mmdd")
 val shortTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("mmddHHMM")

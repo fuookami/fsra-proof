@@ -20,10 +20,9 @@ data class FlightLinkShadowPriceKey(
     val link: com.wintelia.fuookami.fsra.domain.rule_context.model.FlightLink
 ) : ShadowPriceKey(FlightLinkShadowPriceKey::class)
 
-class ConnectingFlightLimit(
+class FlightLinkLimit(
     private val linkMap: FlightLinkMap,
     private val link: FlightLink,
-    private val parameter: Parameter,
     override val name: String = "flight_link"
 ) : CGPipeline<LinearMetaModel, ShadowPriceMap> {
     override fun invoke(model: LinearMetaModel): Try<Error> {

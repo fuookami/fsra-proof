@@ -34,10 +34,11 @@ class Iteration {
     private var bestDualObj = Flt64.minimum
     private var lowerBound = Flt64.zero
     private var upperBound: Flt64? = null
-    val optimalRate: Flt64 get() {
-        val actualOptimalRate = ((lowerBound + Flt64.one) / (bestObj + Flt64.one)).sqr() as Flt64
-        return upperBound?.let { max(actualOptimalRate, (it - bestObj) / it) } ?: actualOptimalRate
-    }
+    val optimalRate: Flt64
+        get() {
+            val actualOptimalRate = ((lowerBound + Flt64.one) / (bestObj + Flt64.one)).sqr() as Flt64
+            return upperBound?.let { max(actualOptimalRate, (it - bestObj) / it) } ?: actualOptimalRate
+        }
 
     fun refreshLowerBound(shadowPriceMap: ShadowPriceMap, newBunches: List<FlightTaskBunch>) {
         val bestReducedCost = HashMap<Aircraft, Flt64>()
@@ -53,7 +54,7 @@ class Iteration {
             if (lowerBound ls currentDualObj) {
                 logger.debug { "lower bound: $lowerBound -> $bestDualObj" }
                 lowerBound = currentDualObj
-                logger.debug { "optimal rate: ${optimalRate * Flt64(100.0) }" }
+                logger.debug { "optimal rate: ${optimalRate * Flt64(100.0)}" }
             }
         }
     }
@@ -74,7 +75,7 @@ class Iteration {
             if (bestLpObj ls lowerBound) {
                 logger.debug { "lower bound: $lowerBound -> $bestLpObj" }
                 lowerBound = bestLpObj
-                logger.debug { "optimal rate: ${optimalRate * Flt64(100.0) }" }
+                logger.debug { "optimal rate: ${optimalRate * Flt64(100.0)}" }
             }
         }
         return flag
@@ -99,7 +100,7 @@ class Iteration {
             if (bestObj ls lowerBound) {
                 logger.debug { "lower bound: $lowerBound -> $bestObj" }
                 lowerBound = bestObj
-                logger.debug { "optimal rate: ${optimalRate * Flt64(100.0) }" }
+                logger.debug { "optimal rate: ${optimalRate * Flt64(100.0)}" }
             }
         }
         return flag
@@ -117,5 +118,9 @@ class Iteration {
     operator fun dec(): Iteration {
         --_iteration
         return this
+    }
+
+    override fun toString(): String {
+        return "$iteration"
     }
 }

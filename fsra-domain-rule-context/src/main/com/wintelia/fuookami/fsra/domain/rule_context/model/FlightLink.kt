@@ -19,7 +19,7 @@ data class ConnectingFlightPair(
     override val prevTask: FlightTask,
     override val succTask: FlightTask,
     override val splitCost: Flt64
-): FlightLink("connecting_flight") {
+) : FlightLink("connecting_flight") {
     init {
         assert((prevTask is Flight) && (!prevTask.recovered))
         assert((succTask is Flight) && (!succTask.recovered))
@@ -46,7 +46,7 @@ data class StopoverFlightPair(
     override val prevTask: FlightTask,
     override val succTask: FlightTask,
     override val splitCost: Flt64
-): FlightLink("stopover_flight") {
+) : FlightLink("stopover_flight") {
     val connectionTime = succTask.scheduledTime!!.begin - prevTask.scheduledTime!!.end
 
     init {
@@ -75,7 +75,7 @@ data class ConnectionTimeIgnoringFlightPair(
     override val prevTask: FlightTask,
     override val succTask: FlightTask,
     override val splitCost: Flt64
-): FlightLink("connecting_time_ignoring_flight") {
+) : FlightLink("connecting_time_ignoring_flight") {
     init {
         assert((prevTask is Flight) && (!prevTask.recovered))
         assert((succTask is Flight) && (!succTask.recovered))

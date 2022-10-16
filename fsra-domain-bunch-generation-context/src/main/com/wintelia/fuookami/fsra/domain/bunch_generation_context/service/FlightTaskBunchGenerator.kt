@@ -3,6 +3,8 @@ package com.wintelia.fuookami.fsra.domain.bunch_generation_context.service
 import kotlin.time.*
 import kotlinx.datetime.*
 import fuookami.ospf.kotlin.utils.math.*
+import fuookami.ospf.kotlin.utils.error.*
+import fuookami.ospf.kotlin.utils.functional.*
 import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
@@ -214,7 +216,7 @@ class FlightTaskBunchGenerator(
     private val enabledTime by aircraftUsability::enabledTime
     private val nodes = sortNodes(graph)
 
-    operator fun invoke(iteration: UInt64, shadowPriceMap: ShadowPriceMap): List<FlightTaskBunch> {
+    operator fun invoke(iteration: UInt64, shadowPriceMap: ShadowPriceMap): Result<List<FlightTaskBunch>, Error> {
         val labels: LabelMap = HashMap()
         for (prevNode in nodes) {
             for (prevLabel in getLabels(labels, prevNode)) {
@@ -237,7 +239,7 @@ class FlightTaskBunchGenerator(
                 }
             }
         }
-        return selectBunches(iteration, labels[EndNode]!!)
+        return Ok(selectBunches(iteration, labels[EndNode]!!))
     }
 
     private fun initRootLabel(labels: LabelMap, shadowPriceMap: ShadowPriceMap) {
@@ -371,7 +373,11 @@ class FlightTaskBunchGenerator(
         return if (prevLabel.node is RootNode && aircraftUsability.lastTask == null) {
             aircraftUsability.enabledTime
         } else {
-            val prevFlightTask = if (prevLabel.node is RootNode) { aircraftUsability.lastTask!! } else { prevLabel.flightTask!! }
+            val prevFlightTask = if (prevLabel.node is RootNode) {
+                aircraftUsability.lastTask!!
+            } else {
+                prevLabel.flightTask!!
+            }
             val thisFlightTask = (succNode as TaskNode).task
             val connectionTime = connectionTimeCalculator(aircraft, prevFlightTask, thisFlightTask)
             minimumDepartureTimeCalculator(prevLabel.arrivalTime, aircraft, thisFlightTask, connectionTime)

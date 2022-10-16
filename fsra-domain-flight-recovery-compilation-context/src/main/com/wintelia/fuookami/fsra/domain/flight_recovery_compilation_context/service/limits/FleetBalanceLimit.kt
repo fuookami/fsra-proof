@@ -21,7 +21,7 @@ private data class FleetBalanceShadowPriceKey(
     val aircraftMinorType: AircraftMinorType
 ) : ShadowPriceKey(FleetBalanceShadowPriceKey::class)
 
-class  FleetBalanceLimit(
+class FleetBalanceLimit(
     private val fleetBalance: FleetBalance,
     private val parameter: Parameter,
     override val name: String = "fleet_balance"

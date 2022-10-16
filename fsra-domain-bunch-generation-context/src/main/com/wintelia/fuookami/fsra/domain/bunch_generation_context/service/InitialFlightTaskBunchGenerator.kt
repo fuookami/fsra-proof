@@ -3,7 +3,7 @@ package com.wintelia.fuookami.fsra.domain.bunch_generation_context.service
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 
 class InitialFlightTaskBunchGenerator(
-    val flightTaskFeasibilityJudger: FlightTaskFeasibilityJudger,
+    val feasibilityJudger: FlightTaskFeasibilityJudger,
     val connectionTimeCalculator: ConnectionTimeCalculator,
     val minimumDepartureTimeCalculator: MinimumDepartureTimeCalculator,
     val costCalculator: CostCalculator

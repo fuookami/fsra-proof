@@ -10,6 +10,7 @@ import fuookami.ospf.kotlin.core.frontend.expression.polynomial.*
 import fuookami.ospf.kotlin.core.frontend.expression.symbol.*
 import fuookami.ospf.kotlin.core.frontend.model.mechanism.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
+import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 
 class Compilation {
     private val _x = ArrayList<BinVariable1>()
@@ -21,10 +22,16 @@ class Compilation {
     lateinit var flightTaskCompilation: LinearSymbols1
     lateinit var aircraftCompilation: LinearSymbols1
 
-    fun register(flightTasks: List<FlightTask>, aircrafts: List<Aircraft>, model: LinearMetaModel): Try<Error> {
+    fun register(flightTasks: List<FlightTask>, aircrafts: List<Aircraft>, lock: Lock, model: LinearMetaModel): Try<Error> {
         if (!this::y.isInitialized) {
             y = BinVariable1("y", Shape1(flightTasks.size))
-            flightTasks.forEach { y[it]!!.name = "${y.name}_${it.name}" }
+            flightTasks.forEach {
+                y[it]!!.name = "${y.name}_${it.name}"
+
+                if (lock.lockedCancelFlightTasks.contains(it.key)) {
+                    y[it]!!.range.eq(UInt8.zero)
+                }
+            }
         }
         model.addVars(y)
 

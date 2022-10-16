@@ -10,7 +10,7 @@ fun <M : OriginShadowPriceMap<M>> wrap(extractor: (OriginShadowPriceMap<M>, Flig
     return { map, args -> extractor(map, args[0] as FlightTask, args[1] as FlightTask, args[2] as Aircraft) }
 }
 
-class ShadowPriceMap: OriginShadowPriceMap<ShadowPriceMap>() {
+class ShadowPriceMap : OriginShadowPriceMap<ShadowPriceMap>() {
     operator fun invoke(prevFlightTask: FlightTask?, thisFlightTask: FlightTask?, aircraft: Aircraft): Flt64 {
         return super.invoke(arrayOf(prevFlightTask, thisFlightTask, aircraft))
     }

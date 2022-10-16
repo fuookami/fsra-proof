@@ -10,15 +10,24 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 class AircraftUsabilityTidier {
     val logger = logger()
 
-    operator fun invoke(aircrafts: List<Aircraft>, flightTasks: List<FlightTask>, aircraftDTOList: List<AircraftDTO>, recoveryPlan: RecoveryPlan): Result<Map<Aircraft, AircraftUsability>, Error> {
+    operator fun invoke(
+        aircrafts: List<Aircraft>,
+        flightTasks: List<FlightTask>,
+        aircraftDTOList: List<AircraftDTO>,
+        recoveryPlan: RecoveryPlan
+    ): Result<Map<Aircraft, AircraftUsability>, Error> {
         val map = HashMap<Aircraft, AircraftUsability>()
         when (val ret = findLastFlightTask(map, flightTasks, recoveryPlan)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         when (val ret = complete(map, aircrafts, aircraftDTOList, recoveryPlan)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         for ((aircraft, usability) in map) {
             logger.info { "Aircraft ${aircraft.regNo} could be used at ${usability.location}, ${usability.enabledTime}" }
@@ -41,8 +50,7 @@ class AircraftUsabilityTidier {
                 }
                 if (!it.recoveryNeeded(recoveryPlan.timeWindow)) {
                     return@filter true
-                }
-                else if (!it.recoveryNeeded(recoveryPlan.recoveryTime)) {
+                } else if (!it.recoveryNeeded(recoveryPlan.recoveryTime)) {
                     if (it.type is AOGFlightTask) {
                         return@filter true
                     } else {
@@ -62,7 +70,8 @@ class AircraftUsabilityTidier {
             val enabledTime = flightTask.time!!.end + flightTask.connectionTime(aircraft, null)
 
             if (!map.containsKey(aircraft)
-                || map[aircraft]!!.enabledTime < enabledTime) {
+                || map[aircraft]!!.enabledTime < enabledTime
+            ) {
                 map[aircraft] = AircraftUsability(
                     lastTask = flightTask,
                     location = flightTask.arr,

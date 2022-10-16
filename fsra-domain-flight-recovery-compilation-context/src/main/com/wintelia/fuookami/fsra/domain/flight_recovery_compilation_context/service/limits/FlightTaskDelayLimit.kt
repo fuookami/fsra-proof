@@ -16,12 +16,11 @@ import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
+import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.service.*
 
 data class FlightTaskDelayShadowPriceKey(
     val flightTask: FlightTaskKey
 ) : ShadowPriceKey(FlightTaskDelayShadowPriceKey::class)
-
-typealias DelayCostCalculator = fuookami.ospf.kotlin.utils.functional.Extractor<Flt64, FlightTask>
 
 // with redundancy
 class FlightTaskDelayLimit(
@@ -52,7 +51,7 @@ class FlightTaskDelayLimit(
 
         val obj = LinearPolynomial()
         for (task in flightTasks) {
-            obj += delayCostCalculator(task) * delay[task]!!
+            obj += delayCostCalculator(null, task) * delay[task]!!
         }
         model.minimize(obj, "delay")
 

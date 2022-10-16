@@ -30,7 +30,7 @@ private data class FlightTaskPair(
 
 // with redundancy
 class FlightTaskConnectionTimeLimit(
-    private val iteration: Int,
+    private val iteration: UInt64,
     bunches: List<FlightTaskBunch>,
     private val compilation: Compilation,
     private val flightTaskTime: FlightTaskTime,
@@ -60,7 +60,7 @@ class FlightTaskConnectionTimeLimit(
         model.registerConstraintGroup(name)
         val m = Flt64(timeWindow.duration.toDouble(DurationUnit.MINUTES))
 
-        val xi = compilation.x[iteration]
+        val xi = compilation.x[iteration.toInt()]
         val redundancy = flightTaskTime.redundancy
         val etd = flightTaskTime.etd
         val eta = flightTaskTime.eta

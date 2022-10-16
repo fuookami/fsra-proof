@@ -26,12 +26,14 @@ class MinimumDepartureTimeCalculator(
                         }
                         departureCloses[airport]!!.add(flowControl)
                     }
+
                     FlowControlScene.Arrival, FlowControlScene.Stay -> {
                         if (arrivalCloses.containsKey(airport)) {
                             arrivalCloses[airport] = ArrayList()
                         }
                         arrivalCloses[airport]!!.add(flowControl)
                     }
+
                     FlowControlScene.DepartureArrival -> {
                         if (departureCloses.containsKey(airport)) {
                             departureCloses[airport] = ArrayList()

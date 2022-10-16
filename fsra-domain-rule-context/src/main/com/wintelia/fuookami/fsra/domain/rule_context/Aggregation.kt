@@ -12,11 +12,18 @@ class Aggregation(
     val lock: Lock
 ) {
     val restrictions: List<Restriction>
+    val flightTasks: List<FlightTask>
 
     init {
         val restrictions = ArrayList<Restriction>()
         restrictions.addAll(relationRestrictions)
         restrictions.addAll(generalRestrictions)
         this.restrictions = restrictions
+
+        this.flightTasks = ArrayList()
+    }
+
+    fun enabled(aircraft: Aircraft): Boolean {
+        return enabledAircrafts.contains(aircraft)
     }
 }

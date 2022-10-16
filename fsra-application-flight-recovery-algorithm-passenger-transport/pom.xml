@@ -44,6 +44,21 @@
             <artifactId>fsra-domain-bunch-generation-context</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.wintelia.fuookami</groupId>
+            <artifactId>fsra-domain-passenger-context</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wintelia.fuookami</groupId>
+            <artifactId>fsra-domain-cargo-context</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wintelia.fuookami</groupId>
+            <artifactId>fsra-domain-crew-context</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
 </project>
