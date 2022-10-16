@@ -16,7 +16,7 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.FlightLink
 
-data class FlightLinkShadowPriceKey(
+private data class FlightLinkShadowPriceKey(
     val link: com.wintelia.fuookami.fsra.domain.rule_context.model.FlightLink
 ) : ShadowPriceKey(FlightLinkShadowPriceKey::class)
 

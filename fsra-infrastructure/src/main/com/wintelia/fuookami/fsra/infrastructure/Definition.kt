@@ -12,8 +12,9 @@ val gr = Greater<Flt64, Flt64>(precision)
 val geq = GreaterEqual<Flt64, Flt64>(precision)
 val eq = Equal<Flt64, Flt64>(precision)
 
-val shortDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("mmdd")
-val shortTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("mmddHHMM")
+private val dateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-mm-dd")
+private val shortDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("mmdd")
+private val shortTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("mmddHHMM")
 
 fun Instant.toShortString(): String = shortTimeFormatter.format(this.toJavaInstant())
 
@@ -28,6 +29,7 @@ data class Date(
 
     fun localDate(timeZone: TimeZone = TimeZone.currentSystemDefault()) = value.toLocalDateTime(timeZone).date
 
+    override fun toString(): String = dateFormat.format(value.toJavaInstant())
     fun toShortString(): String = shortDateFormat.format(value.toJavaInstant())
 }
 

@@ -21,8 +21,10 @@ class FlightTaskBunch(
     val size get() = flightTasks.size
     val empty get() = flightTasks.isEmpty()
     val lastTask by ability::lastTask
+    val costDensity = (cost.sum ?: Flt64.zero) / Flt64(size.toDouble())
     val busyTime: Duration
     val totalDelay: Duration
+    val aircraftChange: UInt64
     val keys: Map<FlightTaskKey, Int>
     val redundancy: Map<FlightTaskKey, Pair<Duration, Duration>>
 
@@ -94,6 +96,7 @@ class FlightTaskBunch(
             busyTime += flightTasks[i].connectionTime(aircraft, succTask)
         }
         this.busyTime = busyTime
+        this.aircraftChange = UInt64(flightTasks.count { it.aircraftChanged }.toULong())
 
         totalDelay = flightTasks.sumOf { it.delay.toLong(DurationUnit.MINUTES) }.minutes
     }

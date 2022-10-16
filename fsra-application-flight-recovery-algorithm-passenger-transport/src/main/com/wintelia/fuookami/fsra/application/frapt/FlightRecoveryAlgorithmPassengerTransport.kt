@@ -46,10 +46,10 @@ class FlightRecoveryAlgorithmPassengerTransport(
     private var subProblemSolvingTimes: UInt64 = UInt64.zero
     private var subProblemSolvingTime: Duration = Duration.ZERO
 
-    val columnAmount: UInt64 get() = flightRecoveryCompilationContext.columnAmount
-    val aircraftAmount: UInt64 get() = UInt64(flightRecoveryCompilationContext.recoveryNeededAircrafts.size.toULong())
-    fun notFixedAircraftAmount(fixedBunches: Set<FlightTaskBunch>): UInt64 = aircraftAmount - UInt64(fixedBunches.size.toULong())
-    fun minimumColumnAmount(fixedBunches: Set<FlightTaskBunch>, configuration: Configuration): UInt64 = notFixedAircraftAmount(fixedBunches) * configuration.minimumColumnAmountPerAircraft
+    private val columnAmount: UInt64 get() = flightRecoveryCompilationContext.columnAmount
+    private val aircraftAmount: UInt64 get() = UInt64(flightRecoveryCompilationContext.recoveryNeededAircrafts.size.toULong())
+    private fun notFixedAircraftAmount(fixedBunches: Set<FlightTaskBunch>): UInt64 = aircraftAmount - UInt64(fixedBunches.size.toULong())
+    private fun minimumColumnAmount(fixedBunches: Set<FlightTaskBunch>, configuration: Configuration): UInt64 = notFixedAircraftAmount(fixedBunches) * configuration.minimumColumnAmountPerAircraft
 
     operator fun invoke(input: Input, configuration: Configuration, parameter: Parameter): Output {
         var maximumReducedCost1 = Flt64(50.0)
@@ -168,7 +168,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
 
                 logger.debug { "Global column generation of iteration $mainIteration end!" }
 
-                val freeAircrafts = when (val ret = selectFreeAircrafts(shadowPriceMap, model)) {
+                val freeAircrafts = when (val ret = selectFreeAircrafts(shadowPriceMap, model, configuration)) {
                     is Ok -> { ret.value }
                     is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
                 }
@@ -211,7 +211,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                         is Ok -> { }
                         is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
                     }
-                    val newFixedBunches = when (val ret = locallyFix(iteration.iteration, iteration.optimalRate, fixedBunches, model)) {
+                    val newFixedBunches = when (val ret = locallyFix(iteration.iteration, fixedBunches, model)) {
                         is Ok -> { ret.value }
                         is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
                     }
@@ -453,12 +453,12 @@ class FlightRecoveryAlgorithmPassengerTransport(
 
         when (val ret = flightRecoveryCompilationContext.globallyFix(fixedBunches)) {
             is Ok -> { }
-            is Failed -> { }
+            is Failed -> { return Failed(ret.error) }
         }
         return Ok(fixedBunches)
     }
 
-    private fun locallyFix(iteration: UInt64, optimalRate: Flt64, fixedBunches: Set<FlightTaskBunch>, model: LinearMetaModel): Result<Set<FlightTaskBunch>, Error> {
+    private fun locallyFix(iteration: UInt64, fixedBunches: Set<FlightTaskBunch>, model: LinearMetaModel): Result<Set<FlightTaskBunch>, Error> {
         val fixBar = Flt64(0.9)
         return when (val ret = flightRecoveryCompilationContext.locallyFix(iteration, fixBar, fixedBunches, model)) {
             is Ok -> { Ok(ret.value) }
@@ -554,8 +554,8 @@ class FlightRecoveryAlgorithmPassengerTransport(
         }
     }
 
-    private fun selectFreeAircrafts(shadowPriceMap: ShadowPriceMap, model: LinearMetaModel): Result<Set<Aircraft>, Error> {
-        return flightRecoveryCompilationContext.selectFreeAircrafts(fixedBunches, hiddenAircrafts, shadowPriceMap, model)
+    private fun selectFreeAircrafts(shadowPriceMap: ShadowPriceMap, model: LinearMetaModel, configuration: Configuration): Result<Set<Aircraft>, Error> {
+        return flightRecoveryCompilationContext.selectFreeAircrafts(fixedBunches, hiddenAircrafts, shadowPriceMap, model, configuration)
     }
 
     private fun refresh(lpResult: LPResult) {

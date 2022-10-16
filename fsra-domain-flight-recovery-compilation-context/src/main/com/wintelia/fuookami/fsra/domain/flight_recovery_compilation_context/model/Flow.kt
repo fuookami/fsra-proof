@@ -26,6 +26,7 @@ class Flow(
         val airport by flowControl::airport
         val scene by flowControl::scene
         val condition by flowControl::condition
+        val closed by flowControl::closed
         val capacity get() = flowControl.capacity.amount
         val interval get() = flowControl.capacity.interval
 

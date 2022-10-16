@@ -45,6 +45,7 @@ data class RecoveryedMaintenanceDTO(
 
     val canceled: Boolean,
     val delayed: Boolean,
+    val airportChanged: Boolean,
 )
 
 @Serializable

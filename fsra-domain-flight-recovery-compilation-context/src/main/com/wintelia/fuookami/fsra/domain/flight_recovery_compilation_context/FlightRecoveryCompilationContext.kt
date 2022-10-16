@@ -86,7 +86,9 @@ class FlightRecoveryCompilationContext(
         }
     }
 
-    fun analyzeSolution(recoveryPlan: RecoveryPlan, iteration: UInt64, model: LinearMetaModel): Result<OutputAnalyzer.Solution, Error> {
+    fun analyzeSolution(recoveryPlan: RecoveryPlan, iteration: UInt64, model: LinearMetaModel): Result<OutputAnalyzer.Output, Error> {
+        val analyzer = OutputAnalyzer(aggregation)
+        return analyzer(recoveryPlan, iteration, model)
     }
 
     fun extractShadowPrice(shadowPriceMap: ShadowPriceMap, model: LinearMetaModel, shadowPrices: List<Flt64>): Try<Error> {
@@ -121,12 +123,12 @@ class FlightRecoveryCompilationContext(
         fixedBunches: Set<FlightTaskBunch>,
         hiddenAircrafts: Set<Aircraft>,
         shadowPriceMap: ShadowPriceMap,
-        model: LinearMetaModel
+        model: LinearMetaModel,
+        configuration: Configuration
     ): Result<Set<Aircraft>, Error> {
         assert(this::aggregation.isInitialized)
-        val ruleAggregation = ruleContext.aggregation
-        val selector = FreeAircraftSelector(aggregation)
-        return selector(fixedBunches, hiddenAircrafts, ruleAggregation.flowControls, shadowPriceMap, model)
+        val selector = FreeAircraftSelector(aggregation, configuration.freeAircraftSelectorConfiguration)
+        return selector(fixedBunches, hiddenAircrafts, shadowPriceMap, model)
     }
 
     fun globallyFix(fixedBunches: Set<FlightTaskBunch>): Try<Error> {

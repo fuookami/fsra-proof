@@ -16,7 +16,7 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
 
-class FlowControlShadowPriceKey(
+internal data class FlowControlShadowPriceKey(
     val checkPoint: Flow.CheckPoint
 ) : ShadowPriceKey(FlowControlShadowPriceKey::class)
 

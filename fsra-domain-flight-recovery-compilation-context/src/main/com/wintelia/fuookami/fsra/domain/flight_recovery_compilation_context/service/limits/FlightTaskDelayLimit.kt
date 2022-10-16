@@ -18,7 +18,7 @@ import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.service.*
 
-data class FlightTaskDelayShadowPriceKey(
+private data class FlightTaskDelayShadowPriceKey(
     val flightTask: FlightTaskKey
 ) : ShadowPriceKey(FlightTaskDelayShadowPriceKey::class)
 
