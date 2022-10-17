@@ -69,7 +69,7 @@ data class Output(
     val maintenances: List<RecoveryedMaintenanceDTO>?,
     var performance: Performance? = null
 ) {
-    constructor(recoveryPlanId: String, error: Error): this(
+    constructor(recoveryPlanId: String, error: Error) : this(
         recoveryPlanId = recoveryPlanId,
         success = false,
         errorCode = error.code().toUInt64(),

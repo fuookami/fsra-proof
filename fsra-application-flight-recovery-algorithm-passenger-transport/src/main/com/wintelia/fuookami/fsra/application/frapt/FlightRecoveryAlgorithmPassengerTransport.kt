@@ -49,7 +49,8 @@ class FlightRecoveryAlgorithmPassengerTransport(
     private val columnAmount: UInt64 get() = flightRecoveryCompilationContext.columnAmount
     private val aircraftAmount: UInt64 get() = UInt64(flightRecoveryCompilationContext.recoveryNeededAircrafts.size.toULong())
     private fun notFixedAircraftAmount(fixedBunches: Set<FlightTaskBunch>): UInt64 = aircraftAmount - UInt64(fixedBunches.size.toULong())
-    private fun minimumColumnAmount(fixedBunches: Set<FlightTaskBunch>, configuration: Configuration): UInt64 = notFixedAircraftAmount(fixedBunches) * configuration.minimumColumnAmountPerAircraft
+    private fun minimumColumnAmount(fixedBunches: Set<FlightTaskBunch>, configuration: Configuration): UInt64 =
+        notFixedAircraftAmount(fixedBunches) * configuration.minimumColumnAmountPerAircraft
 
     operator fun invoke(input: Input, configuration: Configuration, parameter: Parameter): Output {
         var maximumReducedCost1 = Flt64(50.0)
@@ -61,45 +62,68 @@ class FlightRecoveryAlgorithmPassengerTransport(
             var bestOutput: Output? = null
             val model = LinearMetaModel(id)
             when (val ret = init(input, configuration, parameter)) {
-                is Ok -> { }
-                is Failed -> { return Output(id, ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Output(id, ret.error)
+                }
             }
 
             lateinit var shadowPriceMap: ShadowPriceMap
             var iteration = Iteration()
             when (val ret = register(model, configuration)) {
-                is Ok -> { }
-                is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return tidyOutput(id, bestOutput, beginTime, ret.error)
+                }
             }
             when (val ret = construct(input.plan, model, configuration, parameter)) {
-                is Ok -> { }
-                is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return tidyOutput(id, bestOutput, beginTime, ret.error)
+                }
             }
 
             // solve ip with initial column
             val ipRet = when (val ret = solveMIP("${id}_$iteration", model, configuration)) {
-                is Ok -> { ret.value }
-                is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                is Ok -> {
+                    ret.value
+                }
+
+                is Failed -> {
+                    return tidyOutput(id, bestOutput, beginTime, ret.error)
+                }
             }
             bestOutput = when (val ret = analyzeSolution(input.plan, iteration.iteration, ipRet, model)) {
-                is Ok -> { ret.value }
-                is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                is Ok -> {
+                    ret.value
+                }
+
+                is Failed -> {
+                    return tidyOutput(id, bestOutput, beginTime, ret.error)
+                }
             }
             refresh(ipRet)
             if (eq(ipRet.obj, Flt64.zero)) {
                 return tidyOutput(id, bestOutput, beginTime)
             }
             when (val ret = fixBunch(iteration.iteration, model)) {
-                is Ok -> { }
-                is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return tidyOutput(id, bestOutput, beginTime, ret.error)
+                }
             }
             when (val ret = keepBunch(iteration.iteration, model)) {
-                is Ok -> { }
-                is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return tidyOutput(id, bestOutput, beginTime, ret.error)
+                }
             }
             when (val ret = checkIsStopped(id, bestOutput, beginTime)) {
-                is Output -> { return ret }
-                else -> { }
+                is Output -> {
+                    return ret
+                }
+
+                else -> {}
             }
 
             var mainIteration = UInt64.one
@@ -109,16 +133,26 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 logger.debug { "Iteration $mainIteration begin!" }
 
                 shadowPriceMap = when (val ret = solveRMP(id, iteration, model, configuration, true)) {
-                    is Ok -> { ret.value }
-                    is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                    is Ok -> {
+                        ret.value
+                    }
+
+                    is Failed -> {
+                        return tidyOutput(id, bestOutput, beginTime, ret.error)
+                    }
                 }
                 when (val ret = hideAircrafts(model)) {
-                    is Ok -> { }
-                    is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                    is Ok -> {}
+                    is Failed -> {
+                        return tidyOutput(id, bestOutput, beginTime, ret.error)
+                    }
                 }
                 when (val ret = checkIsStopped(id, bestOutput, beginTime)) {
-                    is Output -> { return ret }
-                    else -> { }
+                    is Output -> {
+                        return ret
+                    }
+
+                    else -> {}
                 }
 
                 logger.debug { "Global column generation of iteration $mainIteration begin!" }
@@ -128,8 +162,13 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 for (count in 0 until 1) {
                     ++iteration
                     val newBunches = when (val ret = solveSP(id, flightRecoveryCompilationContext.recoveryNeededAircrafts, iteration, shadowPriceMap)) {
-                        is Ok -> { ret.value }
-                        is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                        is Ok -> {
+                            ret.value
+                        }
+
+                        is Failed -> {
+                            return tidyOutput(id, bestOutput, beginTime, ret.error)
+                        }
                     }
                     if (newBunches.isEmpty()) {
                         logger.debug { "There is no bunch generated in global column generation of iteration $mainIteration." }
@@ -140,22 +179,37 @@ class FlightRecoveryAlgorithmPassengerTransport(
                     val newBunchAmount = UInt64(newBunches.size.toULong())
 
                     when (val ret = addColumns(iteration.iteration, newBunches, input.plan, model, configuration)) {
-                        is Ok -> { }
-                        is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                        is Ok -> {}
+                        is Failed -> {
+                            return tidyOutput(id, bestOutput, beginTime, ret.error)
+                        }
                     }
                     shadowPriceMap = when (val ret = solveRMP(id, iteration, model, configuration, true)) {
-                        is Ok -> { ret.value }
-                        is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                        is Ok -> {
+                            ret.value
+                        }
+
+                        is Failed -> {
+                            return tidyOutput(id, bestOutput, beginTime, ret.error)
+                        }
                     }
                     when (val ret = checkIsStopped(id, bestOutput, beginTime)) {
-                        is Output -> { return ret }
-                        else -> { }
+                        is Output -> {
+                            return ret
+                        }
+
+                        else -> {}
                     }
                     val reducedAmount = UInt64(fixedBunches.count { gr(shadowPriceMap.reducedCost(it), Flt64.zero) }.toULong())
                     if (columnAmount > configuration.maximumColumnAmount) {
                         maximumReducedCost1 = when (val ret = removeColumns(maximumReducedCost1, shadowPriceMap, model, configuration)) {
-                            is Ok -> { ret.value }
-                            is Failed ->{ return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                            is Ok -> {
+                                ret.value
+                            }
+
+                            is Failed -> {
+                                return tidyOutput(id, bestOutput, beginTime, ret.error)
+                            }
                         }
                     }
                     if (reducedAmount >= configuration.badReducedAmount
@@ -169,17 +223,30 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 logger.debug { "Global column generation of iteration $mainIteration end!" }
 
                 val freeAircrafts = when (val ret = selectFreeAircrafts(shadowPriceMap, model, configuration)) {
-                    is Ok -> { ret.value }
-                    is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                    is Ok -> {
+                        ret.value
+                    }
+
+                    is Failed -> {
+                        return tidyOutput(id, bestOutput, beginTime, ret.error)
+                    }
                 }
                 val fixedBunches = when (val ret = globallyFix(freeAircrafts)) {
-                    is Ok -> { ret.value.toHashSet() }
-                    is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                    is Ok -> {
+                        ret.value.toHashSet()
+                    }
+
+                    is Failed -> {
+                        return tidyOutput(id, bestOutput, beginTime, ret.error)
+                    }
                 }
                 val freeAircraftList = freeAircrafts.toMutableList()
                 when (val ret = checkIsStopped(id, bestOutput, beginTime)) {
-                    is Output -> { return ret }
-                    else -> { }
+                    is Output -> {
+                        return ret
+                    }
+
+                    else -> {}
                 }
 
                 logger.debug { "Local column generation of iteration $mainIteration begin!" }
@@ -187,18 +254,31 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 // locally column generation
                 while (true) {
                     shadowPriceMap = when (val ret = solveRMP(id, iteration, model, configuration, false)) {
-                        is Ok -> { ret.value }
-                        is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                        is Ok -> {
+                            ret.value
+                        }
+
+                        is Failed -> {
+                            return tidyOutput(id, bestOutput, beginTime, ret.error)
+                        }
                     }
                     when (val ret = checkIsStopped(id, bestOutput, beginTime)) {
-                        is Output -> { return ret }
-                        else -> { }
+                        is Output -> {
+                            return ret
+                        }
+
+                        else -> {}
                     }
 
                     ++iteration
                     val newBunches = when (val ret = solveSP(id, flightRecoveryCompilationContext.recoveryNeededAircrafts, iteration, shadowPriceMap)) {
-                        is Ok -> { ret.value }
-                        is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                        is Ok -> {
+                            ret.value
+                        }
+
+                        is Failed -> {
+                            return tidyOutput(id, bestOutput, beginTime, ret.error)
+                        }
                     }
                     if (newBunches.isEmpty()) {
                         --iteration
@@ -208,12 +288,19 @@ class FlightRecoveryAlgorithmPassengerTransport(
                     val newBunchAmount = UInt64(newBunches.size.toULong())
 
                     when (val ret = addColumns(iteration.iteration, newBunches, input.plan, model, configuration)) {
-                        is Ok -> { }
-                        is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                        is Ok -> {}
+                        is Failed -> {
+                            return tidyOutput(id, bestOutput, beginTime, ret.error)
+                        }
                     }
                     val newFixedBunches = when (val ret = locallyFix(iteration.iteration, fixedBunches, model)) {
-                        is Ok -> { ret.value }
-                        is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                        is Ok -> {
+                            ret.value
+                        }
+
+                        is Failed -> {
+                            return tidyOutput(id, bestOutput, beginTime, ret.error)
+                        }
                     }
                     if (newFixedBunches.isNotEmpty()) {
                         for (bunch in newFixedBunches) {
@@ -228,8 +315,13 @@ class FlightRecoveryAlgorithmPassengerTransport(
                         && newBunchAmount > minimumColumnAmount(fixedBunches, configuration)
                     ) {
                         maximumReducedCost2 = when (val ret = removeColumns(maximumReducedCost2, shadowPriceMap, model, configuration)) {
-                            is Ok -> { ret.value }
-                            is Failed ->{ return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                            is Ok -> {
+                                ret.value
+                            }
+
+                            is Failed -> {
+                                return tidyOutput(id, bestOutput, beginTime, ret.error)
+                            }
                         }
                     }
                 }
@@ -238,8 +330,13 @@ class FlightRecoveryAlgorithmPassengerTransport(
 
                 this.fixedBunches = fixedBunches
                 val lpRet = when (val ret = solveLP("${id}_${iteration}_lp", model, configuration, LinearSolverConfig())) {
-                    is Ok -> { ret.value }
-                    is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+                    is Ok -> {
+                        ret.value
+                    }
+
+                    is Failed -> {
+                        return tidyOutput(id, bestOutput, beginTime, ret.error)
+                    }
                 }
                 refresh(lpRet)
                 logIpResults(iteration.iteration, model)
@@ -250,19 +347,25 @@ class FlightRecoveryAlgorithmPassengerTransport(
                                 return tidyOutput(id, bestOutput, beginTime)
                             }
                         }
-                        is Failed -> { return tidyOutput(id, bestOutput, beginTime, ret.error) }
+
+                        is Failed -> {
+                            return tidyOutput(id, bestOutput, beginTime, ret.error)
+                        }
                     }
                 }
                 heartBeat(id, iteration.optimalRate)
                 when (val ret = checkIsStopped(id, bestOutput, beginTime)) {
-                    is Output -> { return ret }
-                    else -> { }
+                    is Output -> {
+                        return ret
+                    }
+
+                    else -> {}
                 }
 
                 flush(iteration.iteration)
                 iteration.halveStep()
 
-                logger.debug { "Iteration $mainIteration end, optimal rate: ${iteration.optimalRate}"}
+                logger.debug { "Iteration $mainIteration end, optimal rate: ${iteration.optimalRate}" }
                 ++mainIteration
             }
 
@@ -287,37 +390,51 @@ class FlightRecoveryAlgorithmPassengerTransport(
 
     private fun init(input: Input, configuration: Configuration, parameter: Parameter): Try<Error> {
         when (val ret = flightTaskContext.init(input)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         when (val ret = ruleContext.init(input, parameter)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         when (val ret = flightRecoveryCompilationContext.init(input.plan, configuration)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         when (val ret = bunchGenerationContext.init(flightRecoveryCompilationContext.recoveryNeededAircrafts, flightRecoveryCompilationContext.recoveryNeededFlightTasks)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         if (configuration.withPassenger) {
             when (val ret = passengerContext.init(input)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         if (configuration.withCargo) {
             when (val ret = cargoContext.init(input)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         if (configuration.withCrew) {
             when (val ret = crewContext.init(input)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         return Ok(success)
@@ -326,25 +443,33 @@ class FlightRecoveryAlgorithmPassengerTransport(
     private fun register(model: LinearMetaModel, configuration: Configuration): Try<Error> {
         val beginTime = Clock.System.now()
         when (val ret = flightRecoveryCompilationContext.register(model, configuration)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         if (configuration.withPassenger) {
             when (val ret = passengerContext.register(model)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         if (configuration.withCargo) {
             when (val ret = cargoContext.register(model)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         if (configuration.withCrew) {
             when (val ret = crewContext.register(model)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         mainProblemModelingTime += Clock.System.now() - beginTime
@@ -354,30 +479,40 @@ class FlightRecoveryAlgorithmPassengerTransport(
     private fun construct(recoveryPlan: RecoveryPlan, model: LinearMetaModel, configuration: Configuration, parameter: Parameter): Try<Error> {
         val beginTime = Clock.System.now()
         when (val ret = flightRecoveryCompilationContext.construct(recoveryPlan, model, configuration, parameter)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         if (configuration.withPassenger) {
             when (val ret = passengerContext.construct(model)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         if (configuration.withCargo) {
             when (val ret = cargoContext.construct(model)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         if (configuration.withCrew) {
             when (val ret = crewContext.construct(model)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         when (val ret = addColumns(UInt64.zero, bunchGenerationContext.initialFlightBunches, recoveryPlan, model, configuration)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         mainProblemModelingTime += Clock.System.now() - beginTime
         return Ok(success)
@@ -385,19 +520,31 @@ class FlightRecoveryAlgorithmPassengerTransport(
 
     private fun solveRMP(id: String, iteration: Iteration, model: LinearMetaModel, configuration: Configuration, withKeeping: Boolean): Result<ShadowPriceMap, Error> {
         val lpRet = when (val ret = solveLP("${id}_${iteration}_lp", model, configuration, LinearSolverConfig())) {
-            is Ok -> { ret.value }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         refresh(lpRet)
         if (iteration.refreshLpObj(lpRet.result.obj) && withKeeping) {
             when (val ret = keepBunch(iteration.iteration, model)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         val shadowPriceMap = when (val ret = extractShadowPrice(model, lpRet.dualResult, configuration)) {
-            is Ok -> { ret.value }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         return Ok(shadowPriceMap)
     }
@@ -405,8 +552,13 @@ class FlightRecoveryAlgorithmPassengerTransport(
     private fun solveSP(id: String, aircrafts: List<Aircraft>, iteration: Iteration, shadowPriceMap: ShadowPriceMap): Result<List<FlightTaskBunch>, Error> {
         val beginTime = Clock.System.now()
         val newBunches = when (val ret = bunchGenerationContext.generateFlightTaskBunch(aircrafts, iteration.iteration, shadowPriceMap)) {
-            is Ok -> { ret.value }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         subProblemSolvingTimes += UInt64.one
         subProblemSolvingTime = Clock.System.now() - beginTime
@@ -419,25 +571,33 @@ class FlightRecoveryAlgorithmPassengerTransport(
         val map = ShadowPriceMap()
 
         when (val ret = flightRecoveryCompilationContext.extractShadowPrice(map, model, shadowPrices)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         if (configuration.withPassenger) {
             when (val ret = passengerContext.extractShadowPrice(map, model, shadowPrices)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         if (configuration.withCargo) {
             when (val ret = cargoContext.extractShadowPrice(map, model, shadowPrices)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         if (configuration.withCrew) {
             when (val ret = crewContext.extractShadowPrice(map, model, shadowPrices)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         return Ok(map)
@@ -452,8 +612,10 @@ class FlightRecoveryAlgorithmPassengerTransport(
         }
 
         when (val ret = flightRecoveryCompilationContext.globallyFix(fixedBunches)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         return Ok(fixedBunches)
     }
@@ -461,15 +623,22 @@ class FlightRecoveryAlgorithmPassengerTransport(
     private fun locallyFix(iteration: UInt64, fixedBunches: Set<FlightTaskBunch>, model: LinearMetaModel): Result<Set<FlightTaskBunch>, Error> {
         val fixBar = Flt64(0.9)
         return when (val ret = flightRecoveryCompilationContext.locallyFix(iteration, fixBar, fixedBunches, model)) {
-            is Ok -> { Ok(ret.value) }
-            is Failed -> { Failed(ret.error) }
+            is Ok -> {
+                Ok(ret.value)
+            }
+
+            is Failed -> {
+                Failed(ret.error)
+            }
         }
     }
 
     private fun flush(iteration: UInt64): Try<Error> {
         when (val ret = flightRecoveryCompilationContext.flush(iteration)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         keptBunches.clear()
         hiddenAircrafts.clear()
@@ -478,42 +647,57 @@ class FlightRecoveryAlgorithmPassengerTransport(
 
     private fun analyzeSolution(recoveryPlan: RecoveryPlan, iteration: UInt64, solverOutput: LinearSolverOutput, model: LinearMetaModel): Result<Output, Error> {
         val (flights, maintenances) = when (val ret = flightRecoveryCompilationContext.analyzeSolution(recoveryPlan, iteration, model)) {
-            is Ok -> { ret.value }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
-        return Ok(Output(
-            recoveryPlanId = recoveryPlan.id,
-            success = true,
-            errorCode = null,
-            errorMessage = null,
-            obj = solverOutput.obj,
-            flights = flights,
-            maintenances = maintenances
-        ))
+        return Ok(
+            Output(
+                recoveryPlanId = recoveryPlan.id,
+                success = true,
+                errorCode = null,
+                errorMessage = null,
+                obj = solverOutput.obj,
+                flights = flights,
+                maintenances = maintenances
+            )
+        )
     }
 
     private fun addColumns(iteration: UInt64, bunches: List<FlightTaskBunch>, recoveryPlan: RecoveryPlan, model: LinearMetaModel, configuration: Configuration): Try<Error> {
         val beginTime = Clock.System.now()
         when (val ret = flightRecoveryCompilationContext.addColumns(iteration, bunches, recoveryPlan, model, configuration)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         if (configuration.withPassenger) {
             when (val ret = passengerContext.addColumns(iteration, bunches)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         if (configuration.withCargo) {
             when (val ret = cargoContext.addColumns(iteration, bunches)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         if (configuration.withCrew) {
             when (val ret = crewContext.addColumns(iteration, bunches)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         mainProblemModelingTime += Clock.System.now() - beginTime
@@ -530,7 +714,10 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 fixedBunches.addAll(ret.value)
                 Ok(success)
             }
-            is Failed -> { Failed(ret.error) }
+
+            is Failed -> {
+                Failed(ret.error)
+            }
         }
     }
 
@@ -540,7 +727,10 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 keptBunches.addAll(ret.value)
                 Ok(success)
             }
-            is Failed -> { Failed(ret.error) }
+
+            is Failed -> {
+                Failed(ret.error)
+            }
         }
     }
 
@@ -550,7 +740,10 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 hiddenAircrafts.addAll(ret.value)
                 Ok(success)
             }
-            is Failed -> { Failed(ret.error) }
+
+            is Failed -> {
+                Failed(ret.error)
+            }
         }
     }
 
@@ -610,8 +803,10 @@ class FlightRecoveryAlgorithmPassengerTransport(
 
     private fun logIpResults(iteration: UInt64, model: LinearMetaModel): Try<Error> {
         when (val ret = logLpResults(iteration, model)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         flightRecoveryCompilationContext.logBunchCost(iteration, model)
         return Ok(success)

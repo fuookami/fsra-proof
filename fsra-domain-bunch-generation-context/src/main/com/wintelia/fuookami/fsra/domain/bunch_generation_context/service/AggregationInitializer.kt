@@ -146,8 +146,9 @@ class AggregationInitializer {
                 continue
             }
 
-            val lockedFlightTasks = flightTasks.filter { isLocked(it, bunch.aircraft) }
-            val newBunch = generator(aircraftUsability[bunch.aircraft]!!, lockedFlightTasks, bunch) ?: continue
+            val aircraft = bunch.aircraft
+            val lockedFlightTasks = flightTasks.filter { isLocked(it, bunch.aircraft) }.sortedBy { it.time?.begin }
+            val newBunch = generator(aircraft, aircraftUsability[bunch.aircraft]!!, lockedFlightTasks, bunch) ?: continue
             generatedAircraft.add(bunch.aircraft)
             bunches.add(newBunch)
         }
@@ -157,7 +158,7 @@ class AggregationInitializer {
                 continue
             }
 
-            val lockedFlightTasks = flightTasks.filter { isLocked(it, aircraft) }
+            val lockedFlightTasks = flightTasks.filter { isLocked(it, aircraft) }.sortedBy { it.time?.begin }
             val newBunch = generator.emptyBunch(aircraft, aircraftUsability[aircraft]!!, lockedFlightTasks) ?: continue
             bunches.add(newBunch)
         }

@@ -21,46 +21,69 @@ class FreeAircraftSelector(
         val freeAircrafts = hiddenAircrafts.toMutableSet()
 
         when (val ret = freeBadReducedCostAircrafts(bunches, freeAircrafts, shadowPriceMap, model)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         when (val ret = freeAirportCloseAircrafts(bunches, freeAircrafts)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         when (val ret = freeNoBusyAircrafts(bunches, freeAircrafts)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         when (val ret = freeHighCostAircrafts(bunches, freeAircrafts)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         when (val ret = freeHighCostDensityAircrafts(bunches, freeAircrafts)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         when (val ret = freeHighFlowControlCostAircrafts(bunches, freeAircrafts, shadowPriceMap)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         when (val ret = freeHighDelayAircrafts(bunches, freeAircrafts)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         when (val ret = freeHighAircraftChangeAircrafts(bunches, freeAircrafts)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
         when (val ret = freeRandAircrafts(bunches, freeAircrafts)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
 
         return Ok(freeAircrafts)
     }
 
-    private fun freeBadReducedCostAircrafts(fixedBunches: MutableList<FlightTaskBunch>, freeAircrafts: MutableSet<Aircraft>, shadowPriceMap: ShadowPriceMap, model: LinearMetaModel): Try<Error> {
+    private fun freeBadReducedCostAircrafts(
+        fixedBunches: MutableList<FlightTaskBunch>,
+        freeAircrafts: MutableSet<Aircraft>,
+        shadowPriceMap: ShadowPriceMap,
+        model: LinearMetaModel
+    ): Try<Error> {
         val values = tidyValue(fixedBunches, model)
         val value = { it: FlightTaskBunch -> shadowPriceMap.reducedCost(it) - it.cost.sum!! * (values[it] ?: Flt64.zero) }
         fixedBunches.sortByDescending { value(it) }

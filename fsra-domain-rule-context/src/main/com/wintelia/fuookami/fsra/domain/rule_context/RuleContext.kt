@@ -24,14 +24,20 @@ class RuleContext(
 
         val initializer = AggregationInitializer()
         aggregation = when (val ret = initializer(flightTaskAggregation.originBunches, input, parameter)) {
-            is Ok -> { ret.value }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
 
         feasibilityJudger = FlightTaskFeasibilityJudger(aggregation)
         connectionTimeCalculator = ConnectionTimeCalculator(aggregation.linkMap)
         minimumDepartureTimeCalculator = MinimumDepartureTimeCalculator(aggregation.lock, aggregation.flowControls)
-        costCalculator = CostCalculator(aggregation, connectionTimeCalculator, minimumDepartureTimeCalculator, flightTaskAggregation.aircraftUsability, aggregation.linkMap, parameter)
+        costCalculator =
+            CostCalculator(aggregation, connectionTimeCalculator, minimumDepartureTimeCalculator, flightTaskAggregation.aircraftUsability, aggregation.linkMap, parameter)
 
         return Ok(success)
     }

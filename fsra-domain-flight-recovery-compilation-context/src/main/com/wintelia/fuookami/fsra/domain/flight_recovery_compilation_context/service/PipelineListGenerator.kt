@@ -15,7 +15,14 @@ import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.ser
 class PipelineListGenerator(
     private val aggregation: Aggregation
 ) {
-    operator fun invoke(cancelCostCalculator: CancelCostCalculator, delayCostCalculator: DelayCostCalculator, linkMap: FlightLinkMap, recoveryPlan: RecoveryPlan, configuration: Configuration, parameter: Parameter): Result<CGPipelineList<LinearMetaModel, ShadowPriceMap>, Error> {
+    operator fun invoke(
+        cancelCostCalculator: CancelCostCalculator,
+        delayCostCalculator: DelayCostCalculator,
+        linkMap: FlightLinkMap,
+        recoveryPlan: RecoveryPlan,
+        configuration: Configuration,
+        parameter: Parameter
+    ): Result<CGPipelineList<LinearMetaModel, ShadowPriceMap>, Error> {
         val ret = ArrayList<CGPipeline<LinearMetaModel, ShadowPriceMap>>()
 
         ret.add(FlightTaskCompilationLimit(aggregation.recoveryNeededFlightTasks, aggregation.compilation, cancelCostCalculator))

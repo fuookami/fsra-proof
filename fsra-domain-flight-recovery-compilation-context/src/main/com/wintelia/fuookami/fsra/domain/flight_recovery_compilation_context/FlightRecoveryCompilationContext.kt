@@ -36,7 +36,8 @@ class FlightRecoveryCompilationContext(
         flightTasks.addAll(ruleAggregation.flightTasks)
 
         val initializer = AggregationInitializer()
-        aggregation = when (val ret = initializer(flightTaskAggregation.aircrafts,
+        aggregation = when (val ret = initializer(
+            flightTaskAggregation.aircrafts,
             flightTasks,
             flightTaskAggregation.aircraftUsability,
             flightTaskAggregation.originBunches,
@@ -44,9 +45,9 @@ class FlightRecoveryCompilationContext(
             ruleAggregation.flowControls,
             {
                 flightTaskAggregation.enabled(it)
-                    && ruleAggregation.enabled(it)
-                    && !(!configuration.withCargo && it.capacity is AircraftCapacity.Cargo)
-                    && !(!configuration.withPassenger && it.capacity is AircraftCapacity.Passenger)
+                        && ruleAggregation.enabled(it)
+                        && !(!configuration.withCargo && it.capacity is AircraftCapacity.Cargo)
+                        && !(!configuration.withPassenger && it.capacity is AircraftCapacity.Passenger)
             },
             recoveryPlan,
             configuration
@@ -75,14 +76,31 @@ class FlightRecoveryCompilationContext(
             val ruleAggregation = ruleContext.aggregation
 
             val generator = PipelineListGenerator(aggregation)
-            pipelineList = when (val ret = generator({ ruleContext.cancelCost(it)?.value ?: Flt64.infinity }, { prevFlightTask, flightTask -> ruleContext.delayCost(prevFlightTask, flightTask)?.value ?: Flt64.infinity }, ruleAggregation.linkMap, recoveryPlan, configuration, parameter )) {
-                is Ok -> { ret.value.toMutableList() }
-                is Failed -> { return Failed(ret.error) }
+            pipelineList = when (val ret = generator(
+                { ruleContext.cancelCost(it)?.value ?: Flt64.infinity },
+                { prevFlightTask, flightTask -> ruleContext.delayCost(prevFlightTask, flightTask)?.value ?: Flt64.infinity },
+                ruleAggregation.linkMap,
+                recoveryPlan,
+                configuration,
+                parameter
+            )) {
+                is Ok -> {
+                    ret.value.toMutableList()
+                }
+
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
         }
         return when (val ret = pipelineList(model)) {
-            is Ok -> { Ok(success) }
-            is Failed -> { Failed(ret.error) }
+            is Ok -> {
+                Ok(success)
+            }
+
+            is Failed -> {
+                Failed(ret.error)
+            }
         }
     }
 
@@ -95,8 +113,10 @@ class FlightRecoveryCompilationContext(
         assert(this::pipelineList.isInitialized)
         for (pipeline in pipelineList) {
             when (val ret = pipeline.refresh(shadowPriceMap, model, shadowPrices)) {
-                is Ok -> { }
-                is Failed-> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
             val extractor = pipeline.extractor() ?: continue
             shadowPriceMap.put(extractor)
@@ -160,15 +180,19 @@ class FlightRecoveryCompilationContext(
     fun addColumns(iteration: UInt64, bunches: List<FlightTaskBunch>, recoveryPlan: RecoveryPlan, model: LinearMetaModel, configuration: Configuration): Try<Error> {
         assert(this::aggregation.isInitialized)
         when (val ret = aggregation.addColumns(iteration, bunches, recoveryPlan.timeWindow, model, configuration)) {
-            is Ok -> { }
-            is Failed -> { return Failed(ret.error) }
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
 
         if (configuration.withRedundancy) {
             val newPipeline = FlightTaskConnectionTimeLimit(iteration, bunches, aggregation.compilation, aggregation.flightTaskTime, recoveryPlan.timeWindow)
             when (val ret = newPipeline(model)) {
-                is Ok -> { }
-                is Failed -> { return Failed(ret.error) }
+                is Ok -> {}
+                is Failed -> {
+                    return Failed(ret.error)
+                }
             }
             pipelineList.add(newPipeline)
         }

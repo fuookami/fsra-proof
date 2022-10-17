@@ -61,14 +61,16 @@ class AggregationInitializer {
             }
         }
 
-        return Ok(Aggregation(
-            recoveryNeededAircrafts = recoveryNeededAircrafts,
-            recoveryNeededFlightTasks = recoveryNeededFlightTasks,
-            aircraftUsability = aircraftUsability,
-            originBunches = originBunches,
-            flightLinkMap = flightLinkMap,
-            flowControls = flowControls,
-            configuration = configuration
-        ))
+        return Ok(
+            Aggregation(
+                recoveryNeededAircrafts = recoveryNeededAircrafts,
+                recoveryNeededFlightTasks = recoveryNeededFlightTasks,
+                aircraftUsability = aircraftUsability,
+                originBunches = originBunches,
+                flightLinkMap = flightLinkMap,
+                flowControls = flowControls,
+                configuration = configuration
+            )
+        )
     }
 }
