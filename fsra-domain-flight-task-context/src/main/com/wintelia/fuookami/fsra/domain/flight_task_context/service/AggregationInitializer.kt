@@ -10,6 +10,7 @@ import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.infrastructure.dto.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
+import com.wintelia.fuookami.fsra.domain.flight_task_context.model.PassengerClass
 
 class AggregationInitializer {
     companion object {

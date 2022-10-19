@@ -22,9 +22,9 @@ import fuookami.ospf.kotlin.core.backend.solver.config.LinearSolverConfig
 import fuookami.ospf.kotlin.core.backend.solver.output.LinearSolverOutput
 
 class FlightRecoveryAlgorithmPassengerTransport(
-    private val heartBeatCallBack: ((String, Flt64) -> Unit)?,
-    private val outputCallBack: ((String, Output) -> Unit)?,
-    private val stoppedCallBack: (() -> Boolean)?
+    private val heartBeatCallBack: ((String, Flt64) -> Unit)? = null,
+    private val outputCallBack: ((String, Output) -> Unit)? = null,
+    private val stoppedCallBack: (() -> Boolean)? = null
 ) {
     private val logger = logger()
 

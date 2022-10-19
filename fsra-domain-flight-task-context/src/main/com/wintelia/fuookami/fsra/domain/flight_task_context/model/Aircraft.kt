@@ -88,6 +88,8 @@ data class AircraftMinorType internal constructor(
         }
 
         operator fun invoke(code: AircraftMinorTypeCode) = pool[code]
+
+        val values get() = pool.values
     }
 
     override fun hashCode(): Int {
@@ -144,6 +146,7 @@ data class FlightHour(
 
     operator fun plus(rhs: FlightHour) = FlightHour(hours + rhs.hours)
     operator fun minus(rhs: FlightHour) = FlightHour(hours - rhs.hours)
+    infix fun ls(rhs: FlightHour) = hours < rhs.hours
     infix fun leq(rhs: FlightHour) = hours <= rhs.hours
 }
 
@@ -156,18 +159,73 @@ data class FlightCycle(
 
     operator fun plus(rhs: FlightCycle) = FlightCycle(cycles + rhs.cycles)
     operator fun minus(rhs: FlightCycle) = FlightCycle(cycles - rhs.cycles)
-    infix fun leq(rhs: FlightCycle) = cycles leq rhs.cycles
+    infix fun ls(rhs: FlightCycle) = cycles < rhs.cycles
+    infix fun leq(rhs: FlightCycle) = cycles <= rhs.cycles
 }
 
 data class FlightCyclePeriod(
     val expirationTime: Instant,
-    val remainingFlightHour: FlightHour,
-    val remainingFlightCycle: FlightCycle
-)
+    val remainingFlightHour: FlightHour?,
+    val remainingFlightCycle: FlightCycle?
+) {
+    fun enabled(flightHour: FlightHour): Boolean {
+        return remainingFlightHour == null || flightHour leq remainingFlightHour
+    }
+
+    fun enabled(flightCycle: FlightCycle): Boolean {
+        return remainingFlightCycle == null || flightCycle leq remainingFlightCycle
+    }
+
+    fun overFlightHour(flightHour: FlightHour): FlightHour {
+        return if (remainingFlightHour != null && remainingFlightHour ls flightHour) {
+            flightHour - remainingFlightHour
+        } else {
+            FlightHour.zero
+        }
+    }
+
+    fun overFlightCycle(flightCycle: FlightCycle): FlightCycle {
+        return if (remainingFlightCycle != null && remainingFlightCycle leq flightCycle) {
+            flightCycle - remainingFlightCycle
+        } else {
+            FlightCycle.zero
+        }
+    }
+}
 
 data class AircraftUsability(
     val lastTask: FlightTask?,
     val location: Airport,
     val enabledTime: Instant,
     val flightCyclePeriods: List<FlightCyclePeriod> = emptyList()
-)
+) {
+    fun overFlightHourTimes(time: Instant, flightHour: FlightHour): UInt64 {
+        return UInt64(flightCyclePeriods.count { time < it.expirationTime && !it.enabled(flightHour) }.toULong())
+    }
+
+    fun overFlightCycleTimes(time: Instant, flightCycle: FlightCycle): UInt64 {
+        return UInt64(flightCyclePeriods.count { time < it.expirationTime && !it.enabled(flightCycle) }.toULong())
+    }
+
+    fun overFlightHour(time: Instant, flightHour: FlightHour): FlightHour {
+        var ret = FlightHour.zero
+        for (period in flightCyclePeriods) {
+            if (time >= period.expirationTime) {
+                continue
+            }
+            ret += period.overFlightHour(flightHour)
+        }
+        return ret
+    }
+
+    fun overFlightCycle(time: Instant, flightCycle: FlightCycle): FlightCycle {
+        var ret = FlightCycle.zero
+        for (period in flightCyclePeriods) {
+            if (time >= period.expirationTime) {
+                continue
+            }
+            ret += period.overFlightCycle(flightCycle)
+        }
+        return ret
+    }
+}

@@ -4,10 +4,9 @@ import kotlin.time.*
 import kotlin.time.Duration.Companion.minutes
 import kotlin.reflect.*
 import kotlinx.datetime.*
+import fuookami.ospf.kotlin.utils.math.*
+import fuookami.ospf.kotlin.utils.concept.*
 import com.wintelia.fuookami.fsra.infrastructure.*
-import fuookami.ospf.kotlin.utils.concept.AutoIndexed
-import fuookami.ospf.kotlin.utils.concept.ManualIndexed
-import fuookami.ospf.kotlin.utils.math.UInt64
 
 enum class FlightTaskCategory {
     Flight {
@@ -55,9 +54,10 @@ abstract class FlightTaskType(
 }
 
 enum class FlightTaskStatus {
-    NotAdvance,                    // 不可提前
+    NotAdvance,                     // 不可提前
     NotDelay,                       // 不可延误
     NotCancel,                      // 不可取消
+    NotCancelPreferred,             // 偏好不取消
     NotAircraftChange,              // 不可换飞机
     NotAircraftTypeChange,          // 不可换大机型（系列）
     NotAircraftMinorTypeChange,     // 不可换小机型（细分）
@@ -116,6 +116,7 @@ abstract class FlightTaskPlan(
     }
 
     val cancelEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotCancel)
+    val notCancelPreferred: Boolean get() = status.contains(FlightTaskStatus.NotCancelPreferred)
     val advanceEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotAdvance)
     val delayEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotDelay)
     val aircraftChangeEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotAircraftChange)
@@ -123,6 +124,7 @@ abstract class FlightTaskPlan(
     val aircraftMinorTypeChangeEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotAircraftMinorTypeChange)
     val terminalChangeEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotTerminalChange)
 
+    open val weight: Flt64 get() = Flt64.one
     val strongLimitIgnored: Boolean get() = !status.contains(FlightTaskStatus.StrongLimitIgnored)
 }
 
@@ -181,6 +183,14 @@ abstract class FlightTask(
         }
     )
 
+    open fun flightHour(aircraft: Aircraft, expirationTime: Instant) = FlightHour(
+        if (isFlight && time!!.begin < expirationTime) {
+            duration(aircraft)
+        } else {
+            Duration.ZERO
+        }
+    )
+
     open val flightCycle
         get() = FlightCycle(
             if (isFlight) {
@@ -189,6 +199,14 @@ abstract class FlightTask(
                 UInt64.zero
             }
         )
+
+    open fun flightCycle(expirationTime: Instant) = FlightCycle(
+        if (isFlight && time!!.begin < expirationTime) {
+            UInt64.one
+        } else {
+            UInt64.zero
+        }
+    )
 
     open fun connectionTime(succTask: FlightTask?): Duration? = plan.connectionTime(succTask)
     open fun connectionTime(aircraft: Aircraft, succTask: FlightTask?): Duration =
@@ -212,12 +230,14 @@ abstract class FlightTask(
             null
         }
     open val cancelEnabled get() = plan.cancelEnabled
+    val notCancelPreferred get() = plan.notCancelPreferred
     open val aircraftChangeEnabled get() = plan.aircraftChangeEnabled
     open val aircraftTypeChangeEnabled get() = plan.aircraftTypeChangeEnabled
     open val aircraftMinorTypeChangeEnabled get() = plan.aircraftMinorTypeChangeEnabled
     open val delayEnabled get() = plan.delayEnabled
     open val advanceEnabled get() = plan.advanceEnabled
     open val routeChangeEnabled get() = plan.terminalChangeEnabled
+    open val weight get() = plan.weight
     open val strongLimitIgnored: Boolean get() = plan.strongLimitIgnored
 
     abstract val recovered: Boolean

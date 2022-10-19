@@ -45,7 +45,7 @@ class FlightTaskFeasibilityJudger(
     }
 
     private fun checkAdditionalFlights(aircraft: Aircraft, prevFlightTask: FlightTask?, flightTask: FlightTask): Boolean {
-        // todo
+        // todo: if implement additional flight
         return true
     }
 

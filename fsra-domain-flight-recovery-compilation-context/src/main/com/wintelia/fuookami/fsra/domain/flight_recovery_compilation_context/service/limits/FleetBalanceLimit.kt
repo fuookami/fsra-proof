@@ -42,7 +42,12 @@ class FleetBalanceLimit(
 
         val obj = LinearPolynomial()
         for (checkPoint in checkPoints) {
-            obj += parameter.fleetBalanceSlack * l[checkPoint]!!
+            val cost = if (checkPoint.airport.base) {
+                parameter.fleetBalanceBaseSlack
+            } else {
+                parameter.fleetBalanceSlack
+            }
+            obj += cost * l[checkPoint]!!
         }
         model.minimize(obj, "fleet balance")
 

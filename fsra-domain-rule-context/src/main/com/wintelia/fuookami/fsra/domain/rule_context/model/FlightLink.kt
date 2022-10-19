@@ -134,6 +134,10 @@ class FlightLinkMap(
         return leftMapper[flightTask.key]?.any { (it is StopoverFlightPair) && (it.succTask == succFlightTask.originTask) } ?: false
     }
 
+    fun linksOf(flightTask: FlightTask): List<FlightLink> {
+        return leftMapper[flightTask.key] ?: emptyList()
+    }
+
     fun connectionTimeIfStopover(flightTask: FlightTask, succFlightTask: FlightTask): Duration? {
         val stopoverFlightPair = leftMapper[flightTask.key]?.find { (it is StopoverFlightPair) && (it.succTask == succFlightTask.originTask) }
         return (stopoverFlightPair as StopoverFlightPair?)?.connectionTime

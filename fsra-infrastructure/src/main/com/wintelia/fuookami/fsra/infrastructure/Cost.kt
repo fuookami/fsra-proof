@@ -18,7 +18,9 @@ data class Cost(
     val valid: Boolean get() = sum != null
 
     operator fun plusAssign(rhs: CostItem) {
-        _items.add(rhs)
+        if (!rhs.valid || rhs.value!! neq Flt64.zero) {
+            _items.add(rhs)
+        }
 
         if (rhs.valid) {
             sum = sum?.plus(rhs.value!!)
@@ -26,10 +28,12 @@ data class Cost(
     }
 
     operator fun plusAssign(rhs: Cost) {
-        _items.addAll(rhs._items)
+        _items.addAll(rhs._items.asIterable().filter { !it.valid || it.value!! neq Flt64.zero })
 
-        if (this.valid && rhs.valid) {
-            sum = sum!! + rhs.sum!!
+        sum = if (this.valid && rhs.valid) {
+            sum!! + rhs.sum!!
+        } else {
+            null
         }
     }
 

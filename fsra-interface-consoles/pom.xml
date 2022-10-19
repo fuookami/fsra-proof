@@ -28,5 +28,10 @@
             <artifactId>fsra-interface-io</artifactId>
             <version>1.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.wintelia.fuookami</groupId>
+            <artifactId>fsra-application-flight-recovery-algorithm-passenger-transport</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 </project>

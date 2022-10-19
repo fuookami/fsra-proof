@@ -64,7 +64,7 @@ class FlightPlan(
     val actualTime: TimeRange?,
     val outTime: Instant?,
     status: Set<FlightTaskStatus>,
-    val weight: Flt64 = Flt64.one,
+    override val weight: Flt64 = Flt64.one,
 ) : FlightTaskPlan(
     id = "${prefix}_${actualId}",
     name = "${no}_${Date(scheduledTime.begin).toShortString()}",

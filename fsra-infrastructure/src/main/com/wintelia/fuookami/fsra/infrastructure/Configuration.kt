@@ -18,12 +18,12 @@ data class FreeAircraftSelectorConfiguration(
 )
 
 data class Configuration(
-    val withRedundancy: Boolean,
-    val withPassenger: Boolean,
-    val withCargo: Boolean,
-    val withCrew: Boolean,
+    val withRedundancy: Boolean = false,
+    val withPassenger: Boolean = false,
+    val withCargo: Boolean = false,
+    val withCrew: Boolean = false,
 
-    val solver: String,
+    val solver: String = "cplex",
     val badReducedAmount: UInt64 = UInt64(20UL),
     val maximumColumnAmount: UInt64 = UInt64(20000UL),
     val minimumColumnAmountPerAircraft: UInt64 = UInt64.zero,

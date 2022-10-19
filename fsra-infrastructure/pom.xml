@@ -45,7 +45,6 @@
                 <configuration>
                     <compilerPlugins>
                         <plugin>kotlinx-serialization</plugin>
-                        <vesion>1.6.0</vesion>
                     </compilerPlugins>
                 </configuration>
                 <dependencies>
