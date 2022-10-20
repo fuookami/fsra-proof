@@ -46,8 +46,8 @@ class FlightRecoveryCompilationContext(
             {
                 flightTaskAggregation.enabled(it)
                         && ruleAggregation.enabled(it)
-                        && !(!configuration.withCargo && it.capacity is AircraftCapacity.Cargo)
-                        && !(!configuration.withPassenger && it.capacity is AircraftCapacity.Passenger)
+                        && !(configuration.onlyWithPassenger && it.capacity is AircraftCapacity.Cargo)
+                        && !(configuration.onlyWithCargo && it.capacity is AircraftCapacity.Passenger)
             },
             recoveryPlan,
             configuration

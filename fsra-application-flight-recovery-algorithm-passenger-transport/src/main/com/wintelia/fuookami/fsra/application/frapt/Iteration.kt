@@ -13,8 +13,8 @@ class Iteration {
         val initialSlowLpImprovementStep = Flt64(100.0)
         val improvementSlowCount = UInt64(5UL)
 
-        private val logger = logger()
     }
+    private val logger = logger()
 
     private var _iteration = UInt64.zero
     val iteration get() = _iteration

@@ -371,6 +371,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
 
             return tidyOutput(id, bestOutput, beginTime)
         } catch (e: Exception) {
+            print(e.stackTraceToString())
             return Output(id, Err(ErrorCode.ApplicationException, e.message))
         }
     }

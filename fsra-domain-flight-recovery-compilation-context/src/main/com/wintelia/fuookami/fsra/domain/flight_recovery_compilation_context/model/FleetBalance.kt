@@ -54,6 +54,8 @@ class FleetBalance(
     lateinit var fleet: LinearSymbols1
 
     init {
+        ManualIndexed.flush<CheckPoint>()
+
         val balanceLimit = HashMap<CheckPoint, Limit>()
         for (aircraft in aircrafts) {
             val bunch = originBunches.find { it.aircraft == aircraft }

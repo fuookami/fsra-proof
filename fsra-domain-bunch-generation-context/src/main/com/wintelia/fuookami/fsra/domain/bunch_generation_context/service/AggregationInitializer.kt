@@ -7,6 +7,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import org.apache.logging.log4j.kotlin.*
 import fuookami.ospf.kotlin.utils.error.*
+import fuookami.ospf.kotlin.utils.concept.*
 import fuookami.ospf.kotlin.utils.parallel.*
 import fuookami.ospf.kotlin.utils.functional.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
@@ -163,6 +164,7 @@ class AggregationInitializer {
             bunches.add(newBunch)
         }
 
+        ManualIndexed.flush<FlightTaskBunch>()
         for (bunch in bunches) {
             bunch.setIndexed()
         }

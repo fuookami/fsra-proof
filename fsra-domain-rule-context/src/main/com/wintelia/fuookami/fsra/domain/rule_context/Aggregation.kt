@@ -12,6 +12,7 @@ class Aggregation(
     val lock: Lock
 ) {
     val restrictions: List<Restriction>
+    private val restrictionMap: Map<Aircraft, List<Restriction>>
     val flightTasks: List<FlightTask>
 
     init {
@@ -20,7 +21,17 @@ class Aggregation(
         restrictions.addAll(generalRestrictions)
         this.restrictions = restrictions
 
+        val restrictionMap = HashMap<Aircraft, List<Restriction>>()
+        for (aircraft in enabledAircrafts) {
+            restrictionMap[aircraft] = restrictions.filter { it.related(aircraft) }
+        }
+        this.restrictionMap = restrictionMap
+
         this.flightTasks = ArrayList()
+    }
+
+    fun restrictions(aircraft: Aircraft): List<Restriction> {
+        return restrictionMap[aircraft] ?: emptyList()
     }
 
     fun enabled(aircraft: Aircraft): Boolean {

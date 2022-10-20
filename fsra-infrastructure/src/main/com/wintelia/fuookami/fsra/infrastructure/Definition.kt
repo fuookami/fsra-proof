@@ -12,9 +12,8 @@ val gr = Greater<Flt64, Flt64>(precision)
 val geq = GreaterEqual<Flt64, Flt64>(precision)
 val eq = Equal<Flt64, Flt64>(precision)
 
-private val dateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-mm-dd")
-private val shortDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("mmdd")
-private val shortTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("mmddHHMM")
+private val shortDateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("MMdd").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
+private val shortTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMddHHmm").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
 
 fun Instant.toShortString(): String = shortTimeFormatter.format(this.toJavaInstant())
 
@@ -29,14 +28,5 @@ data class Date(
 
     fun localDate(timeZone: TimeZone = TimeZone.currentSystemDefault()) = value.toLocalDateTime(timeZone).date
 
-    override fun toString(): String = dateFormat.format(value.toJavaInstant())
     fun toShortString(): String = shortDateFormat.format(value.toJavaInstant())
-}
-
-fun parseDate(str: String): Date {
-    return Date(Instant.parse(str).toJavaInstant().truncatedTo(ChronoUnit.DAYS).toKotlinInstant())
-}
-
-fun parseDateTime(str: String): Instant {
-    return Instant.parse(str).toJavaInstant().truncatedTo(ChronoUnit.MINUTES).toKotlinInstant()
 }

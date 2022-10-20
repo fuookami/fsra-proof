@@ -31,5 +31,7 @@ data class Configuration(
 
     val freeAircraftSelectorConfiguration: FreeAircraftSelectorConfiguration = FreeAircraftSelectorConfiguration()
 ) {
-    val flightTaskTimeNeeded = withPassenger || withCargo
+    val onlyWithCargo: Boolean get() = withCargo && !withPassenger
+    val onlyWithPassenger: Boolean get() = withPassenger && !withCargo
+    val flightTaskTimeNeeded = withPassenger || withCargo || withCrew
 }

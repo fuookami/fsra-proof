@@ -269,7 +269,7 @@ class CostCalculator(
     fun restrictionCost(flightTask: FlightTask): CostItem {
         var cost = Flt64.zero
         if (!flightTask.strongLimitIgnored) {
-            for (restriction in aggregation.restrictions) {
+            for (restriction in aggregation.restrictions(flightTask.aircraft!!)) {
                 when (val ret = restriction.check(flightTask, parameter)) {
                     is NotMatter -> {}
                     is Violate -> {

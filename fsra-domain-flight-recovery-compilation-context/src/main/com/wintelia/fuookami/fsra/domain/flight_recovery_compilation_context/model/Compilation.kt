@@ -26,7 +26,7 @@ class Compilation {
         if (!this::y.isInitialized) {
             y = BinVariable1("y", Shape1(flightTasks.size))
             flightTasks.forEach {
-                y[it]!!.name = "${y.name}_${it.name}"
+                y[it]!!.name = "${y.name}_${it.name}_${it.index}"
 
                 if (lock.lockedCancelFlightTasks.contains(it.key)) {
                     y[it]!!.range.eq(UInt8.zero)
@@ -42,19 +42,19 @@ class Compilation {
         model.addVars(z)
 
         if (!this::bunchCost.isInitialized) {
-            bunchCost = LinearSymbol(LinearPolynomial(), "bunchCost")
+            bunchCost = LinearSymbol(LinearPolynomial(), "bunch_cost")
         }
         model.addSymbol(bunchCost)
 
         if (!this::flightTaskCompilation.isInitialized) {
             flightTaskCompilation = LinearSymbols1("flight_task_compilation", Shape1(flightTasks.size))
-            flightTasks.forEach { flightTaskCompilation[it]!!.name = "${flightTaskCompilation.name}_${it.name}" }
+            flightTasks.forEach { flightTaskCompilation[it] = LinearSymbol(LinearPolynomial(y[it]!!), "${flightTaskCompilation.name}_${it.name}_${it.index}") }
         }
         model.addSymbols(flightTaskCompilation)
 
         if (!this::aircraftCompilation.isInitialized) {
             aircraftCompilation = LinearSymbols1("aircraft_compilation", Shape1(aircrafts.size))
-            aircrafts.forEach { aircraftCompilation[it]!!.name = "${aircraftCompilation.name}_${it.regNo}" }
+            aircrafts.forEach { aircraftCompilation[it] = LinearSymbol(LinearPolynomial(z[it]!!), "${aircraftCompilation.name}_${it.regNo}_${it.index}") }
         }
         model.addSymbols(aircraftCompilation)
 

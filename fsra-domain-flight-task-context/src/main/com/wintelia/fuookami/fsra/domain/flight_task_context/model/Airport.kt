@@ -37,12 +37,11 @@ data class Airport internal constructor(
     companion object {
         private val pool = HashMap<ICAO, Airport>()
 
-        operator fun invoke(icao: ICAO, type: AirportType): Airport {
-            pool[icao] = Airport(icao, type)
-            return pool[icao]!!
-        }
-
         operator fun invoke(icao: ICAO) = pool[icao]
+    }
+
+    init {
+        pool[icao] = this
     }
 
     override fun hashCode(): Int {

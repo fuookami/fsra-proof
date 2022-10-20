@@ -21,25 +21,25 @@ class MinimumDepartureTimeCalculator(
                 val airport = flowControl.airport
                 when (flowControl.scene) {
                     FlowControlScene.Departure -> {
-                        if (departureCloses.containsKey(airport)) {
+                        if (!departureCloses.containsKey(airport)) {
                             departureCloses[airport] = ArrayList()
                         }
                         departureCloses[airport]!!.add(flowControl)
                     }
 
                     FlowControlScene.Arrival, FlowControlScene.Stay -> {
-                        if (arrivalCloses.containsKey(airport)) {
+                        if (!arrivalCloses.containsKey(airport)) {
                             arrivalCloses[airport] = ArrayList()
                         }
                         arrivalCloses[airport]!!.add(flowControl)
                     }
 
                     FlowControlScene.DepartureArrival -> {
-                        if (departureCloses.containsKey(airport)) {
+                        if (!departureCloses.containsKey(airport)) {
                             departureCloses[airport] = ArrayList()
                         }
                         departureCloses[airport]!!.add(flowControl)
-                        if (arrivalCloses.containsKey(airport)) {
+                        if (!arrivalCloses.containsKey(airport)) {
                             arrivalCloses[airport] = ArrayList()
                         }
                         arrivalCloses[airport]!!.add(flowControl)

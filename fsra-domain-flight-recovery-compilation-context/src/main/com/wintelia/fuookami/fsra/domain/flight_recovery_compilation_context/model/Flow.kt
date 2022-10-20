@@ -16,7 +16,8 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 
 class Flow(
-    flowControls: List<FlowControl>
+    flowControls: List<FlowControl>,
+    recoveryPlan: RecoveryPlan,
 ) {
     data class CheckPoint(
         val flowControl: FlowControl,
@@ -39,7 +40,7 @@ class Flow(
         }
 
         override fun toString() =
-            "${flowControl.name}_${((time.begin - flowControl.time.begin) / interval).roundToInt()}"
+            "${flowControl.name}_${((time.begin - flowControl.time.begin) / interval).roundToInt()}_${index}"
     }
 
     val checkPoints: List<CheckPoint>
@@ -47,12 +48,16 @@ class Flow(
     lateinit var m: UIntVariable1
 
     init {
+        AutoIndexed.flush<CheckPoint>()
+
         val checkPoints = ArrayList<CheckPoint>()
         for (rule in flowControls) {
             var index = UInt64.zero
-            var beginTime = rule.time.begin
-            while (beginTime <= rule.time.end) {
-                val time = TimeRange(beginTime, beginTime + minOf(rule.time.end - beginTime, rule.capacity.interval))
+            var beginTime = maxOf(rule.time.begin, recoveryPlan.recoveryTime.begin)
+            val endTime = minOf(rule.time.end, recoveryPlan.recoveryTime.end)
+            while (beginTime <= endTime) {
+                val thisInterval = minOf(endTime - beginTime, rule.capacity.interval)
+                val time = TimeRange(beginTime, beginTime + thisInterval)
                 checkPoints.add(CheckPoint(rule, time, index))
                 beginTime += rule.capacity.interval
             }

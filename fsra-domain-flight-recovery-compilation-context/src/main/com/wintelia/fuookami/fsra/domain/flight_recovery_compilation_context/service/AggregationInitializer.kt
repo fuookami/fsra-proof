@@ -1,6 +1,7 @@
 package com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.service
 
 import fuookami.ospf.kotlin.utils.error.*
+import fuookami.ospf.kotlin.utils.concept.*
 import fuookami.ospf.kotlin.utils.functional.*
 import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
@@ -23,7 +24,6 @@ class AggregationInitializer {
 
         for (aircraft in aircrafts) {
             if (aircraftChecker(aircraft)) {
-                aircraft.setIndexed()
                 recoveryNeededAircrafts.add(aircraft)
             }
         }
@@ -42,7 +42,6 @@ class AggregationInitializer {
             }
 
             if (flightTask.recoveryNeeded(recoveryPlan.recoveryTime)) {
-                flightTask.setIndexed()
                 recoveryNeededFlightTasks.add(flightTask)
                 continue
             }
@@ -54,11 +53,20 @@ class AggregationInitializer {
             ) {
                 val aogTime = aogTimes[aircraft] ?: continue
                 if (aogTime.contains(scheduledTime.begin)) {
-                    flightTask.setIndexed()
                     recoveryNeededFlightTasks.add(flightTask)
                     continue
                 }
             }
+        }
+
+        ManualIndexed.flush<Aircraft>()
+        for (aircraft in recoveryNeededAircrafts) {
+            aircraft.setIndexed()
+        }
+
+        ManualIndexed.flush<FlightTask>()
+        for (flightTask in recoveryNeededFlightTasks) {
+            flightTask.setIndexed()
         }
 
         return Ok(
@@ -69,6 +77,7 @@ class AggregationInitializer {
                 originBunches = originBunches,
                 flightLinkMap = flightLinkMap,
                 flowControls = flowControls,
+                recoveryPlan = recoveryPlan,
                 configuration = configuration
             )
         )

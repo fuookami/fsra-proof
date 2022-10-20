@@ -18,6 +18,8 @@ data class ViolableViolate(val cost: Flt64) : RestrictionCheckingResult()
 sealed interface Restriction {
     val type: RestrictionType
 
+    fun related(aircraft: Aircraft): Boolean
+
     fun check(flightTask: FlightTask): Boolean
     fun check(flightTask: FlightTask, aircraft: Aircraft): Boolean
     fun check(flightTask: FlightTask, recoveryPolicy: RecoveryPolicy): Boolean
@@ -41,6 +43,10 @@ class RelationRestriction(
     val weight: Flt64 = Flt64.one,
     val cost: Flt64? = null
 ) : Restriction {
+    override fun related(aircraft: Aircraft): Boolean {
+        return aircrafts.contains(aircraft)
+    }
+
     override fun check(flightTask: FlightTask): Boolean {
         assert(flightTask.isFlight)
         return check(flightTask.dep, flightTask.arr, flightTask.aircraft)
@@ -255,6 +261,11 @@ class GeneralRestriction(
     val cost: Flt64? = null
 ) : Restriction {
     private val policies = PolicyFactory(condition)
+
+    override fun related(aircraft: Aircraft): Boolean {
+        return (condition.enabledAircrafts?.contains(aircraft) ?: false)
+                || (condition.disabledAircrafts?.contains(aircraft) ?: false)
+    }
 
     override fun check(flightTask: FlightTask): Boolean {
         assert(flightTask.isFlight)

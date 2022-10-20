@@ -109,7 +109,7 @@ data class AircraftMinorType internal constructor(
     }
 }
 
-class Aircraft(
+data class Aircraft internal constructor(
     val regNo: AircraftRegisterNumber,
     val minorType: AircraftMinorType,
     val capacity: AircraftCapacity
@@ -124,16 +124,11 @@ class Aircraft(
     companion object {
         private val pool = HashMap<AircraftRegisterNumber, Aircraft>()
 
-        operator fun invoke(
-            regNo: AircraftRegisterNumber,
-            minorType: AircraftMinorType,
-            capacity: AircraftCapacity
-        ): Aircraft {
-            pool[regNo] = Aircraft(regNo, minorType, capacity)
-            return pool[regNo]!!
-        }
-
         operator fun invoke(regNo: AircraftRegisterNumber) = pool[regNo]
+    }
+
+    init {
+        pool[regNo] = this
     }
 }
 

@@ -13,9 +13,7 @@ import com.wintelia.fuookami.fsra.domain.rule_context.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 
 class AggregationInitializer {
-    companion object {
-        private val logger = logger()
-    }
+    private val logger = logger()
 
     operator fun invoke(originFlightBunches: List<FlightTaskBunch>, input: Input, parameter: Parameter): Result<Aggregation, Error> {
         val enabledAircrafts = when (val ret = initEnabledAircrafts(input.aircrafts)) {
@@ -100,16 +98,18 @@ class AggregationInitializer {
                 logger.warn { "Found unknown airport with icao: ${airportCloseDTO.airport}." }
                 continue
             }
-            val begin = LocalDate.parse(airportCloseDTO.beginDate).atTime(LocalTime.parse(airportCloseDTO.beginCloseTime)).toInstant(TimeZone.currentSystemDefault())
-            val end = LocalDate.parse(airportCloseDTO.endDate).atTime(LocalTime.parse(airportCloseDTO.endCloseTime)).toInstant(TimeZone.currentSystemDefault())
-            flowControls.add(
-                FlowControl(
-                    airport = airport,
-                    time = TimeRange(begin, end),
-                    scene = FlowControlScene.DepartureArrival,
-                    capacity = FlowControlCapacity.close
-                )
+            val beginTime = airportCloseDTO.beginTime
+            val endTime = airportCloseDTO.endTime
+            val time = TimeRange(beginTime, endTime)
+            val flowControl = FlowControl(
+                airport = airport,
+                time = time,
+                scene = FlowControlScene.DepartureArrival,
+                capacity = FlowControlCapacity.close(time)
             )
+            if (!flowControls.any { it == flowControl }) {
+                flowControls.add(flowControl)
+            }
         }
         for (airportFlowControlDTO in airportFlowControlDTOList) {
             val airport = Airport(airportFlowControlDTO.airport)
@@ -122,8 +122,8 @@ class AggregationInitializer {
                 logger.warn { "Found unknown flow control scene: ${airportFlowControlDTO.type}." }
                 continue
             }
-            val begin = Instant.parse(airportFlowControlDTO.beginTime)
-            val end = Instant.parse(airportFlowControlDTO.endTime)
+            val begin = airportFlowControlDTO.beginTime
+            val end = airportFlowControlDTO.endTime
             flowControls.add(
                 FlowControl(
                     airport = airport,

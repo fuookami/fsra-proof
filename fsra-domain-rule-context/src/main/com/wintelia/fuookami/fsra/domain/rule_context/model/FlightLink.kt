@@ -117,11 +117,11 @@ class FlightLinkMap(
         val leftMapper = HashMap<FlightTaskKey, MutableList<FlightLink>>()
         val rightMapper = HashMap<FlightTaskKey, MutableList<FlightLink>>()
         for (pair in connectingFlightPairs) {
-            if (leftMapper.containsKey(pair.prevTask.key)) {
+            if (!leftMapper.containsKey(pair.prevTask.key)) {
                 leftMapper[pair.prevTask.key] = ArrayList()
             }
             leftMapper[pair.prevTask.key]!!.add(pair)
-            if (rightMapper.containsKey(pair.succTask.key)) {
+            if (!rightMapper.containsKey(pair.succTask.key)) {
                 rightMapper[pair.succTask.key] = ArrayList()
             }
             rightMapper[pair.succTask.key]!!.add(pair)

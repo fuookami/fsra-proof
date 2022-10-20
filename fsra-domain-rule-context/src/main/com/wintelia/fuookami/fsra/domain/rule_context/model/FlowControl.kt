@@ -162,7 +162,7 @@ data class FlowControlCapacity(
     val interval: Duration,
 ) {
     companion object {
-        val close = FlowControlCapacity(UInt64.zero, 30.minutes)
+        fun close(time: TimeRange) = FlowControlCapacity(UInt64.zero, time.duration)
     }
 
     val closed = amount == UInt64.zero
@@ -170,7 +170,7 @@ data class FlowControlCapacity(
     override fun toString() = if (closed) "closed" else "${amount}_${interval.toInt(DurationUnit.MINUTES)}m"
 }
 
-class FlowControl(
+data class FlowControl(
     val id: String = UUID.randomUUID().toString(),
     val airport: Airport,
     val time: TimeRange,
@@ -180,4 +180,23 @@ class FlowControl(
     val name: String = "${airport.icao}_${scene}_${capacity}_${time.begin.toShortString()}_${time.end.toShortString()}"
 ) {
     val closed by capacity::closed
+
+    override fun hashCode(): Int {
+        return id.hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as FlowControl
+
+        if (airport != other.airport) return false
+        if (time != other.time) return false
+        if (condition != other.condition) return false
+        if (scene != other.scene) return false
+        if (capacity != other.capacity) return false
+
+        return true
+    }
 }

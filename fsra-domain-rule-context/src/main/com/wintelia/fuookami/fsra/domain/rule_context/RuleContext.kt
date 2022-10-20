@@ -36,8 +36,7 @@ class RuleContext(
         feasibilityJudger = FlightTaskFeasibilityJudger(aggregation)
         connectionTimeCalculator = ConnectionTimeCalculator(aggregation.linkMap)
         minimumDepartureTimeCalculator = MinimumDepartureTimeCalculator(aggregation.lock, aggregation.flowControls)
-        costCalculator =
-            CostCalculator(aggregation, input.plan, connectionTimeCalculator, minimumDepartureTimeCalculator, flightTaskAggregation.aircraftUsability, parameter)
+        costCalculator = CostCalculator(aggregation, input.plan, connectionTimeCalculator, minimumDepartureTimeCalculator, flightTaskAggregation.aircraftUsability, parameter)
 
         return Ok(success)
     }

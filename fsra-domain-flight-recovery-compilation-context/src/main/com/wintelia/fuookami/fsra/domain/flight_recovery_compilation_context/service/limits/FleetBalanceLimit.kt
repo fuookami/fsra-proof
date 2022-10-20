@@ -29,27 +29,29 @@ class FleetBalanceLimit(
     private val checkPoints: List<FleetBalance.CheckPoint> = fleetBalance.limits.keys.toList()
 
     override fun invoke(model: LinearMetaModel): Try<Error> {
-        val fleet = fleetBalance.fleet
-        val l = fleetBalance.l
+        if (fleetBalance.limits.isNotEmpty()) {
+            val fleet = fleetBalance.fleet
+            val l = fleetBalance.l
 
-        for (checkPoint in checkPoints) {
-            val limit = fleetBalance.limits[checkPoint]!!
-            model.addConstraint(
-                (fleet[checkPoint]!! + l[checkPoint]!!) geq limit.amount,
-                "${name}_${checkPoint.airport.icao}_${checkPoint.aircraftMinorType.code}"
-            )
-        }
-
-        val obj = LinearPolynomial()
-        for (checkPoint in checkPoints) {
-            val cost = if (checkPoint.airport.base) {
-                parameter.fleetBalanceBaseSlack
-            } else {
-                parameter.fleetBalanceSlack
+            for (checkPoint in checkPoints) {
+                val limit = fleetBalance.limits[checkPoint]!!
+                model.addConstraint(
+                    (fleet[checkPoint]!! + l[checkPoint]!!) geq limit.amount,
+                    "${name}_${checkPoint.airport.icao}_${checkPoint.aircraftMinorType.code}"
+                )
             }
-            obj += cost * l[checkPoint]!!
+
+            val obj = LinearPolynomial()
+            for (checkPoint in checkPoints) {
+                val cost = if (checkPoint.airport.base) {
+                    parameter.fleetBalanceBaseSlack
+                } else {
+                    parameter.fleetBalanceSlack
+                }
+                obj += cost * l[checkPoint]!!
+            }
+            model.minimize(obj, "fleet balance")
         }
-        model.minimize(obj, "fleet balance")
 
         return Ok(success)
     }

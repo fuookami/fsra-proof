@@ -22,6 +22,7 @@ class Aggregation(
     flightLinkMap: FlightLinkMap,
     flowControls: List<FlowControl>,
 
+    recoveryPlan: RecoveryPlan,
     configuration: Configuration
 ) {
     private val logger = logger()
@@ -46,7 +47,7 @@ class Aggregation(
         }
         flightCapacity = FlightCapacity(withPassenger = configuration.withPassenger, withCargo = configuration.withCargo)
         flightLink = FlightLink(flightLinkMap.linkPairs)
-        flow = Flow(flowControls)
+        flow = Flow(flowControls, recoveryPlan)
         fleetBalance = FleetBalance(recoveryNeededAircrafts, originBunches, aircraftUsability)
     }
 
@@ -85,7 +86,7 @@ class Aggregation(
                 return Failed(ret.error)
             }
         }
-        when (val ret = flow.register(model)) {
+        when (val ret = fleetBalance.register(compilation, model)) {
             is Ok -> {}
             is Failed -> {
                 return Failed(ret.error)
@@ -95,9 +96,6 @@ class Aggregation(
     }
 
     fun addColumns(iteration: UInt64, bunches: List<FlightTaskBunch>, timeWindow: TimeRange, model: LinearMetaModel, configuration: Configuration): Try<Error> {
-        for (bunch in bunches) {
-            bunch.setIndexed()
-        }
         this.bunches.addAll(bunches)
         bunchGroups.add(bunches)
 

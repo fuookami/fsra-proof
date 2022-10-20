@@ -77,7 +77,7 @@ class FlightPlan(
     override val displayName = no
 
     fun recoveryEnabled(): Boolean {
-        return actualTime != null || outTime != null
+        return actualTime == null && outTime == null
     }
 }
 

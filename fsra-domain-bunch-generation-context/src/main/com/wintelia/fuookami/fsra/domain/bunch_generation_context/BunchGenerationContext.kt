@@ -13,8 +13,8 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.FlightTaskContext
 import com.wintelia.fuookami.fsra.domain.rule_context.RuleContext
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
-import com.wintelia.fuookami.fsra.domain.bunch_generation_context.model.*
 import com.wintelia.fuookami.fsra.domain.bunch_generation_context.service.*
+import fuookami.ospf.kotlin.utils.concept.ManualIndexed
 
 class BunchGenerationContext(
     private val flightTaskContext: FlightTaskContext,
@@ -120,6 +120,12 @@ class BunchGenerationContext(
 
             logger.debug { "Sub-problem of ${promise.aircraft.regNo} finished: ${duration.toInt(DurationUnit.MILLISECONDS)} ms， bunches amount: $amount." }
         }
+
+        ManualIndexed.flush<FlightTaskBunch>()
+        for (bunch in bunches) {
+            bunch.setIndexed()
+        }
+
         return Ok(bunches)
     }
 }

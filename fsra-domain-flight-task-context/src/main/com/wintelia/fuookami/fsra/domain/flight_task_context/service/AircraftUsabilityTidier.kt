@@ -57,7 +57,7 @@ class AircraftUsabilityTidier {
                         val aircraft = it.aircraft ?: return@filter false
                         val scheduledTime = it.scheduledTime ?: return@filter false
                         if (aogTimes[aircraft]?.contains(scheduledTime.begin) == true) {
-                            return@filter true
+                            return@filter false
                         }
                     }
                 }
@@ -65,7 +65,7 @@ class AircraftUsabilityTidier {
             }
 
         // bucket sort find the last flight of each aircraft
-        for (flightTask in flightTasks) {
+        for (flightTask in lastFlights) {
             val aircraft = flightTask.aircraft!!
             val enabledTime = flightTask.time!!.end + flightTask.connectionTime(aircraft, null)
 
@@ -99,7 +99,7 @@ class AircraftUsabilityTidier {
             map[aircraft] = AircraftUsability(
                 lastTask = null,
                 location = airport,
-                enabledTime = parseDateTime(dto.enabledTime)
+                enabledTime = dto.enabledTime
             )
         }
 

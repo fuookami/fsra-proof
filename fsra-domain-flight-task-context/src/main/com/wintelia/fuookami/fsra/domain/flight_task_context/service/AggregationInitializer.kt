@@ -13,9 +13,7 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.PassengerClass
 
 class AggregationInitializer {
-    companion object {
-        private val logger = logger()
-    }
+    private val logger = logger()
 
     operator fun invoke(input: Input): Result<Aggregation, Error> {
         val airports = when (val result = initAirports(input.airports)) {
@@ -32,7 +30,8 @@ class AggregationInitializer {
             input.aircraftTypes,
             input.aircraftFee,
             input.aircraftMinorTypeRouteFlyTime,
-            input.aircraftMinorTypeConnectionTime
+            input.aircraftMinorTypeConnectionTime,
+            input.flights
         )) {
             is Ok -> {
                 result.value
@@ -141,7 +140,8 @@ class AggregationInitializer {
         aircraftTypeDTOList: List<AircraftTypeDTO>,
         aircraftFeeDTOList: List<AircraftFeeDTO>,
         aircraftRouteFlyTimeDTOList: List<AircraftMinorTypeRouteFlyTimeDTO>,
-        aircraftConnectionTimeDTOList: List<AircraftMinorTypeConnectionTimeDTO>
+        aircraftConnectionTimeDTOList: List<AircraftMinorTypeConnectionTimeDTO>,
+        flightDTOList: List<FlightDTO>
     ): Result<List<Aircraft>, Error> {
         val aircraftTypes = HashMap<AircraftTypeCode, AircraftType>()
         val aircraftMinorTypes = HashMap<AircraftMinorTypeCode, AircraftMinorType>()
@@ -153,8 +153,7 @@ class AggregationInitializer {
                 continue
             }
             val routeFlyTime = HashMap<Route, Duration>()
-            for (routeFlyTimeDTO in aircraftRouteFlyTimeDTOList.asSequence()
-                .filter { it.minorType == type.minorType }) {
+            for (routeFlyTimeDTO in aircraftRouteFlyTimeDTOList.asIterable().filter { it.minorType == type.minorType }) {
                 val dep = Airport(routeFlyTimeDTO.dep)
                 if (dep == null) {
                     logger.warn { "Found unknown airport with icao: ${routeFlyTimeDTO.dep}." }
@@ -169,8 +168,29 @@ class AggregationInitializer {
 
                 routeFlyTime[Route(dep, arr)] = routeFlyTimeDTO.routeFlyTime.toInt().minutes
             }
+            if (routeFlyTime.isEmpty()) {
+                logger.warn { "There are no route fly time for ${type.minorType}, it will be read from flights."}
+
+                for (flightDTO in flightDTOList.asIterable().filter { it.acType == type.minorType }) {
+                    val dep = Airport(flightDTO.dep)
+                    if (dep == null) {
+                        logger.warn { "Found unknown airport with icao: ${flightDTO.dep}." }
+                        continue
+                    }
+
+                    val arr = Airport(flightDTO.arr)
+                    if (arr == null) {
+                        logger.warn { "Found unknown airport with icao: ${flightDTO.arr}." }
+                        continue
+                    }
+
+                    val duration = flightDTO.sta - flightDTO.std
+                    val route = Route(dep, arr)
+                    routeFlyTime[route] = routeFlyTime[route]?.let { maxOf(it, duration) } ?: duration
+                }
+            }
             val connectionTime = HashMap<Airport, Duration>()
-            for (connectionTimeDTO in aircraftConnectionTimeDTOList) {
+            for (connectionTimeDTO in aircraftConnectionTimeDTOList.asIterable().filter { it.minorType == type.minorType }) {
                 val airport = Airport(connectionTimeDTO.airport)
                 if (airport == null) {
                     logger.warn { "Found unknown airport with icao: ${connectionTimeDTO.airport}." }
@@ -178,6 +198,10 @@ class AggregationInitializer {
                 }
 
                 connectionTime[airport] = connectionTimeDTO.connectionTime.toInt().minutes
+            }
+            if (connectionTime.isEmpty()) {
+                logger.error { "There are no connection time for ${type.minorType}." }
+                return Failed(Err(ErrorCode.ApplicationError, "No connection time for ${type.minorType}" ))
             }
             aircraftMinorTypes[type.minorType] = AircraftMinorType(
                 type = aircraftTypes[type.type]!!,
@@ -249,8 +273,8 @@ class AggregationInitializer {
                 logger.warn { "Found unknown flight type: ${flightDTO.region}." }
                 continue
             }
-            val begin = parseDateTime(flightDTO.std)
-            val end = parseDateTime(flightDTO.sta)
+            val begin = flightDTO.std
+            val end = flightDTO.sta
             val status = hashSetOf(
                 FlightTaskStatus.NotTerminalChange
             )
@@ -276,7 +300,7 @@ class AggregationInitializer {
                 Flight(
                     FlightPlan(
                         actualId = flightDTO.id,
-                        date = parseDate(flightDTO.date),
+                        date = flightDTO.date,
                         no = flightDTO.no,
                         type = type,
                         aircraft = aircraft,
@@ -313,8 +337,8 @@ class AggregationInitializer {
                 }
                 airport
             }
-            val begin = parseDateTime(lineMaintenanceDTO.beginTime)
-            val end = parseDateTime(lineMaintenanceDTO.endTime)
+            val begin = lineMaintenanceDTO.beginTime
+            val end = lineMaintenanceDTO.endTime
             if (airports.size == 1) {
                 maintenances.add(
                     Maintenance(
@@ -343,8 +367,8 @@ class AggregationInitializer {
                 }
                 airport
             }
-            val begin = parseDateTime(scheduleMaintenanceDTO.beginTime)
-            val end = parseDateTime(scheduleMaintenanceDTO.endTime)
+            val begin = scheduleMaintenanceDTO.beginTime
+            val end = scheduleMaintenanceDTO.endTime
             if (airports.size == 1) {
                 maintenances.add(
                     Maintenance(
@@ -376,8 +400,8 @@ class AggregationInitializer {
                 logger.warn { "Found unknown airport with icao: ${aogDTO.airport}." }
                 continue
             }
-            val begin = parseDateTime(aogDTO.beginTime)
-            val end = parseDateTime(aogDTO.endTime)
+            val begin = aogDTO.beginTime
+            val end = aogDTO.endTime
             aogs.add(
                 AOG(
                     AOGPlan(
@@ -404,8 +428,8 @@ class AggregationInitializer {
                 logger.warn { "Found unknown airport with icao: ${transferFlightDTO.arr}." }
                 continue
             }
-            val begin = parseDateTime(transferFlightDTO.beginTime)
-            val end = parseDateTime(transferFlightDTO.endTime)
+            val begin = transferFlightDTO.beginTime
+            val end = transferFlightDTO.endTime
             transferFlights.add(
                 TransferFlight(
                     Transfer(

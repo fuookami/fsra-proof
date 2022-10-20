@@ -27,10 +27,11 @@ class FlightLinkLimit(
 ) : CGPipeline<LinearMetaModel, ShadowPriceMap> {
     override fun invoke(model: LinearMetaModel): Try<Error> {
         val linkPairs = link.linkPairs
-        val link = this.link.link
-        val k = this.link.k
 
         if (linkPairs.isNotEmpty()) {
+            val link = this.link.link
+            val k = this.link.k
+
             for (pair in linkPairs) {
                 model.addConstraint(
                     (link[pair]!! + k[pair]!!) eq UInt64.one,

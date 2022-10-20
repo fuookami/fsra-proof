@@ -29,7 +29,7 @@ class FlightTaskFeasibilityJudger(
             return true
         }
 
-        for (restriction in aggregation.restrictions) {
+        for (restriction in aggregation.restrictions(aircraft)) {
             if (!restriction.check(flightTask, aircraft)) {
                 return false
             }
