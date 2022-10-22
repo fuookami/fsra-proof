@@ -181,4 +181,6 @@ class FlightTaskBunch(
         }
         return false
     }
+
+    override fun toString() = "${aircraft.regNo}, ${dep.icao} - ${arr.icao}, ${time.begin.toShortString()} - ${time.end.toShortString()}, ${flightTasks.size} tasks"
 }

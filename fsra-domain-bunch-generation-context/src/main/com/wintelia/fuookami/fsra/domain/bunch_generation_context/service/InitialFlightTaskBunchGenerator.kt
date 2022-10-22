@@ -13,7 +13,6 @@ class InitialFlightTaskBunchGenerator(
 ) {
     companion object {
         val config = FlightTaskFeasibilityJudger.Config(
-            checkEnabledTime = false,
             timeExtractor = FlightTask::time
         )
     }
@@ -146,11 +145,12 @@ class InitialFlightTaskBunchGenerator(
                 flightTasks.last()
             }
 
-            if (prevFlightTask != null) {
-                val connectionTime = connectionTimeCalculator(aircraft, prevFlightTask, flightTask)
-                time = minimumDepartureTimeCalculator(time, aircraft, flightTask, connectionTime)
+            val connectionTime = if (prevFlightTask != null) {
+                connectionTimeCalculator(aircraft, prevFlightTask, flightTask)
+            } else {
+                Duration.ZERO
             }
-
+            time = minimumDepartureTimeCalculator(time, aircraft, flightTask, connectionTime)
             val recoveryedTime = TimeRange(time, time + flightTask.duration(aircraft))
             val recoveryPolicy = if (recoveryedTime == flightTask.scheduledTime!!) {
                 RecoveryPolicy()

@@ -2,6 +2,7 @@ package com.wintelia.fuookami.fsra.domain.bunch_generation_context.service
 
 import java.lang.Exception
 import kotlinx.datetime.*
+import kotlin.time.Duration.*
 import kotlin.time.Duration.Companion.hours
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
@@ -14,6 +15,7 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.bunch_generation_context.*
 import com.wintelia.fuookami.fsra.domain.bunch_generation_context.model.*
+import kotlin.time.Duration
 
 class AggregationInitializer {
     private val logger = logger()
@@ -111,18 +113,24 @@ class AggregationInitializer {
         if (flightTasks.size >= 2) {
             while (true) {
                 pairs.clear()
-                for (i in pairs.indices) {
-                    for (j in (i + 1) until pairs.size) {
-                        if (FlightTaskReverse.reverseEnabled(flightTasks[i], flightTasks[j], lock, timeDifferenceLimit)) {
+                for (i in flightTasks.indices) {
+                    for (j in (i + 1) until flightTasks.size) {
+                        if (FlightTaskReverse.symmetrical(flightTasks[i], flightTasks[j], lock, timeDifferenceLimit + FlightTaskReverse.defaultTimeDifferenceLimit)) {
                             pairs.add(Pair(flightTasks[i], flightTasks[j]))
-                        }
-                        if (FlightTaskReverse.reverseEnabled(flightTasks[j], flightTasks[i], lock, timeDifferenceLimit)) {
-                            pairs.add(Pair(flightTasks[j], flightTasks[i]))
+                        } else {
+                            if (FlightTaskReverse.reverseEnabled(flightTasks[i], flightTasks[j], lock, timeDifferenceLimit)) {
+                                pairs.add(Pair(flightTasks[i], flightTasks[j]))
+                            }
+                            if (FlightTaskReverse.reverseEnabled(flightTasks[j], flightTasks[i], lock, timeDifferenceLimit)) {
+                                pairs.add(Pair(flightTasks[j], flightTasks[i]))
+                            }
                         }
                     }
                 }
 
-                if (pairs.size <= FlightTaskReverse.criticalSize.toInt() || timeDifferenceLimit <= 3.hours) {
+                if (timeDifferenceLimit == 0.hours) {
+                    break
+                } else if (pairs.size <= FlightTaskReverse.criticalSize.toInt() && timeDifferenceLimit <= 3.hours) {
                     break
                 } else {
                     timeDifferenceLimit -= 1.hours

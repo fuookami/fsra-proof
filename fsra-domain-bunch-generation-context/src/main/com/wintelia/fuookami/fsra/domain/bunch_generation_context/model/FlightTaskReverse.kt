@@ -37,7 +37,7 @@ class FlightTaskReverse private constructor(
                 if (!rightMapper.containsKey(pair.second.key)) {
                     rightMapper[pair.second.key] = ArrayList()
                 }
-                rightMapper[pair.first.key]!!.add(reversiblePair)
+                rightMapper[pair.second.key]!!.add(reversiblePair)
 
                 if (reversiblePair.symmetrical) {
                     symmetricalPairs.add(reversiblePair)
@@ -97,6 +97,11 @@ class FlightTaskReverse private constructor(
             }
 
             return false
+        }
+
+        fun symmetrical(prevFlightTask: FlightTask, succFlightTask: FlightTask, lock: Lock, timeDifferenceLimit: Duration): Boolean {
+            return reverseEnabled(prevFlightTask, succFlightTask, lock, timeDifferenceLimit)
+                    && prevFlightTask.aircraft == succFlightTask.aircraft
         }
 
         private fun symmetrical(originBunches: List<FlightTaskBunch>, prevFlightTask: FlightTask, succFlightTask: FlightTask, lock: Lock, timeDifferenceLimit: Duration): Boolean {

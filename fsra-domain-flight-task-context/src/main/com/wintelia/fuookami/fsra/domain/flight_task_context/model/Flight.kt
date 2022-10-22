@@ -176,4 +176,6 @@ class Flight internal constructor(
                 AircraftMinorTypeChange(plan.aircraft.minorType, it.minorType)
             }
         }
+
+    override fun toString() = "${plan.no}, ${aircraft.regNo}, ${dep.icao} - ${arr.icao}, ${time!!.begin.toShortString()} - ${time!!.end.toShortString()}"
 }
