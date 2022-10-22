@@ -61,11 +61,19 @@ class CostCalculator(
         }
 
         for (period in aircraftUsability[aircraft]!!.flightCyclePeriods) {
-            cost += overFlightHourCost(aircraft, period.expirationTime - 1.minutes, FlightHour(flightTasks.sumOf { it.flightHour(aircraft, period.expirationTime).hours.toInt(DurationUnit.MINUTES) }.minutes))
+            cost += overFlightHourCost(
+                aircraft,
+                period.expirationTime - 1.minutes,
+                FlightHour(flightTasks.sumOf { it.flightHour(aircraft, period.expirationTime).hours.toInt(DurationUnit.MINUTES) }.minutes)
+            )
             if (!cost.valid) {
                 return cost
             }
-            cost += overFlightCycleCost(aircraft, period.expirationTime - 1.minutes, FlightCycle(UInt64(flightTasks.sumOf { it.flightCycle(period.expirationTime).cycles.toInt() }.toULong())))
+            cost += overFlightCycleCost(
+                aircraft,
+                period.expirationTime - 1.minutes,
+                FlightCycle(UInt64(flightTasks.sumOf { it.flightCycle(period.expirationTime).cycles.toInt() }.toULong()))
+            )
         }
 
         return cost
@@ -142,6 +150,7 @@ class CostCalculator(
                         parameter.flightCancel
                     }
                 }
+
                 is MaintenanceFlightTask -> {
                     if (!flightTask.cancelEnabled) {
                         parameter.recoveryLockCancel
@@ -149,12 +158,15 @@ class CostCalculator(
                         parameter.maintenanceCancel
                     }
                 }
+
                 is AOGFlightTask -> {
                     parameter.AOGCancel
                 }
                 // todo: if implement additional flight task
                 // todo: if implement straighten flight task
-                else -> { Flt64.zero }
+                else -> {
+                    Flt64.zero
+                }
             }
         }
         return CostItem("cancel", cost)
@@ -164,7 +176,7 @@ class CostCalculator(
         var cost = Flt64.zero
         val delay = flightTask.delay
         if (delay != Duration.ZERO
-            // todo: check if it is not locked with time
+        // todo: check if it is not locked with time
         ) {
             cost = when (flightTask.type) {
                 is FlightFlightTask -> {
@@ -187,6 +199,7 @@ class CostCalculator(
                     }
                     costFlight + costHour
                 }
+
                 is MaintenanceFlightTask -> {
                     if (!flightTask.delayEnabled) {
                         parameter.recoveryLock
@@ -194,15 +207,19 @@ class CostCalculator(
                         parameter.maintenanceDelay
                     }
                 }
+
                 is AOGFlightTask -> {
                     parameter.AOGDelay
                 }
+
                 is TransferFlightFlightTask -> {
                     return CostItem("delay", null, "transfer: ${flightTask.name}")
                 }
                 // todo: if implement additional flight task
                 // todo: if implement straighten flight task
-                else -> { Flt64.zero }
+                else -> {
+                    Flt64.zero
+                }
             }
         }
         return CostItem("delay", cost)
@@ -335,7 +352,11 @@ class CostCalculator(
         return if (flightTask.time!!.begin < maxOf(prevArrivalTime, enabledTime)) {
             CostItem(
                 "time connection", null,
-                "${flightTask.aircraft!!.regNo}-${prevFlightTask.name}-${flightTask.name}-${(flightTask.time!!.begin - prevFlightTask.time!!.end).toInt(DurationUnit.MINUTES)}m-${connectionTime.toInt(DurationUnit.MINUTES)}m"
+                "${flightTask.aircraft!!.regNo}-${prevFlightTask.name}-${flightTask.name}-${(flightTask.time!!.begin - prevFlightTask.time!!.end).toInt(DurationUnit.MINUTES)}m-${
+                    connectionTime.toInt(
+                        DurationUnit.MINUTES
+                    )
+                }m"
             )
         } else {
             CostItem("time connection", Flt64.zero)

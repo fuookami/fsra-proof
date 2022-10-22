@@ -269,7 +269,7 @@ class Aggregation(
         }
 
         for (obj in model.subObjects) {
-            logger.debug { "${obj.name} = ${obj.value()}"}
+            logger.debug { "${obj.name} = ${obj.value()}" }
         }
 
         return Ok(success)

@@ -14,6 +14,7 @@ class Iteration {
         val improvementSlowCount = UInt64(5UL)
 
     }
+
     private val logger = logger()
 
     private var _iteration = UInt64.zero
@@ -54,7 +55,7 @@ class Iteration {
             if (lowerBound ls currentDualObj) {
                 logger.debug { "lower bound: $lowerBound -> $bestDualObj" }
                 lowerBound = currentDualObj
-                logger.debug { "optimal rate: ${optimalRate * Flt64(100.0)}" }
+                logger.debug { "optimal rate: ${String.format("%.2f", (optimalRate * Flt64(100.0)).toDouble())}%" }
             }
         }
     }
@@ -75,7 +76,7 @@ class Iteration {
             if (bestLpObj ls lowerBound) {
                 logger.debug { "lower bound: $lowerBound -> $bestLpObj" }
                 lowerBound = bestLpObj
-                logger.debug { "optimal rate: ${optimalRate * Flt64(100.0)}" }
+                logger.debug { "optimal rate: ${String.format("%.2f", (optimalRate * Flt64(100.0)).toDouble())}%" }
             }
         }
         return flag
@@ -100,7 +101,7 @@ class Iteration {
             if (bestObj ls lowerBound) {
                 logger.debug { "lower bound: $lowerBound -> $bestObj" }
                 lowerBound = bestObj
-                logger.debug { "optimal rate: ${optimalRate * Flt64(100.0)}" }
+                logger.debug { "optimal rate: ${String.format("%.2f", (optimalRate * Flt64(100.0)).toDouble())}%" }
             }
         }
         return flag

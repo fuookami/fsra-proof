@@ -103,6 +103,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 }
             }
             refresh(ipRet)
+            iteration.refreshIpObj(ipRet.obj)
             if (eq(ipRet.obj, Flt64.zero)) {
                 return tidyOutput(id, bestOutput, beginTime)
             }
@@ -161,7 +162,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 // it runs only 1 time
                 for (count in 0 until 1) {
                     ++iteration
-                    val newBunches = when (val ret = solveSP(id, flightRecoveryCompilationContext.recoveryNeededAircrafts, iteration, shadowPriceMap)) {
+                    val newBunches = when (val ret = solveSP(id, flightRecoveryCompilationContext.recoveryNeededAircrafts, iteration, shadowPriceMap, configuration)) {
                         is Ok -> {
                             ret.value
                         }
@@ -271,7 +272,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                     }
 
                     ++iteration
-                    val newBunches = when (val ret = solveSP(id, flightRecoveryCompilationContext.recoveryNeededAircrafts, iteration, shadowPriceMap)) {
+                    val newBunches = when (val ret = solveSP(id, flightRecoveryCompilationContext.recoveryNeededAircrafts, iteration, shadowPriceMap, configuration)) {
                         is Ok -> {
                             ret.value
                         }
@@ -365,7 +366,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 flush(iteration.iteration)
                 iteration.halveStep()
 
-                logger.debug { "Iteration $mainIteration end, optimal rate: ${iteration.optimalRate}" }
+                logger.debug { "Iteration $mainIteration end, optimal rate: ${String.format("%.2f", (iteration.optimalRate * Flt64(100.0)).toDouble())}%" }
                 ++mainIteration
             }
 
@@ -377,7 +378,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
     }
 
     private fun heartBeat(id: String, optimalRate: Flt64) {
-        logger.info { "Heart beat, current optimal rate: $optimalRate" }
+        logger.info { "Heart beat, current optimal rate: ${String.format("%.2f", (optimalRate * Flt64(100.0)).toDouble())}%" }
         heartBeatCallBack?.let { it(id, optimalRate) }
     }
 
@@ -408,7 +409,8 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 return Failed(ret.error)
             }
         }
-        when (val ret = bunchGenerationContext.init(flightRecoveryCompilationContext.recoveryNeededAircrafts, flightRecoveryCompilationContext.recoveryNeededFlightTasks)) {
+        when (val ret =
+            bunchGenerationContext.init(flightRecoveryCompilationContext.recoveryNeededAircrafts, flightRecoveryCompilationContext.recoveryNeededFlightTasks, configuration)) {
             is Ok -> {}
             is Failed -> {
                 return Failed(ret.error)
@@ -550,9 +552,15 @@ class FlightRecoveryAlgorithmPassengerTransport(
         return Ok(shadowPriceMap)
     }
 
-    private fun solveSP(id: String, aircrafts: List<Aircraft>, iteration: Iteration, shadowPriceMap: ShadowPriceMap): Result<List<FlightTaskBunch>, Error> {
+    private fun solveSP(
+        id: String,
+        aircrafts: List<Aircraft>,
+        iteration: Iteration,
+        shadowPriceMap: ShadowPriceMap,
+        configuration: Configuration
+    ): Result<List<FlightTaskBunch>, Error> {
         val beginTime = Clock.System.now()
-        val newBunches = when (val ret = bunchGenerationContext.generateFlightTaskBunch(aircrafts, iteration.iteration, shadowPriceMap)) {
+        val newBunches = when (val ret = bunchGenerationContext.generateFlightTaskBunch(aircrafts, iteration.iteration, shadowPriceMap, configuration)) {
             is Ok -> {
                 ret.value
             }

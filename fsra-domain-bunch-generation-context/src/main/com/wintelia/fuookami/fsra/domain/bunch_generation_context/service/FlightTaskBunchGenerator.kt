@@ -1,6 +1,7 @@
 package com.wintelia.fuookami.fsra.domain.bunch_generation_context.service
 
 import kotlin.time.*
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.datetime.*
 import fuookami.ospf.kotlin.utils.math.*
 import fuookami.ospf.kotlin.utils.error.*
@@ -73,14 +74,14 @@ private data class Label(
     }
 
     val reducedCost get() = cost.sum!! - shadowPrice
-    val aircraftChange: UInt64 = (prevLabel?.aircraftChange ?: UInt64.zero) +
+    val aircraftChange: UInt64 = // (prevLabel?.aircraftChange ?: UInt64.zero) +
             if (flightTask?.aircraftChanged == true) {
                 UInt64.one
             } else {
                 UInt64.zero
             }
     val trace: List<UInt64>
-    val isBetterBunch get() = reducedCost leq Flt64.zero
+    val isBetterBunch get() = ls(reducedCost, Flt64.zero)
     val originFlightTask get() = flightTask?.originTask
 
     init {
@@ -152,9 +153,9 @@ private data class Label(
     }
 
     infix fun ls(rhs: Label): Boolean {
-        return reducedCost ls rhs.reducedCost
+        return ls(reducedCost, rhs.reducedCost)
                 && delay <= rhs.delay
-                && ((node is EndNode) || (aircraftChange > rhs.aircraftChange))
+                && ((node is EndNode) || (aircraftChange >= rhs.aircraftChange))
         // && flightHour leq rhs.flightHour
         // && flightCycle leq rhs.flightCycle
     }
@@ -163,17 +164,16 @@ private data class Label(
 private typealias LabelMap = MutableMap<Node, MutableList<Label>>
 
 class FlightTaskBunchGenerator(
-    val aircraft: Aircraft,
-    val aircraftUsability: AircraftUsability,
-    val graph: Graph,
-    val connectionTimeCalculator: ConnectionTimeCalculator,
-    val minimumDepartureTimeCalculator: MinimumDepartureTimeCalculator,
-    val costCalculator: CostCalculator,
-    val totalCostCalculator: TotalCostCalculator
+    private val aircraft: Aircraft,
+    private val aircraftUsability: AircraftUsability,
+    private val graph: Graph,
+    private val connectionTimeCalculator: ConnectionTimeCalculator,
+    private val minimumDepartureTimeCalculator: MinimumDepartureTimeCalculator,
+    private val costCalculator: CostCalculator,
+    private val totalCostCalculator: TotalCostCalculator,
+    private val configuration: Configuration
 ) {
     companion object {
-        const val maxAmount = 60
-
         private fun sortNodes(graph: Graph): List<Node> {
             val inDegree = HashMap<Node, UInt64>()
             for ((_, node) in graph.nodes) {
@@ -336,14 +336,23 @@ class FlightTaskBunchGenerator(
 
     private fun insertLabel(labels: MutableList<Label>, label: Label, withDeletion: Boolean = true) {
         if (withDeletion) {
-            if (labels.any { it ls label }) {
-                return
+            val remainingLabels = ArrayList<Label>()
+            for (it in labels) {
+                if (it ls label) {
+                    return
+                } else if (!(label ls it)) {
+                    if (remainingLabels.size <= configuration.maximumLabelPerNode.toInt()) {
+                        remainingLabels.add(label)
+                    }
+                }
             }
-            labels.removeIf { label ls it }
+
+            labels.clear()
+            labels.addAll(remainingLabels)
         }
 
         for (i in labels.indices) {
-            if (label.reducedCost ls labels[i].reducedCost) {
+            if (ls(label.reducedCost, labels[i].reducedCost)) {
                 labels.add(i, label)
                 return
             }
@@ -360,7 +369,7 @@ class FlightTaskBunchGenerator(
             if (newBunch != null) {
                 bunches.add(newBunch)
             }
-            if (bunches.size == maxAmount) {
+            if (bunches.size == configuration.maximumColumnGeneratedPerAircraft.toInt()) {
                 break
             }
         }
@@ -372,15 +381,15 @@ class FlightTaskBunchGenerator(
     // because there is no connection between virtual node and flight node
     private fun getMinDepartureTime(prevLabel: Label, succNode: Node): Instant {
         assert(succNode is TaskNode)
+        val thisFlightTask = (succNode as TaskNode).task
         return if (prevLabel.node is RootNode && aircraftUsability.lastTask == null) {
-            aircraftUsability.enabledTime
+            minimumDepartureTimeCalculator(prevLabel.arrivalTime, aircraft, thisFlightTask, 0.minutes)
         } else {
             val prevFlightTask = if (prevLabel.node is RootNode) {
                 aircraftUsability.lastTask!!
             } else {
                 prevLabel.flightTask!!
             }
-            val thisFlightTask = (succNode as TaskNode).task
             val connectionTime = connectionTimeCalculator(aircraft, prevFlightTask, thisFlightTask)
             minimumDepartureTimeCalculator(prevLabel.arrivalTime, aircraft, thisFlightTask, connectionTime)
         }

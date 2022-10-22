@@ -4,6 +4,7 @@ import kotlin.time.Duration.Companion.minutes
 import fuookami.ospf.kotlin.utils.math.*
 import fuookami.ospf.kotlin.utils.error.*
 import fuookami.ospf.kotlin.utils.functional.*
+import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.bunch_generation_context.model.*
 
@@ -11,7 +12,8 @@ typealias FeasibilityJudger = (Aircraft, FlightTask?, FlightTask) -> Boolean
 
 class RouteGraphGenerator(
     private val reverse: FlightTaskReverse,
-    private val feasibilityJudger: FeasibilityJudger
+    private val configuration: Configuration,
+    private val feasibilityJudger: FeasibilityJudger,
 ) {
     operator fun invoke(
         aircraft: Aircraft,
@@ -58,7 +60,7 @@ class RouteGraphGenerator(
             if (!flag) {
                 graph.put(node, EndNode)
             }
-        } else {
+        } else if (configuration.withOrderChange) {
             assert(node is TaskNode)
             val prevFlightTask = (node as TaskNode).task
             for (flightTask in flightTasks) {
@@ -71,6 +73,15 @@ class RouteGraphGenerator(
                 if (reverse.contains(flightTask, prevFlightTask)
                     && !isConnected(graph, nodeMap, flightTask, prevFlightTask)
                 ) {
+                    insertFlightTask(graph, nodes, nodeMap, node, flightTask)
+                }
+            }
+            graph.put(node, EndNode)
+        } else {
+            assert(node is TaskNode)
+            val prevFlightTask = (node as TaskNode).task
+            for (flightTask in flightTasks) {
+                if (feasibilityJudger(aircraft, prevFlightTask, flightTask)) {
                     insertFlightTask(graph, nodes, nodeMap, node, flightTask)
                 }
             }

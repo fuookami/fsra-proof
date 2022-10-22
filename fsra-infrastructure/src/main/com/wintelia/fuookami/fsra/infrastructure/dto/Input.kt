@@ -51,7 +51,7 @@ data class AircraftDTO(
     @SerialName("end_time")
     val endTimeStr: String,             // DateTime
     @SerialName("is_abnormal")
-    val enabledBin: UInt64,
+    val disabledBin: UInt64,
     @SerialName("aircraft_avai_time")
     val enabledTimeStr: String          // DateTime
 ) {
@@ -59,7 +59,7 @@ data class AircraftDTO(
         private val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
     }
 
-    val enabled: Boolean get() = enabledBin == UInt64.one
+    val enabled: Boolean get() = disabledBin != UInt64.one
     val endTime get() = parseDateTime(endTimeStr, formatter)
     val enabledTime get() = parseDateTime(enabledTimeStr, formatter)
 }
@@ -320,21 +320,22 @@ data class AirportCloseDTO(
         private val timeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
     }
 
-    val times: List<TimeRange> get() {
-        val times = ArrayList<TimeRange>()
+    val times: List<TimeRange>
+        get() {
+            val times = ArrayList<TimeRange>()
 
-        var date = parseDate(beginDateStr, dateFormatter)
-        val endDate = parseDate(endDateStr, dateFormatter)
-        var beginTime = parseDateTime("$beginDateStr $beginCloseTime", timeFormatter)
-        var endTime = parseDateTime("$beginDateStr $endCloseTime", timeFormatter)
-        while (date != endDate) {
-            times.add(TimeRange(beginTime, endTime))
-            date += 1.days
-            beginTime += 1.days
-            endTime += 1.days
+            var date = parseDate(beginDateStr, dateFormatter)
+            val endDate = parseDate(endDateStr, dateFormatter)
+            var beginTime = parseDateTime("$beginDateStr $beginCloseTime", timeFormatter)
+            var endTime = parseDateTime("$beginDateStr $endCloseTime", timeFormatter)
+            while (date != endDate) {
+                times.add(TimeRange(beginTime, endTime))
+                date += 1.days
+                beginTime += 1.days
+                endTime += 1.days
+            }
+            return times
         }
-        return times
-    }
 }
 
 @Serializable

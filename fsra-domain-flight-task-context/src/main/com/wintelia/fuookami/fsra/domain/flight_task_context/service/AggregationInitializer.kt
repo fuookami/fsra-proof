@@ -169,7 +169,7 @@ class AggregationInitializer {
                 routeFlyTime[Route(dep, arr)] = routeFlyTimeDTO.routeFlyTime.toInt().minutes
             }
             if (routeFlyTime.isEmpty()) {
-                logger.warn { "There are no route fly time for ${type.minorType}, it will be read from flights."}
+                logger.warn { "There are no route fly time for ${type.minorType}, it will be read from flights." }
 
                 for (flightDTO in flightDTOList.asIterable().filter { it.acType == type.minorType }) {
                     val dep = Airport(flightDTO.dep)
@@ -201,7 +201,7 @@ class AggregationInitializer {
             }
             if (connectionTime.isEmpty()) {
                 logger.error { "There are no connection time for ${type.minorType}." }
-                return Failed(Err(ErrorCode.ApplicationError, "No connection time for ${type.minorType}" ))
+                return Failed(Err(ErrorCode.ApplicationError, "No connection time for ${type.minorType}"))
             }
             aircraftMinorTypes[type.minorType] = AircraftMinorType(
                 type = aircraftTypes[type.type]!!,

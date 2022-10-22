@@ -3,13 +3,19 @@
     <Appenders>
         <Console name="Console">
             <PatternLayout>
-                <Pattern>[%level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n</Pattern>
+                <Pattern>[%level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] - %msg%n</Pattern>
             </PatternLayout>
         </Console>
+        <File name="File" fileName="log/log.log" append="false">
+            <PatternLayout>
+                <Pattern>[%level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] - %msg%n</Pattern>
+            </PatternLayout>
+        </File>
     </Appenders>
     <Loggers>
         <Root level="TRACE">
             <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
         </Root>
     </Loggers>
 </Configuration>

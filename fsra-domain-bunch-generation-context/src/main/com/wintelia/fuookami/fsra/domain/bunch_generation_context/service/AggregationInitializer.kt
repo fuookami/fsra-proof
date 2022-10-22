@@ -15,12 +15,12 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.bunch_generation_context.*
 import com.wintelia.fuookami.fsra.domain.bunch_generation_context.model.*
+import com.wintelia.fuookami.fsra.infrastructure.Configuration
 import kotlin.time.Duration
 
 class AggregationInitializer {
     private val logger = logger()
 
-    @OptIn(DelicateCoroutinesApi::class)
     operator fun invoke(
         aircrafts: List<Aircraft>,
         aircraftUsability: Map<Aircraft, AircraftUsability>,
@@ -28,9 +28,10 @@ class AggregationInitializer {
         originBunches: List<FlightTaskBunch>,
         lock: Lock,
         flightTaskFeasibilityJudger: FlightTaskFeasibilityJudger,
-        initialFlightTaskBunchGenerator: InitialFlightTaskBunchGenerator
+        initialFlightTaskBunchGenerator: InitialFlightTaskBunchGenerator,
+        configuration: Configuration,
     ): Result<Aggregation, Error> {
-        val reverse = when (val ret = initReverseEnabledFlight(flightTasks, originBunches, lock)) {
+        val reverse = when (val ret = initReverseEnabledFlight(flightTasks, originBunches, lock, configuration)) {
             is Ok -> {
                 ret.value
             }
@@ -40,21 +41,23 @@ class AggregationInitializer {
             }
         }
         val flightTaskGroups = groupFlightTasks(flightTasks)
-        val promises = ArrayList<Pair<Aircraft, ChannelGuard<Result<Graph, Error>>>>()
-        val graphGenerator = RouteGraphGenerator(reverse) { aircraft: Aircraft, prevFlightTask: FlightTask?, succFlightTask: FlightTask ->
+        val graphGenerator = RouteGraphGenerator(reverse, configuration) { aircraft: Aircraft, prevFlightTask: FlightTask?, succFlightTask: FlightTask ->
             flightTaskFeasibilityJudger(aircraft, prevFlightTask, succFlightTask)
         }
-        for (aircraft in aircrafts) {
-            val promise = Channel<Result<Graph, Error>>()
-            GlobalScope.launch {
-                try {
-                    promise.send(graphGenerator(aircraft, aircraftUsability[aircraft]!!, flightTaskGroups))
-                } catch (e: Exception) {
-                    logger.warn { "$e" }
-                }
+        val graphs = when (val ret = if (configuration.multiThread) {
+            generateGraphMultiThread(aircrafts, aircraftUsability, flightTaskGroups, graphGenerator)
+        } else {
+            generateGraphSingleThread(aircrafts, aircraftUsability, flightTaskGroups, graphGenerator)
+        }) {
+            is Ok -> {
+                ret.value
             }
-            promises.add(Pair(aircraft, ChannelGuard(promise)))
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
         }
+
         val initialFlightBunches = when (val ret = generateInitialFlightTaskBunches(aircrafts, aircraftUsability, flightTasks, originBunches, initialFlightTaskBunchGenerator)) {
             is Ok -> {
                 ret.value
@@ -65,18 +68,7 @@ class AggregationInitializer {
             }
         }
 
-        val graphs = HashMap<Aircraft, Graph>()
-        for ((aircraft, promise) in promises) {
-            when (val ret = runBlocking { promise.receive() }) {
-                is Ok -> {
-                    graphs[aircraft] = ret.value
-                }
 
-                is Failed -> {
-                    return Failed(ret.error)
-                }
-            }
-        }
         return Ok(
             Aggregation(
                 graphs = graphs,
@@ -107,15 +99,20 @@ class AggregationInitializer {
         return flightTaskGroups
     }
 
-    private fun initReverseEnabledFlight(flightTasks: List<FlightTask>, originBunches: List<FlightTaskBunch>, lock: Lock): Result<FlightTaskReverse, Error> {
+    private fun initReverseEnabledFlight(
+        flightTasks: List<FlightTask>,
+        originBunches: List<FlightTaskBunch>,
+        lock: Lock,
+        configuration: Configuration
+    ): Result<FlightTaskReverse, Error> {
         var timeDifferenceLimit = FlightTaskReverse.defaultTimeDifferenceLimit
         val pairs = ArrayList<Pair<FlightTask, FlightTask>>()
-        if (flightTasks.size >= 2) {
+        if (configuration.withOrderChange && flightTasks.size >= 2) {
             while (true) {
                 pairs.clear()
                 for (i in flightTasks.indices) {
                     for (j in (i + 1) until flightTasks.size) {
-                        if (FlightTaskReverse.symmetrical(flightTasks[i], flightTasks[j], lock, timeDifferenceLimit + FlightTaskReverse.defaultTimeDifferenceLimit)) {
+                        if (FlightTaskReverse.symmetrical(flightTasks[i], flightTasks[j], lock, timeDifferenceLimit + (FlightTaskReverse.defaultTimeDifferenceLimit / 2.0))) {
                             pairs.add(Pair(flightTasks[i], flightTasks[j]))
                         } else {
                             if (FlightTaskReverse.reverseEnabled(flightTasks[i], flightTasks[j], lock, timeDifferenceLimit)) {
@@ -138,6 +135,62 @@ class AggregationInitializer {
             }
         }
         return Ok(FlightTaskReverse(pairs, originBunches, lock, timeDifferenceLimit))
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun generateGraphMultiThread(
+        aircrafts: List<Aircraft>,
+        aircraftUsability: Map<Aircraft, AircraftUsability>,
+        flightTaskGroups: Map<Airport, List<FlightTask>>,
+        graphGenerator: RouteGraphGenerator
+    ): Result<Map<Aircraft, Graph>, Error> {
+        val promises = ArrayList<Pair<Aircraft, ChannelGuard<Result<Graph, Error>>>>()
+
+        for (aircraft in aircrafts) {
+            val promise = Channel<Result<Graph, Error>>()
+            GlobalScope.launch {
+                try {
+                    promise.send(graphGenerator(aircraft, aircraftUsability[aircraft]!!, flightTaskGroups))
+                } catch (e: Exception) {
+                    logger.warn { "$e" }
+                }
+            }
+            promises.add(Pair(aircraft, ChannelGuard(promise)))
+        }
+        val graphs = HashMap<Aircraft, Graph>()
+        for ((aircraft, promise) in promises) {
+            when (val ret = runBlocking { promise.receive() }) {
+                is Ok -> {
+                    graphs[aircraft] = ret.value
+                }
+
+                is Failed -> {
+                    return Failed(ret.error)
+                }
+            }
+        }
+        return Ok(graphs)
+    }
+
+    private fun generateGraphSingleThread(
+        aircrafts: List<Aircraft>,
+        aircraftUsability: Map<Aircraft, AircraftUsability>,
+        flightTaskGroups: Map<Airport, List<FlightTask>>,
+        graphGenerator: RouteGraphGenerator
+    ): Result<Map<Aircraft, Graph>, Error> {
+        val graphs = HashMap<Aircraft, Graph>()
+        for (aircraft in aircrafts) {
+            when (val ret = graphGenerator(aircraft, aircraftUsability[aircraft]!!, flightTaskGroups)) {
+                is Ok -> {
+                    graphs[aircraft] = ret.value
+                }
+
+                is Failed -> {
+                    return Failed(ret.error)
+                }
+            }
+        }
+        return Ok(graphs)
     }
 
     private fun generateInitialFlightTaskBunches(

@@ -30,7 +30,7 @@ class AircraftUsabilityTidier {
             }
         }
         for ((aircraft, usability) in map) {
-            logger.info { "Aircraft ${aircraft.regNo} could be used at ${usability.location}, ${usability.enabledTime}" }
+            logger.info { "Aircraft ${aircraft.regNo} could be used at ${usability.location.icao}, ${usability.enabledTime}" }
         }
         return Ok(map)
     }

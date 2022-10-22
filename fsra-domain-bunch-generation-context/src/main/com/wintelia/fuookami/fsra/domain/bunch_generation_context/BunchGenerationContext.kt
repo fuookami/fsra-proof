@@ -14,6 +14,7 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.FlightTaskContext
 import com.wintelia.fuookami.fsra.domain.rule_context.RuleContext
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.bunch_generation_context.service.*
+import com.wintelia.fuookami.fsra.infrastructure.Configuration
 import fuookami.ospf.kotlin.utils.concept.ManualIndexed
 
 class BunchGenerationContext(
@@ -27,7 +28,7 @@ class BunchGenerationContext(
     private lateinit var generators: Map<Aircraft, FlightTaskBunchGenerator>
     val initialFlightBunches get() = aggregation.initialFlightBunches
 
-    fun init(aircrafts: List<Aircraft>, flightTasks: List<FlightTask>): Try<Error> {
+    fun init(aircrafts: List<Aircraft>, flightTasks: List<FlightTask>, configuration: Configuration): Try<Error> {
         val flightTaskAggregation = flightTaskContext.aggregation
         val ruleAggregation = ruleContext.aggregation
 
@@ -50,7 +51,8 @@ class BunchGenerationContext(
             flightTaskAggregation.originBunches,
             ruleAggregation.lock,
             feasibilityJudger,
-            initialFlightTaskBunchGenerator
+            initialFlightTaskBunchGenerator,
+            configuration
         )) {
             is Ok -> {
                 ret.value
@@ -70,7 +72,8 @@ class BunchGenerationContext(
                 connectionTimeCalculator = ruleContext::connectionTime,
                 minimumDepartureTimeCalculator = ruleContext::minimumDepartureTime,
                 costCalculator = ruleContext::cost,
-                totalCostCalculator = ruleContext::cost
+                totalCostCalculator = ruleContext::cost,
+                configuration
             )
         }
         this.generators = generators
@@ -84,8 +87,44 @@ class BunchGenerationContext(
         val promise: ChannelGuard<Result<List<FlightTaskBunch>, Error>>
     )
 
+    fun generateFlightTaskBunch(aircrafts: List<Aircraft>, iteration: UInt64, shadowPriceMap: ShadowPriceMap, configuration: Configuration): Result<List<FlightTaskBunch>, Error> {
+        return if (configuration.multiThread) {
+            generateFlightTaskBunchMultiThread(aircrafts, iteration, shadowPriceMap)
+        } else {
+            generateFlightTaskBunchSingleThread(aircrafts, iteration, shadowPriceMap)
+        }
+    }
+
+    private fun generateFlightTaskBunchSingleThread(aircrafts: List<Aircraft>, iteration: UInt64, shadowPriceMap: ShadowPriceMap): Result<List<FlightTaskBunch>, Error> {
+        val bunches = ArrayList<FlightTaskBunch>()
+        for (aircraft in aircrafts) {
+            logger.debug { "Sub-problem of ${aircraft.regNo} started." }
+            val beginTime = Clock.System.now()
+            val thisBunches = when (val ret = generators[aircraft]!!(iteration, shadowPriceMap)) {
+                is Ok -> {
+                    ret.value
+                }
+
+                is Failed -> {
+                    return Failed(ret.error)
+                }
+            }
+            val amount = thisBunches.size
+            val duration = Clock.System.now() - beginTime
+            bunches.addAll(thisBunches)
+            logger.debug { "Sub-problem of ${aircraft.regNo} finished: ${duration.toInt(DurationUnit.MILLISECONDS)} ms, bunches amount: $amount." }
+        }
+
+        ManualIndexed.flush<FlightTaskBunch>()
+        for (bunch in bunches) {
+            bunch.setIndexed()
+        }
+
+        return Ok(bunches)
+    }
+
     @OptIn(DelicateCoroutinesApi::class)
-    fun generateFlightTaskBunch(aircrafts: List<Aircraft>, iteration: UInt64, shadowPriceMap: ShadowPriceMap): Result<List<FlightTaskBunch>, Error> {
+    private fun generateFlightTaskBunchMultiThread(aircrafts: List<Aircraft>, iteration: UInt64, shadowPriceMap: ShadowPriceMap): Result<List<FlightTaskBunch>, Error> {
         val promises = ArrayList<Promise>()
 
         for (aircraft in aircrafts) {
@@ -118,7 +157,7 @@ class BunchGenerationContext(
             val duration = Clock.System.now() - promise.beginTime
             bunches.addAll(thisBunches)
 
-            logger.debug { "Sub-problem of ${promise.aircraft.regNo} finished: ${duration.toInt(DurationUnit.MILLISECONDS)} ms， bunches amount: $amount." }
+            logger.debug { "Sub-problem of ${promise.aircraft.regNo} finished: ${duration.toInt(DurationUnit.MILLISECONDS)} ms, bunches amount: $amount." }
         }
 
         ManualIndexed.flush<FlightTaskBunch>()

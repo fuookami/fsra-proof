@@ -15,9 +15,9 @@ import fuookami.ospf.kotlin.core.backend.plugins.scip.*
 typealias IPResult = LinearSolverOutput
 
 fun solveMIP(name: String, metaModel: LinearMetaModel, configuration: Configuration, solverConfig: LinearSolverConfig = LinearSolverConfig()): Result<IPResult, Error> {
-    metaModel.export("$name.opm")
+    // metaModel.export("$name.opm")
     val model = LinearTriadModel(LinearModel(metaModel))
-    model.export("$name.lp", ModelFileFormat.LP)
+    // model.export("$name.lp", ModelFileFormat.LP)
     val ret = when (configuration.solver) {
         "cplex" -> {
             val solver = CplexLinearSolver(solverConfig)
@@ -57,7 +57,7 @@ data class LPResult(
 )
 
 fun solveLP(name: String, metaModel: LinearMetaModel, configuration: Configuration, solverConfig: LinearSolverConfig = LinearSolverConfig()): Result<LPResult, Error> {
-    metaModel.export("$name.opm")
+    // metaModel.export("$name.opm")
     lateinit var dualResult: List<Flt64>
     val model = LinearTriadModel(LinearModel(metaModel))
     model.linearRelax()

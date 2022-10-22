@@ -22,9 +22,13 @@ data class Configuration(
     val withPassenger: Boolean = false,
     val withCargo: Boolean = false,
     val withCrew: Boolean = false,
+    val withOrderChange: Boolean = false,
 
     val solver: String = "cplex",
+    val multiThread: Boolean = true,
     val badReducedAmount: UInt64 = UInt64(20UL),
+    val maximumLabelPerNode: UInt64 = UInt64(30UL),
+    val maximumColumnGeneratedPerAircraft: UInt64 = UInt64(60UL),
     val maximumColumnAmount: UInt64 = UInt64(20000UL),
     val minimumColumnAmountPerAircraft: UInt64 = UInt64.zero,
     val timeLimit: Duration = 30000.seconds,
