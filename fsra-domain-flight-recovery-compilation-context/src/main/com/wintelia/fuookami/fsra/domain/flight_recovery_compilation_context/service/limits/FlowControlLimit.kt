@@ -41,6 +41,8 @@ class FlowControlLimit(
             for (checkPoint in this.flow.checkPoints) {
                 obj += parameter.flowControlSlack * m[checkPoint]!!
             }
+
+            model.minimize(obj, "flow control")
         }
 
         return Ok(success)

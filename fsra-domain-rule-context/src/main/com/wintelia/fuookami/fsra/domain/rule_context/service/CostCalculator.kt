@@ -217,7 +217,7 @@ class CostCalculator(
     }
 
     fun advanceCost(flightTask: FlightTask): CostItem {
-        return if (!flightTask.advanceEnabled) {
+        return if (!flightTask.advanceEnabled && flightTask.advance != Duration.ZERO) {
             CostItem("advance", null)
         } else if (flightTask.advance != Duration.ZERO) {
             CostItem("advance", flightTask.weight * parameter.flightAdvancePerFlight)

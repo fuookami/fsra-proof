@@ -11,7 +11,7 @@ class FlightTaskFeasibilityJudger(
     val ruleChecker: RuleChecker
 ) {
     data class Config(
-        val checkEnabledTime: Boolean = true,
+        val checkEnabledTime: Boolean = false,
         val timeExtractor: Extractor<TimeRange?, FlightTask> = FlightTask::scheduledTime,
         val departureTime: Instant? = null
     )
@@ -62,7 +62,7 @@ class FlightTaskFeasibilityJudger(
             return false
         }
         if (config.checkEnabledTime) {
-            val time = flightTask.time
+            val time = config.timeExtractor(flightTask)
             if (time != null && time.begin < aircraftUsability[aircraft]!!.enabledTime) {
                 return false
             }

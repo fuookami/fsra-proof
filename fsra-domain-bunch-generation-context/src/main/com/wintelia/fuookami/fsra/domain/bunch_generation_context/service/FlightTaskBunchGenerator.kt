@@ -218,6 +218,8 @@ class FlightTaskBunchGenerator(
 
     operator fun invoke(iteration: UInt64, shadowPriceMap: ShadowPriceMap): Result<List<FlightTaskBunch>, Error> {
         val labels: LabelMap = HashMap()
+        initRootLabel(labels, shadowPriceMap)
+
         for (prevNode in nodes) {
             for (prevLabel in getLabels(labels, prevNode)) {
                 for (edge in graph[prevNode]) {
@@ -325,7 +327,7 @@ class FlightTaskBunchGenerator(
 
         return if (recoveryPolicy.empty) {
             succTask
-        } else if (succTask.recoveryEnabled(recoveryPolicy)) {
+        } else if (!succTask.recoveryEnabled(recoveryPolicy)) {
             null
         } else {
             succTask.recovery(recoveryPolicy)

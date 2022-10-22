@@ -2,6 +2,7 @@ package com.wintelia.fuookami.fsra.infrastructure
 
 import java.time.format.*
 import java.time.temporal.*
+import kotlin.time.*
 import kotlinx.datetime.*
 import fuookami.ospf.kotlin.utils.math.*
 
@@ -25,6 +26,8 @@ data class Date(
             return Date(value.toJavaInstant().truncatedTo(ChronoUnit.DAYS).toKotlinInstant())
         }
     }
+
+    operator fun plus(rhs: Duration) = Date(value + rhs)
 
     fun localDate(timeZone: TimeZone = TimeZone.currentSystemDefault()) = value.toLocalDateTime(timeZone).date
 

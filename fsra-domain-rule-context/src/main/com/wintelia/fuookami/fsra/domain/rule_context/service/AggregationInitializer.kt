@@ -98,17 +98,16 @@ class AggregationInitializer {
                 logger.warn { "Found unknown airport with icao: ${airportCloseDTO.airport}." }
                 continue
             }
-            val beginTime = airportCloseDTO.beginTime
-            val endTime = airportCloseDTO.endTime
-            val time = TimeRange(beginTime, endTime)
-            val flowControl = FlowControl(
-                airport = airport,
-                time = time,
-                scene = FlowControlScene.DepartureArrival,
-                capacity = FlowControlCapacity.close(time)
-            )
-            if (!flowControls.any { it == flowControl }) {
-                flowControls.add(flowControl)
+            for (time in airportCloseDTO.times) {
+                val flowControl = FlowControl(
+                    airport = airport,
+                    time = time,
+                    scene = FlowControlScene.DepartureArrival,
+                    capacity = FlowControlCapacity.close(time)
+                )
+                if (!flowControls.any { it == flowControl }) {
+                    flowControls.add(flowControl)
+                }
             }
         }
         for (airportFlowControlDTO in airportFlowControlDTOList) {

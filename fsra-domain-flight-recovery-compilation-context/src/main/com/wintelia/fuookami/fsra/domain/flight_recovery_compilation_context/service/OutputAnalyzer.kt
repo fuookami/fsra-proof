@@ -11,7 +11,7 @@ import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 
 class OutputAnalyzer(
-    val aggregation: Aggregation
+    private val aggregation: Aggregation
 ) {
     data class Output(
         val recoveryedFlights: List<RecoveryedFlightDTO>,
@@ -34,14 +34,16 @@ class OutputAnalyzer(
         val canceledFlights = ArrayList<FlightTask>()
         val canceledMaintenances = ArrayList<FlightTask>()
         for (flightTask in aggregation.recoveryNeededFlightTasks) {
-            var flag = true
+            var flag = false
             for (bunch in selectedBunches) {
                 val recoveryedFlightTask = bunch.get(flightTask)
-                if (recoveryedFlightTask != null && recoveryedFlightTask.recovered) {
-                    if (recoveryedFlightTask.isFlight) {
-                        recoveryedFlights.add(recoveryedFlightTask)
-                    } else {
-                        recoveryedMaintenances.add(recoveryedFlightTask)
+                if (recoveryedFlightTask != null) {
+                    if (recoveryedFlightTask.recovered) {
+                        if (recoveryedFlightTask.isFlight) {
+                            recoveryedFlights.add(recoveryedFlightTask)
+                        } else {
+                            recoveryedMaintenances.add(recoveryedFlightTask)
+                        }
                     }
                     flag = true
                     break

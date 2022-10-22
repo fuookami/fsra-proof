@@ -777,7 +777,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
 
     private fun tidyOutput(id: String, bestOutput: Output?, beginTime: Instant, error: Error): Output {
         return if (bestOutput != null) {
-            tidyOutput(id, bestOutput, beginTime, error)
+            tidyOutput(id, bestOutput, beginTime)
         } else {
             logger.info { "Stopped: ${error.code()}, ${error.message()}." }
             Output(id, error)

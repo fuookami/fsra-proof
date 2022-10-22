@@ -63,13 +63,13 @@ class RouteGraphGenerator(
             val prevFlightTask = (node as TaskNode).task
             for (flightTask in flightTasks) {
                 if (feasibilityJudger(aircraft, prevFlightTask, flightTask)
-                    && isConnected(graph, nodeMap, flightTask, prevFlightTask)
+                    && !isConnected(graph, nodeMap, flightTask, prevFlightTask)
                 ) {
                     insertFlightTask(graph, nodes, nodeMap, node, flightTask)
                 }
 
                 if (reverse.contains(flightTask, prevFlightTask)
-                    && isConnected(graph, nodeMap, flightTask, prevFlightTask)
+                    && !isConnected(graph, nodeMap, flightTask, prevFlightTask)
                 ) {
                     insertFlightTask(graph, nodes, nodeMap, node, flightTask)
                 }

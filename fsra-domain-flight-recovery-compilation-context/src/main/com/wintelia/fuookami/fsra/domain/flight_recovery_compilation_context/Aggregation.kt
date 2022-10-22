@@ -226,15 +226,17 @@ class Aggregation(
                 for (i in UInt64.zero..iteration) {
                     val xi = compilation.x[i.toInt()]
 
-                    val bunch = bunches(i)[token.variable.index]
-                    assert(!removedBunches.contains(bunch))
+                    if (token.variable.identifier == xi.identifier) {
+                        val bunch = bunches(i)[token.variable.index]
+                        assert(!removedBunches.contains(bunch))
 
-                    if (geq(token.result!!, bestValue) && !fixedBunches.contains(bunch)) {
-                        bestValue = token.result!!
-                    }
-                    if (geq(token.result!!, bar) && !fixedBunches.contains(bunch)) {
-                        ret.add(bunch)
-                        xi[token.variable.index]!!.range.eq(UInt8.one)
+                        if (token.result != null && geq(token.result!!, bestValue) && !fixedBunches.contains(bunch)) {
+                            bestValue = token.result!!
+                        }
+                        if (token.result != null && geq(token.result!!, bar) && !fixedBunches.contains(bunch)) {
+                            ret.add(bunch)
+                            xi[token.variable.index]!!.range.eq(UInt8.one)
+                        }
                     }
                 }
             }
@@ -261,40 +263,27 @@ class Aggregation(
         val z = compilation.z
 
         for (token in model.tokens.tokens) {
-            if (gr(token.result!!, Flt64.zero)
-                && !token.name.startsWith("x")
-                && token.variable.identifier != y.identifier
-                && token.variable.identifier != z.identifier
-            ) {
+            if (gr(token.result!!, Flt64.zero)) {
                 logger.debug { "${token.name} = ${token.result!!}" }
             }
+        }
+
+        for (obj in model.subObjects) {
+            logger.debug { "${obj.name} = ${obj.value()}"}
         }
 
         return Ok(success)
     }
 
     fun logBunchCost(iteration: UInt64, model: LinearMetaModel): Try<Error> {
-        val y = compilation.y
-        val z = compilation.z
-
         for (token in model.tokens.tokens) {
-            if (eq(token.result!!, Flt64.one)
-                && !token.name.startsWith("x")
-                && token.variable.identifier != y.identifier
-                && token.variable.identifier != z.identifier
-            ) {
-                logger.debug { "${token.name} = ${token.result}" }
-            }
-
-            if (eq(token.result!!, Flt64.one)
-                && token.name.startsWith("x")
-            ) {
+            if (eq(token.result!!, Flt64.one) && token.name.startsWith("x")) {
                 for (i in UInt64.zero..iteration) {
                     val xi = compilation.x[i.toInt()]
 
                     if (token.variable.identifier == xi.identifier) {
                         val bunch = bunches(i)[token.variable.index]
-                        logger.debug { "${bunch.aircraft} cost: ${bunch.cost.sum!!}" }
+                        logger.debug { "${bunch.aircraft.regNo} cost: ${bunch.cost.sum!!}" }
                         break
                     }
                 }

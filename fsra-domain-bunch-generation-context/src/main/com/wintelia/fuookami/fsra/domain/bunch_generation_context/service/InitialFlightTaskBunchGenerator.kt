@@ -13,6 +13,7 @@ class InitialFlightTaskBunchGenerator(
 ) {
     companion object {
         val config = FlightTaskFeasibilityJudger.Config(
+            checkEnabledTime = false,
             timeExtractor = FlightTask::time
         )
     }

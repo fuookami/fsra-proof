@@ -32,7 +32,7 @@ class AircraftCompilationLimit(
 
         for (aircraft in aircrafts) {
             model.addConstraint(
-                compilation[aircraft]!! + z[aircraft]!! eq UInt64.one,
+                compilation[aircraft]!! eq UInt64.one,
                 "${name}_${aircraft.regNo}"
             )
         }

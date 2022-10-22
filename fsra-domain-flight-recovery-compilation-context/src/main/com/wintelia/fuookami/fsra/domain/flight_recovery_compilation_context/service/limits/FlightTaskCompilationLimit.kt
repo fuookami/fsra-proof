@@ -33,7 +33,7 @@ class FlightTaskCompilationLimit(
 
         for (flightTask in flightTasks) {
             model.addConstraint(
-                (compilation[flightTask]!! + y[flightTask]!!) eq Flt64.one,
+                compilation[flightTask]!! eq Flt64.one,
                 "${name}_${flightTask.name}"
             )
         }
