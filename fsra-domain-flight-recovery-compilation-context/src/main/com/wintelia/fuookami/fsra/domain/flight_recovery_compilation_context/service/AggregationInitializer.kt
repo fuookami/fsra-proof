@@ -66,7 +66,7 @@ class AggregationInitializer {
 
         ManualIndexed.flush<FlightTask>()
         for (flightTask in recoveryNeededFlightTasks) {
-            flightTask.setIndexed()
+            flightTask.setIndexed(FlightTask::class)
         }
 
         return Ok(

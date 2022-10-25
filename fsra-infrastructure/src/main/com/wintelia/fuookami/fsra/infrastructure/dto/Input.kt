@@ -7,6 +7,7 @@ import kotlinx.datetime.*
 import kotlinx.serialization.*
 import fuookami.ospf.kotlin.utils.math.*
 import com.wintelia.fuookami.fsra.infrastructure.*
+import java.io.Serial
 
 private fun parseDate(str: String, formatter: DateTimeFormatter): Date {
     return Date(java.time.LocalDate.from(formatter.parse(str)).atStartOfDay().toKotlinLocalDateTime().toInstant(TimeZone.currentSystemDefault()))
@@ -109,9 +110,9 @@ data class FlightDTO(
     val id: String,
     @SerialName("flight_date")
     val dateStr: String,                // Date
-    @SerialName("region")
+    @SerialName("d_or_i")
     val region: CString,                // "国内" 或 "国外"
-    @SerialName("flight_code")
+    @SerialName("flight_no")
     val no: String,
     @SerialName("dep_airport")
     val dep: ICAO,
@@ -139,7 +140,7 @@ data class FlightDTO(
     val businessClassNum: UInt64,
     @SerialName("E_class_order_num")
     val economyClassNum: UInt64,
-    @SerialName("importance_num")
+    @SerialName("weight")
     val weight: Flt64,
     @SerialName("conn_order_num")
     val connectedPassengerAmount: UInt64,
@@ -157,7 +158,7 @@ data class FlightDTO(
     val aircraftChangeEnabledBin: UInt64,
     @SerialName("allow_cancel")
     val cancelEnabledBin: UInt64,
-    @SerialName("passenger_cargo_type")
+    @SerialName("p_or_c")
     val passengerCargoType: String,     // "passenger" or "cargo"
 ) {
     companion object {
@@ -194,10 +195,10 @@ data class LineMaintenanceDTO(
     val airportList: String,        // [ICAO]
 ) {
     companion object {
-        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
+        private val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
     }
 
-    val airports get() = airportList.split(",").map { ICAO(it) }
+    val airports get() = airportList.split("|").mapNotNull { if (it.isNotEmpty()) { ICAO(it) } else { null } }
     val beginTime get() = parseDateTime(beginTimeStr, formatter)
     val endTime get() = parseDateTime(endTimeStr, formatter)
 }
@@ -214,10 +215,10 @@ data class ScheduleMaintenanceDTO(
     val airportList: String,        // [ICAO]
 ) {
     companion object {
-        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
+        private val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
     }
 
-    val airports get() = airportList.split(",").map { ICAO(it) }
+    val airports get() = airportList.split("|").mapNotNull { if (it.isNotEmpty()) { ICAO(it) } else { null } }
 
     val beginTime get() = parseDateTime(beginTimeStr, formatter)
     val endTime get() = parseDateTime(endTimeStr, formatter)
@@ -237,10 +238,10 @@ data class AOGDTO(
     val airportList: String,        // [ICAO]
 ) {
     companion object {
-        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
+        private val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
     }
 
-    val airports get() = airportList.split("|").map { ICAO(it) }
+    val airports get() = airportList.split("|").mapNotNull { if (it.isNotEmpty()) { ICAO(it) } else { null } }
 
     val beginTime get() = parseDateTime(beginTimeStr, formatter)
     val endTime get() = parseDateTime(endTimeStr, formatter)
@@ -293,8 +294,10 @@ data class StrongRestrictionDTO(
     val arr: ICAO,
     @SerialName("ac_reg")
     val acReg: AircraftRegisterNumber,
-    @SerialName("penalty_value")
-    val weight: Flt64
+    @SerialName("flight_id")
+    val flightId: String,
+    @SerialName("limit_type")
+    val limitType: String
 )
 
 @Serializable
@@ -322,6 +325,8 @@ data class AirportCloseDTO(
     val endDateStr: String,         // Date
     @SerialName("end_close_time")
     val endCloseTime: String,       // DayTime
+    @SerialName("ac_types")
+    val acTypeList: String,
 ) {
     companion object {
         private val dateFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
@@ -336,14 +341,20 @@ data class AirportCloseDTO(
             val endDate = parseDate(endDateStr, dateFormatter)
             var beginTime = parseDateTime("$beginDateStr $beginCloseTime", timeFormatter)
             var endTime = parseDateTime("$beginDateStr $endCloseTime", timeFormatter)
-            while (date != endDate) {
+            if (date == endDate) {
                 times.add(TimeRange(beginTime, endTime))
-                date += 1.days
-                beginTime += 1.days
-                endTime += 1.days
+            } else {
+                while (date leq endDate) {
+                    times.add(TimeRange(beginTime, endTime))
+                    date += 1.days
+                    beginTime += 1.days
+                    endTime += 1.days
+                }
             }
             return times
         }
+
+    val minorTypes = acTypeList.split(",").mapNotNull { if (it.isNotEmpty()) { AircraftMinorTypeCode(it) } else { null } }
 }
 
 @Serializable

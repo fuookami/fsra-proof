@@ -77,8 +77,8 @@ class FlightRecoveryCompilationContext(
 
             val generator = PipelineListGenerator(aggregation)
             pipelineList = when (val ret = generator(
-                { ruleContext.cancelCost(it)?.value ?: Flt64.infinity },
-                { prevFlightTask, flightTask -> ruleContext.delayCost(prevFlightTask, flightTask)?.value ?: Flt64.infinity },
+                { ruleContext.cancelCost(it).value ?: Flt64.infinity },
+                { prevFlightTask, flightTask -> ruleContext.delayCost(prevFlightTask, flightTask).value ?: Flt64.infinity },
                 ruleAggregation.linkMap,
                 recoveryPlan,
                 configuration,

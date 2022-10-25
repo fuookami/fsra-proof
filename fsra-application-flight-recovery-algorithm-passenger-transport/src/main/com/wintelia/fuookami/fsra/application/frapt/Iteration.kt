@@ -38,7 +38,7 @@ class Iteration {
     val optimalRate: Flt64
         get() {
             val actualOptimalRate = ((lowerBound + Flt64.one) / (bestObj + Flt64.one)).sqr() as Flt64
-            return upperBound?.let { max(actualOptimalRate, (it - bestObj) / it) } ?: actualOptimalRate
+            return min(Flt64.one, upperBound?.let { max(actualOptimalRate, (it - bestObj) / it) } ?: actualOptimalRate)
         }
 
     fun refreshLowerBound(shadowPriceMap: ShadowPriceMap, newBunches: List<FlightTaskBunch>) {

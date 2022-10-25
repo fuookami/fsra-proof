@@ -26,10 +26,10 @@ class FlowControlLimit(
     override val name: String = "flow_control"
 ) : CGPipeline<LinearMetaModel, ShadowPriceMap> {
     override fun invoke(model: LinearMetaModel): Try<Error> {
-        val flow = this.flow.flow
-        val m = this.flow.m
-
         if (this.flow.checkPoints.isNotEmpty()) {
+            val flow = this.flow.flow
+            val m = this.flow.m
+
             for (checkPoint in this.flow.checkPoints) {
                 model.addConstraint(
                     (flow[checkPoint]!! - m[checkPoint]!!) leq checkPoint.capacity,

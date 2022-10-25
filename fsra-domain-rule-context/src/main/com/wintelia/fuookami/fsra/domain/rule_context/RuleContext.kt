@@ -23,7 +23,7 @@ class RuleContext(
         val flightTaskAggregation = flightTaskContext.aggregation
 
         val initializer = AggregationInitializer()
-        aggregation = when (val ret = initializer(flightTaskAggregation.originBunches, input, parameter)) {
+        aggregation = when (val ret = initializer(flightTaskAggregation.flightTasks, flightTaskAggregation.originBunches, input, parameter)) {
             is Ok -> {
                 ret.value
             }
@@ -65,11 +65,11 @@ class RuleContext(
         return costCalculator(aircraft, prevFlightTask, flightTask, prevFlightHour, prevFlightCycle)
     }
 
-    fun cancelCost(flightTask: FlightTask): CostItem? {
+    fun cancelCost(flightTask: FlightTask): CostItem {
         return costCalculator.cancelCost(flightTask)
     }
 
-    fun delayCost(prevFlightTask: FlightTask?, flightTask: FlightTask): CostItem? {
+    fun delayCost(prevFlightTask: FlightTask?, flightTask: FlightTask): CostItem {
         return costCalculator.delayCost(prevFlightTask, flightTask)
     }
 }

@@ -148,6 +148,7 @@ class RelationRestriction(
 
 data class GeneralRestrictionCondition(
     val time: TimeRange = TimeRange(),
+    val flights: Set<FlightTaskKey>? = null,
     val departureAirports: Set<Airport>? = null,
     val arrivalAirports: Set<Airport>? = null,
     val bidirectional: Boolean? = null,
@@ -164,6 +165,16 @@ private typealias Condition = GeneralRestrictionCondition
 private sealed interface Policy {
     fun ifValid(condition: Condition): Boolean
     fun check(condition: Condition, flightTask: FlightTask, recoveryPolicy: RecoveryPolicy?): Boolean
+}
+
+private object FlightPolicy : Policy {
+    override fun ifValid(condition: Condition): Boolean {
+        return condition.flights?.isNotEmpty() == true
+    }
+
+    override fun check(condition: Condition, flightTask: FlightTask, recoveryPolicy: RecoveryPolicy?): Boolean {
+        return condition.flights?.contains(flightTask.key) == true
+    }
 }
 
 private object DepartureAirportPolicy : Policy {
@@ -208,7 +219,7 @@ private object BidirectionalAirportPolicy : Policy {
         val arr = recoveryPolicy?.route?.arr ?: flightTask.arr
         return time != null && condition.valid(time)
                 && ((condition.departureAirports!!.contains(dep) && condition.arrivalAirports!!.contains(arr))
-                || (condition.arrivalAirports!!.contains(dep) && condition.departureAirports.contains(arr))
+                    || (condition.arrivalAirports!!.contains(dep) && condition.departureAirports.contains(arr))
                 )
     }
 }
@@ -245,6 +256,7 @@ private object PolicyFactory {
                 ret.add(it)
             }
         }
+        addIfValid(FlightPolicy)
         addIfValid(DepartureAirportPolicy)
         addIfValid(ArrivalAirportPolicy)
         addIfValid(BidirectionalAirportPolicy)

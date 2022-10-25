@@ -15,7 +15,7 @@ import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 class AggregationInitializer {
     private val logger = logger()
 
-    operator fun invoke(originFlightBunches: List<FlightTaskBunch>, input: Input, parameter: Parameter): Result<Aggregation, Error> {
+    operator fun invoke(flightTasks: List<FlightTask>, originFlightBunches: List<FlightTaskBunch>, input: Input, parameter: Parameter): Result<Aggregation, Error> {
         val enabledAircrafts = when (val ret = initEnabledAircrafts(input.aircrafts)) {
             is Ok -> {
                 ret.value
@@ -34,7 +34,7 @@ class AggregationInitializer {
                 return Failed(ret.error)
             }
         }
-        val generalRestrictions = when (val ret = initGeneralRestrictions(input.weakRestriction, input.strongRestrictions, parameter)) {
+        val generalRestrictions = when (val ret = initGeneralRestrictions(flightTasks, input.weakRestriction, input.strongRestrictions, parameter)) {
             is Ok -> {
                 ret.value
             }
@@ -99,9 +99,21 @@ class AggregationInitializer {
                 continue
             }
             for (time in airportCloseDTO.times) {
+                val condition = FlowControlCondition(
+                    aircraftMinorTypes = airportCloseDTO.minorTypes.mapNotNull {
+                        val type = AircraftMinorType(it)
+                        return@mapNotNull if (type == null) {
+                            logger.warn { "Found unknown airport type: ${it}." }
+                            null
+                        } else {
+                            type
+                        }
+                    }.toSet()
+                )
                 val flowControl = FlowControl(
                     airport = airport,
                     time = time,
+                    condition = condition,
                     scene = FlowControlScene.DepartureArrival,
                     capacity = FlowControlCapacity.close(time)
                 )
@@ -136,6 +148,7 @@ class AggregationInitializer {
     }
 
     private fun initGeneralRestrictions(
+        flightTasks: List<FlightTask>,
         weakRestrictionDTOList: List<WeakRestrictionDTO>,
         strongRestrictionDTOList: List<StrongRestrictionDTO>,
         parameter: Parameter
@@ -171,6 +184,7 @@ class AggregationInitializer {
             )
         }
         for (strongRestrictionDTO in strongRestrictionDTOList) {
+            val flights = flightTasks.find { it.actualId == strongRestrictionDTO.flightId }?.let { setOf(it.key) } ?: emptySet()
             val dep = Airport(strongRestrictionDTO.dep)
             if (dep == null) {
                 logger.warn { "Found unknown airport with icao: ${strongRestrictionDTO.dep}." }
@@ -187,6 +201,7 @@ class AggregationInitializer {
                 continue
             }
             val condition = GeneralRestrictionCondition(
+                flights = flights,
                 departureAirports = setOf(dep),
                 arrivalAirports = setOf(arr),
                 disabledAircrafts = setOf(aircraft)
@@ -195,7 +210,7 @@ class AggregationInitializer {
                 GeneralRestriction(
                     type = RestrictionType.ViolableStrong,
                     condition = condition,
-                    cost = strongRestrictionDTO.weight
+                    cost = parameter.inviolableStrongRestrictionViolation
                 )
             )
         }

@@ -75,11 +75,11 @@ private data class Label(
 
     val reducedCost get() = cost.sum!! - shadowPrice
     val aircraftChange: UInt64 = // (prevLabel?.aircraftChange ?: UInt64.zero) +
-            if (flightTask?.aircraftChanged == true) {
-                UInt64.one
-            } else {
-                UInt64.zero
-            }
+        if (flightTask?.aircraftChanged == true) {
+            UInt64.one
+        } else {
+            UInt64.zero
+        }
     val trace: List<UInt64>
     val isBetterBunch get() = ls(reducedCost, Flt64.zero)
     val originFlightTask get() = flightTask?.originTask
@@ -153,7 +153,7 @@ private data class Label(
     }
 
     infix fun ls(rhs: Label): Boolean {
-        return ls(reducedCost, rhs.reducedCost)
+        return leq(reducedCost, rhs.reducedCost)
                 && delay <= rhs.delay
                 && ((node is EndNode) || (aircraftChange >= rhs.aircraftChange))
         // && flightHour leq rhs.flightHour

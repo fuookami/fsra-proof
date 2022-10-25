@@ -51,7 +51,7 @@ class MinimumDepartureTimeCalculator(
             closes.sortBy { it.time.begin }
         }
         for ((_, closes) in arrivalCloses) {
-            closes.sortBy { it.time.begin }
+            closes.sortBy { it.time.end }
         }
 
         this.departureCloses = departureCloses

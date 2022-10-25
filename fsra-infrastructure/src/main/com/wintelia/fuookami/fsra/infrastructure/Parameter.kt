@@ -80,7 +80,7 @@ data class Parameter(
         weakRestrictionViolation = parameter["COST_VIOLATE_WEAK_LIMIT"]!!.value,
         connectingFlightSplit = parameter["COST_FLIGHT_CONNECT_SPLIT"]!!.value,
         fleetBalanceSlack = parameter["COST_END_AIRCRAFT_UNBALANCED"]!!.value,
-        fleetBalanceBaseSlack = parameter["COST_COST_END_UNBALANCED"]!!.value,
+        fleetBalanceBaseSlack = parameter["COST_COST_END_UNBALANCED"]?.value ?: Flt64(600.0),
 
         flightAdvancePerFlight = parameter["COST_FLIGHT_AHEAD"]!!.value,
         flightDelayPerHour = parameter["COST_FLIGHT_DELAY_HOUR"]!!.value,

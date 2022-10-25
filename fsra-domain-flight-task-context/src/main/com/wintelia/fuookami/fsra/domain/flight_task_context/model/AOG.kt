@@ -56,9 +56,9 @@ class AOGPlan(
     override val depBackup = airportBackup
     override fun actualArr(dep: Airport): Airport? {
         return if (depBackup.contains(dep)) {
-            null
-        } else {
             dep
+        } else {
+            null
         }
     }
 

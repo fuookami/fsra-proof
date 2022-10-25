@@ -28,6 +28,7 @@ data class Date(
     }
 
     operator fun plus(rhs: Duration) = Date(value + rhs)
+    infix fun leq(rhs: Date) = value <= rhs.value
 
     fun localDate(timeZone: TimeZone = TimeZone.currentSystemDefault()) = value.toLocalDateTime(timeZone).date
 

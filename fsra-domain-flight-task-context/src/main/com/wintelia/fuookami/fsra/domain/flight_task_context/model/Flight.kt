@@ -144,10 +144,10 @@ class Flight internal constructor(
         if (!aircraftMinorTypeChangeEnabled && policy.aircraft != null && aircraft.minorType != policy.aircraft.minorType) {
             return false
         }
-        if (!delayEnabled && policy.time != null && scheduledTime!!.begin < policy.time.begin) {
+        if (!delayEnabled && policy.time != null && plan.time!!.begin < policy.time.begin) {
             return false
         }
-        if (!advanceEnabled && policy.time != null && scheduledTime!!.begin > policy.time.begin) {
+        if (!advanceEnabled && policy.time != null && plan.time!!.begin > policy.time.begin) {
             return false
         }
         return true

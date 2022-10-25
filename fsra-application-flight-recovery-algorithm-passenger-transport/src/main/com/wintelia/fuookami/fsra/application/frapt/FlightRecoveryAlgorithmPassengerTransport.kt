@@ -93,6 +93,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                     return tidyOutput(id, bestOutput, beginTime, ret.error)
                 }
             }
+            logIpResults(iteration.iteration, model)
             bestOutput = when (val ret = analyzeSolution(input.plan, iteration.iteration, ipRet, model)) {
                 is Ok -> {
                     ret.value
