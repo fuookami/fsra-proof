@@ -174,7 +174,7 @@ class CostCalculator(
 
     fun delayCost(prevFlightTask: FlightTask?, flightTask: FlightTask): CostItem {
         var cost = Flt64.zero
-        val delay = flightTask.delay
+        val delay = flightTask.actualDelay
         if (delay != Duration.ZERO
         // todo: check if it is not locked with time
         ) {
@@ -234,9 +234,10 @@ class CostCalculator(
     }
 
     fun advanceCost(flightTask: FlightTask): CostItem {
-        return if (!flightTask.advanceEnabled && flightTask.advance != Duration.ZERO) {
+        val advance = flightTask.actualAdvance
+            return if (!flightTask.advanceEnabled && advance != Duration.ZERO) {
             CostItem("advance", null)
-        } else if (flightTask.advance != Duration.ZERO) {
+        } else if (advance != Duration.ZERO) {
             CostItem("advance", flightTask.weight * parameter.flightAdvancePerFlight)
         } else {
             CostItem("advance", Flt64.zero)

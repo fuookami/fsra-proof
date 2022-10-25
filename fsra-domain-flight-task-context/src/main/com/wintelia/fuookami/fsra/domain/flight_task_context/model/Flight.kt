@@ -61,6 +61,7 @@ class FlightPlan(
     override val dep: Airport,
     override val arr: Airport,
     override val scheduledTime: TimeRange,
+    val estimatedTime: TimeRange?,
     val actualTime: TimeRange?,
     val outTime: Instant?,
     status: Set<FlightTaskStatus>,
@@ -75,6 +76,8 @@ class FlightPlan(
     }
 
     override val displayName = no
+
+    override val time: TimeRange? get() = estimatedTime ?: super.time
 
     fun recoveryEnabled(): Boolean {
         return actualTime == null && outTime == null

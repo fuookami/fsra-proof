@@ -258,10 +258,10 @@ abstract class FlightTask(
     open val delay: Duration get() = delay(plan.time)
     open val actualDelay: Duration get() = delay(scheduledTime)
     open val overMaxDelay: Duration
-        get() = if (maxDelay == null || delay <= maxDelay!!) {
+        get() = if (maxDelay == null || actualDelay <= maxDelay!!) {
             0.minutes
         } else {
-            delay - maxDelay!!
+            actualDelay - maxDelay!!
         }
     open val aircraftChanged: Boolean
         get() = if (!aircraftChangeEnabled) {

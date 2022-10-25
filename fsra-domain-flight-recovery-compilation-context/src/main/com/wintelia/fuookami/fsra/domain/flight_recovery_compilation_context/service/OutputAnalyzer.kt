@@ -221,7 +221,7 @@ class OutputAnalyzer(
                 delayed = if (canceled) {
                     false
                 } else {
-                    flight.delay != Duration.ZERO
+                    flight.actualDelay != Duration.ZERO
                 },
                 advanced = if (canceled) {
                     false

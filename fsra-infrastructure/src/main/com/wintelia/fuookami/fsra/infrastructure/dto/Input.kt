@@ -234,11 +234,13 @@ data class AOGDTO(
     @SerialName("end_time")
     val endTimeStr: String,         // DateTime
     @SerialName("airport")
-    val airport: ICAO
+    val airportList: String,        // [ICAO]
 ) {
     companion object {
         private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
     }
+
+    val airports get() = airportList.split("|").map { ICAO(it) }
 
     val beginTime get() = parseDateTime(beginTimeStr, formatter)
     val endTime get() = parseDateTime(endTimeStr, formatter)

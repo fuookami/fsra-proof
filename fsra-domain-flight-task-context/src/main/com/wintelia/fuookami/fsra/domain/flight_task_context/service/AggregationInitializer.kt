@@ -273,8 +273,10 @@ class AggregationInitializer {
                 logger.warn { "Found unknown flight type: ${flightDTO.region}." }
                 continue
             }
-            val begin = flightDTO.std
-            val end = flightDTO.sta
+            val std = flightDTO.std
+            val sta = flightDTO.sta
+            val etd = flightDTO.etd
+            val eta = flightDTO.eta
             val status = hashSetOf(
                 FlightTaskStatus.NotTerminalChange
             )
@@ -306,7 +308,8 @@ class AggregationInitializer {
                         aircraft = aircraft,
                         dep = dep,
                         arr = arr,
-                        scheduledTime = TimeRange(begin, end),
+                        scheduledTime = TimeRange(std, sta),
+                        estimatedTime = if (etd != null && eta != null) { TimeRange(etd, eta) } else { null },
                         actualTime = null,
                         outTime = null,
                         status = status,
@@ -395,10 +398,12 @@ class AggregationInitializer {
                 logger.warn { "Found unknown aircraft: ${aogDTO.acReg}." }
                 continue
             }
-            val airport = Airport(aogDTO.airport)
-            if (airport == null) {
-                logger.warn { "Found unknown airport with icao: ${aogDTO.airport}." }
-                continue
+            val airports = aogDTO.airports.mapNotNull {
+                val airport = Airport(it)
+                if (airport == null) {
+                    logger.warn { "Found unknown airport with icao: $it." }
+                }
+                airport
             }
             val begin = aogDTO.beginTime
             val end = aogDTO.endTime
@@ -406,7 +411,7 @@ class AggregationInitializer {
                 AOG(
                     AOGPlan(
                         aircraft = aircraft,
-                        airport = airport,
+                        airports = airports,
                         scheduledTime = TimeRange(begin, end)
                     )
                 )

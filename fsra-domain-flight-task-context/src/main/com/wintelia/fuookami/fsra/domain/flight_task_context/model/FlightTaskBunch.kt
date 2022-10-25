@@ -98,7 +98,7 @@ class FlightTaskBunch(
         this.busyTime = busyTime
         this.aircraftChange = UInt64(flightTasks.count { it.aircraftChanged }.toULong())
 
-        totalDelay = flightTasks.sumOf { it.delay.toLong(DurationUnit.MINUTES) }.minutes
+        totalDelay = flightTasks.sumOf { it.actualDelay.toLong(DurationUnit.MINUTES) }.minutes
     }
 
     operator fun get(index: Int): FlightTask {
