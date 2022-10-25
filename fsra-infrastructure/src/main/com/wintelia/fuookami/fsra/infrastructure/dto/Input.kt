@@ -121,6 +121,10 @@ data class FlightDTO(
     val stdStr: String,                 // DateTime
     @SerialName("sta")
     val staStr: String,                 // DateTime
+    @SerialName("etd")
+    val etdStr: String?,                // DateTime
+    @SerialName("eta")
+    val etaStr: String?,                // DateTime
     @SerialName("ac_reg")
     val acReg: AircraftRegisterNumber,
     @SerialName("ac_type")
@@ -164,6 +168,8 @@ data class FlightDTO(
     val date get() = parseDate(dateStr, dateFormatter)
     val std get() = parseDateTime(stdStr, dateTimeFormatter)
     val sta get() = parseDateTime(staStr, dateTimeFormatter)
+    val etd get() = if (!etdStr.isNullOrBlank()) { parseDateTime(etdStr, dateTimeFormatter) } else { null }
+    val eta get() = if (!etaStr.isNullOrBlank()) { parseDateTime(etaStr, dateTimeFormatter) } else { null }
 
     val stopoverFlight: Boolean get() = stopoverFlightBin == UInt64.one
     val advanceEnabled: Boolean get() = advanceEnabledBin == UInt64.one

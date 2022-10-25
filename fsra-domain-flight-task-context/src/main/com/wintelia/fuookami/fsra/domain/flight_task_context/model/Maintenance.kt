@@ -1,8 +1,6 @@
 package com.wintelia.fuookami.fsra.domain.flight_task_context.model
 
-import com.sun.tools.javac.Main
 import java.util.*
-import kotlin.time.*
 import kotlinx.datetime.*
 import com.wintelia.fuookami.fsra.infrastructure.*
 
@@ -66,23 +64,23 @@ class MaintenancePlan internal constructor(
             return if (airports.size == 1) {
                 status.add(FlightTaskStatus.NotTerminalChange)
                 MaintenancePlan(
-                    aircraft,
-                    scheduledTime,
-                    airports.first(),
-                    emptyList(),
-                    category,
-                    expirationTime,
-                    status
+                    aircraft = aircraft,
+                    scheduledTime = scheduledTime,
+                    airport = airports.first(),
+                    airportBackup = emptyList(),
+                    category = category,
+                    expirationTime = expirationTime,
+                    status = status
                 )
             } else {
                 MaintenancePlan(
-                    aircraft,
-                    scheduledTime,
-                    airports.first(),
-                    airports.subList(0, airports.size),
-                    category,
-                    expirationTime,
-                    status
+                    aircraft = aircraft,
+                    scheduledTime = scheduledTime,
+                    airport = airports.first(),
+                    airportBackup = airports.subList(1, airports.size),
+                    category = category,
+                    expirationTime = expirationTime,
+                    status = status
                 )
             }
         }
@@ -173,9 +171,9 @@ class Maintenance internal constructor(
         if (!advanceEnabled && policy.time != null && scheduledTime!!.begin > policy.time.begin) {
             return false
         }
-        if (!routeChangeEnabled && policy.route != null && (policy.route.dep != policy.route.arr) && (dep != policy.route.dep || !depBackup.contains(
-                (policy.route.dep)
-            ))
+        if (!routeChangeEnabled && policy.route != null
+            && (policy.route.dep != policy.route.arr)
+            && (dep != policy.route.dep || !depBackup.contains(policy.route.dep))
         ) {
             return false
         }
