@@ -57,7 +57,7 @@ data class AircraftDTO(
     val enabledTimeStr: String          // DateTime
 ) {
     companion object {
-        private val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
+        private val formatter = DateTimeFormatter.ofPattern("yyyy/M/d H:m").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
     }
 
     val enabled: Boolean get() = disabledBin != UInt64.one

@@ -11,6 +11,7 @@ import fuookami.ospf.kotlin.core.frontend.expression.symbol.*
 import fuookami.ospf.kotlin.core.frontend.model.mechanism.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
+import fuookami.ospf.kotlin.utils.parallel.ThreadGuard
 
 class Compilation {
     private val _x = ArrayList<BinVariable1>()
@@ -67,7 +68,7 @@ class Compilation {
         flightTasks: List<FlightTask>,
         aircrafts: List<Aircraft>,
         model: LinearMetaModel
-    ): Try<Error> {
+    ): Result<ThreadGuard, Error> {
         assert(iteration.toInt() == x.size)
         assert(bunches.isNotEmpty())
 
@@ -101,6 +102,15 @@ class Compilation {
                 }
         }
 
-        return Ok(success)
+        return Ok(ThreadGuard(Thread{
+            bunchCost.cells
+
+            for (task in flightTasks) {
+                (this.flightTaskCompilation[task]!! as LinearSymbol).cells
+            }
+            for (aircraft in aircrafts) {
+                (this.aircraftCompilation[aircraft]!! as LinearSymbol).cells
+            }
+        }))
     }
 }

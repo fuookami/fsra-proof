@@ -143,6 +143,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                         return tidyOutput(id, bestOutput, beginTime, ret.error)
                     }
                 }
+                logLpResults(iteration.iteration, model)
                 when (val ret = hideAircrafts(model)) {
                     is Ok -> {}
                     is Failed -> {
@@ -195,6 +196,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                             return tidyOutput(id, bestOutput, beginTime, ret.error)
                         }
                     }
+                    logLpResults(iteration.iteration, model)
                     when (val ret = checkIsStopped(id, bestOutput, beginTime)) {
                         is Output -> {
                             return ret
@@ -264,6 +266,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                             return tidyOutput(id, bestOutput, beginTime, ret.error)
                         }
                     }
+                    logLpResults(iteration.iteration, model)
                     when (val ret = checkIsStopped(id, bestOutput, beginTime)) {
                         is Output -> {
                             return ret
@@ -273,7 +276,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                     }
 
                     ++iteration
-                    val newBunches = when (val ret = solveSP(id, flightRecoveryCompilationContext.recoveryNeededAircrafts, iteration, shadowPriceMap, configuration)) {
+                    val newBunches = when (val ret = solveSP(id, freeAircraftList, iteration, shadowPriceMap, configuration)) {
                         is Ok -> {
                             ret.value
                         }
@@ -331,7 +334,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 logger.debug { "Local column generation of iteration $mainIteration end!" }
 
                 this.fixedBunches = fixedBunches
-                val lpRet = when (val ret = solveLP("${id}_${iteration}_lp", model, configuration, LinearSolverConfig())) {
+                val thisIpRet = when (val ret = solveMIP("${id}_${iteration}_ip", model, configuration, LinearSolverConfig())) {
                     is Ok -> {
                         ret.value
                     }
@@ -340,12 +343,12 @@ class FlightRecoveryAlgorithmPassengerTransport(
                         return tidyOutput(id, bestOutput, beginTime, ret.error)
                     }
                 }
-                refresh(lpRet)
+                refresh(thisIpRet)
                 logIpResults(iteration.iteration, model)
-                if (iteration.refreshIpObj(lpRet.obj)) {
-                    when (val ret = analyzeSolution(input.plan, iteration.iteration, lpRet.result, model)) {
+                if (iteration.refreshIpObj(thisIpRet.obj)) {
+                    when (val ret = analyzeSolution(input.plan, iteration.iteration, thisIpRet, model)) {
                         is Ok -> {
-                            if (eq(lpRet.obj, Flt64.zero)) {
+                            if (eq(thisIpRet.obj, Flt64.zero)) {
                                 return tidyOutput(id, bestOutput, beginTime)
                             }
                         }
@@ -718,7 +721,6 @@ class FlightRecoveryAlgorithmPassengerTransport(
     private fun removeColumns(maximumReducedCost: Flt64, shadowPriceMap: ShadowPriceMap, model: LinearMetaModel, configuration: Configuration): Result<Flt64, Error> {
         return when (val ret = flightRecoveryCompilationContext.removeColumns(maximumReducedCost, configuration.maximumColumnAmount, shadowPriceMap, fixedBunches, keptBunches, model)) {
             is Ok -> {
-                model.flush()
                 Ok(ret.value)
             }
             is Failed -> {

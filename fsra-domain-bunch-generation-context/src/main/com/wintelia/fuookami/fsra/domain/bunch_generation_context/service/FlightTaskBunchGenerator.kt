@@ -30,13 +30,17 @@ private data class LabelBuilder(
         )
 
         operator fun invoke(node: Node, previousLabel: Label) = LabelBuilder(
+            cost = previousLabel.cost.copy(),
+            shadowPrice = previousLabel.shadowPrice,
             arrivalTime = previousLabel.arrivalTime,
             node = node,
             prevLabel = previousLabel
         )
 
         operator fun invoke(node: Node, previousLabel: Label, recoveryFlightTask: FlightTask) = LabelBuilder(
-            delay = previousLabel.delay + recoveryFlightTask.delay,
+            cost = previousLabel.cost.copy(),
+            shadowPrice = previousLabel.shadowPrice,
+            delay = previousLabel.delay + recoveryFlightTask.actualDelay,
             arrivalTime = recoveryFlightTask.time!!.end,
             flightHour = previousLabel.flightHour + recoveryFlightTask.flightHour!!,
             flightCycle = previousLabel.flightCycle + recoveryFlightTask.flightCycle,
@@ -153,7 +157,7 @@ private data class Label(
     }
 
     infix fun ls(rhs: Label): Boolean {
-        return leq(reducedCost, rhs.reducedCost)
+        return ls(reducedCost, rhs.reducedCost)                                     // leq for faster
                 && delay <= rhs.delay
                 && ((node is EndNode) || (aircraftChange >= rhs.aircraftChange))
         // && flightHour leq rhs.flightHour
@@ -342,7 +346,9 @@ class FlightTaskBunchGenerator(
                     return
                 } else if (!(label ls it)) {
                     if (remainingLabels.size <= configuration.maximumLabelPerNode.toInt()) {
-                        remainingLabels.add(label)
+                        remainingLabels.add(it)
+                    } else {
+                        break
                     }
                 }
             }

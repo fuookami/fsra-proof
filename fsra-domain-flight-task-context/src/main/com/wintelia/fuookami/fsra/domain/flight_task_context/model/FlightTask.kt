@@ -96,7 +96,7 @@ abstract class FlightTaskPlan(
 
     open val duration: Duration? get() = time?.duration ?: scheduledTime?.duration
     open fun duration(aircraft: Aircraft): Duration {
-        return aircraft.routeFlyTime[dep, arr] ?: aircraft.maxRouteFlyTime
+        return aircraft.routeFlyTime[dep, arr] ?: duration ?: aircraft.maxRouteFlyTime
     }
 
     open fun connectionTime(succTask: FlightTask?): Duration? {

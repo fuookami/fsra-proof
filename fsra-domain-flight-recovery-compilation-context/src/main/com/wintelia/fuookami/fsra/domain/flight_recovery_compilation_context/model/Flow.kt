@@ -103,6 +103,9 @@ class Flow(
                 }
             }
         }
+        for (checkPoint in checkPoints) {
+            (this.flow[checkPoint]!! as LinearSymbol).cells
+        }
 
         return Ok(success)
     }

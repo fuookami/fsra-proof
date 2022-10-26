@@ -64,7 +64,7 @@ class Iteration {
         if ((prevLpObj - obj ls slowLpImprovementStep) || (((bestObj - obj) / bestLpObj) ls Flt64.one)) {
             ++slowLpImprovementCount
         } else {
-            slowIpImprovementCount = UInt64.zero
+            slowLpImprovementCount = UInt64.zero
         }
         prevLpObj = obj
 

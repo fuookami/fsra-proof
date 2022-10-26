@@ -73,7 +73,7 @@ data class AircraftMinorType internal constructor(
     val routeFlyTime: Map<Route, Duration>,
     val connectionTime: Map<Airport, Duration>
 ) {
-    val maxRouteFlyType: Duration = maxFlyTime ?: routeFlyTime.asSequence().maxOf { it.value }
+    val maxRouteFlyType: Duration = routeFlyTime.asSequence().maxOf { it.value }
     val maxConnectionTime: Duration = connectionTime.asSequence().maxOf { it.value }
 
     companion object {
@@ -120,6 +120,7 @@ data class Aircraft internal constructor(
     val type by minorType::type
     val costPerHour by minorType::costPerHour
     val routeFlyTime by minorType::routeFlyTime
+    val maxFlyTime by minorType::maxFlyTime
     val maxRouteFlyTime by minorType::maxRouteFlyType
     val connectionTime by minorType::connectionTime
     val maxConnectionTime by minorType::maxConnectionTime

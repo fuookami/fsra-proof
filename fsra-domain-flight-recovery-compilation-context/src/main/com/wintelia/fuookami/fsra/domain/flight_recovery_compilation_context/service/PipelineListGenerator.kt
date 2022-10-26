@@ -28,7 +28,7 @@ class PipelineListGenerator(
         ret.add(FlightTaskCompilationLimit(aggregation.recoveryNeededFlightTasks, aggregation.compilation, cancelCostCalculator))
         ret.add(AircraftCompilationLimit(aggregation.recoveryNeededAircrafts, aggregation.compilation, parameter))
         ret.add(FlowControlLimit(aggregation.flow, parameter))
-        ret.add(FlightLinkLimit(linkMap, aggregation.flightLink))
+        ret.add(FlightLinkLimit(linkMap, aggregation.compilation, aggregation.flightLink))
         ret.add(FleetBalanceLimit(aggregation.fleetBalance, parameter))
 
         if (configuration.withRedundancy) {

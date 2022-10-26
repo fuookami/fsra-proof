@@ -10,6 +10,7 @@ import fuookami.ospf.kotlin.core.frontend.expression.symbol.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import fuookami.ospf.kotlin.core.frontend.expression.polynomial.LinearPolynomial
 import fuookami.ospf.kotlin.core.frontend.model.mechanism.LinearMetaModel
+import fuookami.ospf.kotlin.utils.parallel.ThreadGuard
 
 class FleetBalance(
     aircrafts: List<Aircraft>,
@@ -125,6 +126,9 @@ class FleetBalance(
                     fleet.flush()
                     (fleet.polynomial as LinearPolynomial) += xi[it]!!
                 }
+        }
+        for ((checkPoint, _) in limits) {
+            (this.fleet[checkPoint] as LinearSymbol).cells
         }
 
         return Ok(success)

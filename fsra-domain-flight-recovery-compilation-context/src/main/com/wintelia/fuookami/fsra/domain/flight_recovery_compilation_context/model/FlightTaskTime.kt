@@ -95,6 +95,10 @@ class FlightTaskTime(
                 (eta.polynomial as LinearPolynomial) += Flt64((time.end - timeWindow.begin).toDouble(DurationUnit.MINUTES)) * xi[bunch]!!
             }
         }
+        for (task in flightTasks) {
+            (this.etd[task] as LinearSymbol).cells
+            (this.eta[task] as LinearSymbol).cells
+        }
 
         return Ok(success)
     }

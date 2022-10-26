@@ -99,7 +99,8 @@ class FlightTaskFeasibilityJudger(
         }
 
         val duration = flightTask.duration
-        return duration == null || duration <= aircraft.maxRouteFlyTime
+        val maxFlyTime = aircraft.maxFlyTime
+        return duration == null || maxFlyTime == null || duration <= maxFlyTime
     }
 
     private fun checkTime(aircraft: Aircraft, prevFlightTask: FlightTask?, flightTask: FlightTask, config: Config): Boolean {

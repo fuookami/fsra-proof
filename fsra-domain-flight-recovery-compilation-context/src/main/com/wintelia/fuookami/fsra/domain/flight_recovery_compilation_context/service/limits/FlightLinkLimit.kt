@@ -11,9 +11,9 @@ import fuookami.ospf.kotlin.framework.model.CGPipeline
 import fuookami.ospf.kotlin.framework.model.Extractor
 import fuookami.ospf.kotlin.framework.model.ShadowPrice
 import fuookami.ospf.kotlin.framework.model.ShadowPriceKey
-import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
+import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.Compilation
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.FlightLink
 
 private data class FlightLinkShadowPriceKey(
@@ -24,10 +24,12 @@ private data class FlightLinkShadowPriceKey(
 
 class FlightLinkLimit(
     private val linkMap: FlightLinkMap,
+    private val compilation: Compilation,
     private val link: FlightLink,
     override val name: String = "flight_link"
 ) : CGPipeline<LinearMetaModel, ShadowPriceMap> {
     override fun invoke(model: LinearMetaModel): Try<Error> {
+        val y = compilation.y
         val linkPairs = link.linkPairs
 
         if (linkPairs.isNotEmpty()) {
@@ -35,9 +37,14 @@ class FlightLinkLimit(
             val k = this.link.k
 
             for (pair in linkPairs) {
+                val lhs = LinearPolynomial()
+                lhs += link[pair]!!
+                lhs += k[pair]!!
+                lhs += y[pair.prevTask]!! / Flt64.two
+                lhs += y[pair.succTask]!! / Flt64.two
                 model.addConstraint(
-                    (link[pair]!! + k[pair]!!) eq UInt64.one,
-                    "${name}_${pair}"
+                    lhs geq UInt64.one,
+                    "${name}_${pair}_${pair.index}"
                 )
             }
 
@@ -45,7 +52,7 @@ class FlightLinkLimit(
             for (pair in linkPairs) {
                 obj += pair.splitCost * k[pair]!!
             }
-            model.minimize(obj)
+            model.minimize(obj, "flight link")
         }
 
         return Ok(success)

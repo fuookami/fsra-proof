@@ -10,6 +10,8 @@ import fuookami.ospf.kotlin.core.frontend.expression.symbol.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.FlightLink
 import fuookami.ospf.kotlin.core.frontend.expression.polynomial.LinearPolynomial
+import fuookami.ospf.kotlin.utils.concept.ManualIndexed
+import fuookami.ospf.kotlin.utils.parallel.ThreadGuard
 
 class FlightLink(
     linkPairs: List<FlightLink>
@@ -18,20 +20,27 @@ class FlightLink(
     lateinit var link: LinearSymbols1
     lateinit var k: UIntVariable1
 
+    init {
+        ManualIndexed.flush<FlightLink>()
+        for (pair in this.linkPairs) {
+            pair.setIndexed(FlightLink::class)
+        }
+    }
+
     fun register(model: LinearMetaModel): Try<Error> {
         if (linkPairs.isNotEmpty()) {
             if (!this::link.isInitialized) {
                 link = LinearSymbols1("link", Shape1(linkPairs.size))
                 for (pair in linkPairs) {
-                    link[pair] = LinearSymbol(LinearPolynomial(), "${link.name}_${pair}")
+                    link[pair] = LinearSymbol(LinearPolynomial(), "${link.name}_${pair}_${pair.index}")
                 }
             }
             model.addSymbols(link)
 
-            if (!this::link.isInitialized) {
+            if (!this::k.isInitialized) {
                 k = UIntVariable1("k", Shape1(linkPairs.size))
                 for (pair in linkPairs) {
-                    k[pair]!!.name = "${k.name}_${pair}"
+                    k[pair]!!.name = "${k.name}_${pair}_${pair.index}"
                 }
             }
             model.addVars(k)
@@ -57,6 +66,9 @@ class FlightLink(
                     link.flush()
                     (link.polynomial as LinearPolynomial) += xi[it]!!
                 }
+        }
+        for (pair in linkPairs) {
+            (this.link[pair]!! as LinearSymbol).cells
         }
 
         return Ok(success)

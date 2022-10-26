@@ -240,8 +240,8 @@ class AggregationInitializer {
                 if (bunch[i] is Flight && bunch[i + 1] is Flight) {
                     val prevFlight = bunch[i] as Flight
                     val succFlight = bunch[i + 1] as Flight
-                    if (flightDTOList.find { it.id == prevFlight.id }?.stopoverFlight == true
-                        && flightDTOList.find { it.id == succFlight.id }?.stopoverFlight == true
+                    if (flightDTOList.find { it.id == prevFlight.actualId }?.stopoverFlight == true
+                        && flightDTOList.find { it.id == succFlight.actualId }?.stopoverFlight == true
                     ) {
                         pairs.add(StopoverFlightPair(prevFlight, succFlight, parameter.stopoverFlightSplit))
                     }

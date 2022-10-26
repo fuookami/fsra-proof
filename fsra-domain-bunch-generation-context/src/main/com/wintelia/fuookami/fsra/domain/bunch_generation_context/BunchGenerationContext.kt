@@ -131,7 +131,7 @@ class BunchGenerationContext(
             val promise = Channel<Result<List<FlightTaskBunch>, Error>>()
             GlobalScope.launch {
                 promise.send(generators[aircraft]!!(iteration, shadowPriceMap))
-                logger.debug { "Sub-problem of ${aircraft.regNo} started." }
+                // logger.debug { "Sub-problem of ${aircraft.regNo} started." }
             }
             promises.add(
                 Promise(

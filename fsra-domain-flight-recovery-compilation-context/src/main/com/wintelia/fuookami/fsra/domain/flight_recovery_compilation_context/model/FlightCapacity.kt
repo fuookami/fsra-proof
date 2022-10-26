@@ -9,6 +9,7 @@ import fuookami.ospf.kotlin.core.frontend.expression.polynomial.*
 import fuookami.ospf.kotlin.core.frontend.expression.symbol.*
 import fuookami.ospf.kotlin.core.frontend.model.mechanism.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
+import fuookami.ospf.kotlin.utils.parallel.ThreadGuard
 
 class FlightCapacity(
     val withPassenger: Boolean = false,
@@ -78,6 +79,11 @@ class FlightCapacity(
                     }
                 }
             }
+            for (task in flightTasks) {
+                PassengerClass.values().forEach { cls ->
+                    (passenger[cls]!![task]!! as LinearSymbol).cells
+                }
+            }
         }
 
         if (withCargo) {
@@ -95,6 +101,9 @@ class FlightCapacity(
                         else -> {}
                     }
                 }
+            }
+            for (task in flightTasks) {
+                (cargo[task]!! as LinearSymbol).cells
             }
         }
 

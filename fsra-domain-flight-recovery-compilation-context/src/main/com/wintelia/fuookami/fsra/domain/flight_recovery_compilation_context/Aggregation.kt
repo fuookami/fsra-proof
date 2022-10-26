@@ -12,6 +12,11 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.FlightLink
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class Aggregation(
     val recoveryNeededAircrafts: List<Aircraft>,
@@ -95,17 +100,20 @@ class Aggregation(
         return Ok(success)
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun addColumns(iteration: UInt64, bunches: List<FlightTaskBunch>, timeWindow: TimeRange, model: LinearMetaModel, configuration: Configuration): Try<Error> {
         this.bunches.addAll(bunches)
         bunchGroups.add(bunches)
 
-        when (val ret = compilation.addColumns(iteration, bunches, recoveryNeededFlightTasks, recoveryNeededAircrafts, model)) {
-            is Ok -> {}
+        val thread = when (val ret = compilation.addColumns(iteration, bunches, recoveryNeededFlightTasks, recoveryNeededAircrafts, model)) {
+            is Ok -> { ret.value }
             is Failed -> {
                 return Failed(ret.error)
             }
         }
+        val promises = ArrayList<Channel<Try<Error>>>()
         if (configuration.flightTaskTimeNeeded) {
+            val promise =
             when (val ret = flightTaskTime.addColumns(iteration, bunches, recoveryNeededFlightTasks, timeWindow, compilation)) {
                 is Ok -> {}
                 is Failed -> {
@@ -113,28 +121,38 @@ class Aggregation(
                 }
             }
         }
-        when (val ret = flightCapacity.addColumns(iteration, bunches, recoveryNeededFlightTasks, compilation)) {
-            is Ok -> {}
-            is Failed -> {
-                return Failed(ret.error)
+        run {
+            val promise = Channel<Try<Error>>()
+            GlobalScope.launch {
+                promise.send(flightCapacity.addColumns(iteration, bunches, recoveryNeededFlightTasks, compilation))
             }
+            promises.add(promise)
         }
-        when (val ret = flightLink.addColumns(iteration, bunches, compilation)) {
-            is Ok -> {}
-            is Failed -> {
-                return Failed(ret.error)
+        run {
+            val promise = Channel<Try<Error>>()
+            GlobalScope.launch {
+                promise.send(flightLink.addColumns(iteration, bunches, compilation))
             }
+            promises.add(promise)
         }
-        when (val ret = flow.addColumns(iteration, bunches, compilation)) {
-            is Ok -> {}
-            is Failed -> {
-                return Failed(ret.error)
+        run {
+            val promise = Channel<Try<Error>>()
+            GlobalScope.launch {
+                promise.send(flow.addColumns(iteration, bunches, compilation))
             }
+            promises.add(promise)
         }
-        when (val ret = fleetBalance.addColumns(iteration, bunches, compilation)) {
-            is Ok -> {}
-            is Failed -> {
-                return Failed(ret.error)
+        run {
+            val promise = Channel<Try<Error>>()
+            GlobalScope.launch {
+                promise.send(fleetBalance.addColumns(iteration, bunches, compilation))
+            }
+            promises.add(promise)
+        }
+        for (promise in promises) {
+            when (val ret = runBlocking { promise.receive() }) {
+                is Ok -> { }
+                is Failed -> { return Failed(ret.error) }
             }
         }
         return Ok(success)
@@ -213,7 +231,6 @@ class Aggregation(
         var bestValue = Flt64.zero
 
         val y = compilation.y
-        val z = compilation.z
         for (token in model.tokens.tokens) {
             if (token.variable.identifier == y.identifier
                 && gr(token.result!!, bar)
@@ -259,9 +276,6 @@ class Aggregation(
     }
 
     fun logResult(iteration: UInt64, model: LinearMetaModel): Try<Error> {
-        val y = compilation.y
-        val z = compilation.z
-
         for (token in model.tokens.tokens) {
             if (gr(token.result!!, Flt64.zero)) {
                 logger.debug { "${token.name} = ${token.result!!}" }

@@ -40,6 +40,8 @@ data class ConnectingFlightPair(
 
         return true
     }
+
+    override fun toString() = super.toString()
 }
 
 data class StopoverFlightPair(
@@ -62,13 +64,15 @@ data class StopoverFlightPair(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ConnectingFlightPair
+        other as StopoverFlightPair
 
         if (prevTask != other.prevTask) return false
         if (succTask != other.succTask) return false
 
         return true
     }
+
+    override fun toString() = super.toString()
 }
 
 data class ConnectionTimeIgnoringFlightPair(
@@ -89,13 +93,15 @@ data class ConnectionTimeIgnoringFlightPair(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as ConnectingFlightPair
+        other as ConnectionTimeIgnoringFlightPair
 
         if (prevTask != other.prevTask) return false
         if (succTask != other.succTask) return false
 
         return true
     }
+
+    override fun toString() = super.toString()
 }
 
 class FlightLinkMap(
