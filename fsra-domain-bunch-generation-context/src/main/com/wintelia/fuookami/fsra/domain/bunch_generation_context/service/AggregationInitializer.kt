@@ -213,6 +213,8 @@ class AggregationInitializer {
             val newBunch = generator(aircraft, aircraftUsability[bunch.aircraft]!!, lockedFlightTasks, bunch) ?: continue
             generatedAircraft.add(bunch.aircraft)
             bunches.add(newBunch)
+
+            logger.info { "Initial bunch of ${aircraft.regNo} generated: ${newBunch.size} tasks, origin: ${bunch.size} tasks."}
         }
 
         for (aircraft in aircrafts) {
@@ -220,9 +222,15 @@ class AggregationInitializer {
                 continue
             }
 
+            val bunch = originBunches.find { it.aircraft == aircraft }
             val lockedFlightTasks = flightTasks.filter { isLocked(it, aircraft) }.sortedBy { it.time?.begin }
-            val newBunch = generator.emptyBunch(aircraft, aircraftUsability[aircraft]!!, lockedFlightTasks) ?: continue
-            bunches.add(newBunch)
+            val newBunch = generator.emptyBunch(aircraft, aircraftUsability[aircraft]!!, lockedFlightTasks)
+            if (newBunch != null) {
+                bunches.add(newBunch)
+                logger.info { "Initial bunch of ${aircraft.regNo} generated: ${newBunch.size} tasks, origin: ${bunch?.size ?: 0} tasks."}
+            } else {
+                logger.info { "Failed to generate initial bunch of ${aircraft.regNo}, origin: ${bunch?.size ?: 0} tasks. "}
+            }
         }
 
         ManualIndexed.flush<FlightTaskBunch>()

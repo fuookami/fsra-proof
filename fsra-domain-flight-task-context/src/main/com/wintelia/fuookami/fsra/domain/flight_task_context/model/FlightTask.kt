@@ -376,6 +376,8 @@ abstract class FlightTask(
         return true
     }
 
+    override fun toString() = name
+
     private fun advance(targetTime: TimeRange?): Duration {
         return if (targetTime != null && time != null) {
             val advance = targetTime.begin - time!!.begin

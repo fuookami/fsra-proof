@@ -85,8 +85,9 @@ class FleetBalance(
         if (limits.isNotEmpty()) {
             if (!this::l.isInitialized) {
                 l = UIntVariable1("l", Shape1(limits.size))
-                for ((checkPoint, _) in limits) {
+                for ((checkPoint, limit) in limits) {
                     l[checkPoint]!!.name = "${l.name}_${checkPoint.airport.icao}_${checkPoint.aircraftMinorType.code}"
+                    l[checkPoint]!!.range.leq(limit.amount)
                 }
             }
             model.addVars(l)

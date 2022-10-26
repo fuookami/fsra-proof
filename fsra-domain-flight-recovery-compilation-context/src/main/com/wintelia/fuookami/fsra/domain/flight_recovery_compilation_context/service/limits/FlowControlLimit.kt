@@ -18,7 +18,9 @@ import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.mod
 
 internal data class FlowControlShadowPriceKey(
     val checkPoint: Flow.CheckPoint
-) : ShadowPriceKey(FlowControlShadowPriceKey::class)
+) : ShadowPriceKey(FlowControlShadowPriceKey::class) {
+    override fun toString() = "Flow Control ($checkPoint)"
+}
 
 class FlowControlLimit(
     private val flow: Flow,
@@ -62,15 +64,12 @@ class FlowControlLimit(
 
     override fun refresh(map: ShadowPriceMap, model: LinearMetaModel, shadowPrices: List<Flt64>): Try<Error> {
         for ((i, j) in model.indicesOfConstraintGroup(name)!!.withIndex()) {
-            val constraint = model.constraints[j]
-            if (constraint.name.startsWith(name)) {
-                map.put(
-                    ShadowPrice(
-                        key = FlowControlShadowPriceKey(flow.checkPoints[i]),
-                        price = shadowPrices[j]
-                    )
+            map.put(
+                ShadowPrice(
+                    key = FlowControlShadowPriceKey(flow.checkPoints[i]),
+                    price = shadowPrices[j]
                 )
-            }
+            )
         }
 
         return Ok(success)

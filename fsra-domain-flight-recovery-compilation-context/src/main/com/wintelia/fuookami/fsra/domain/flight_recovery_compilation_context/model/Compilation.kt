@@ -72,7 +72,7 @@ class Compilation {
         assert(bunches.isNotEmpty())
 
         val xi = BinVariable1("x_$iteration", Shape1(bunches.size))
-        bunches.forEach { xi[it]!!.name = "${xi.name}_${it.index}" }
+        bunches.forEach { xi[it]!!.name = "${xi.name}_${it.index}_${it.aircraft}" }
         model.addVars(xi)
         _x.add(xi)
 

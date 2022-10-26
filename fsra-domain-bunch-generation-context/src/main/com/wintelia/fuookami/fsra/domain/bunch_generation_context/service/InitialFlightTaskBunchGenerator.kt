@@ -41,6 +41,10 @@ class InitialFlightTaskBunchGenerator(
     }
 
     private fun softRecovery(aircraft: Aircraft, aircraftUsability: AircraftUsability, lockedFlightTasks: List<FlightTask>, originBunch: FlightTaskBunch): FlightTaskBunch? {
+        if (aircraft.regNo.no == "304V") {
+            println("1")
+        }
+
         val flightTasks = if (lockedFlightTasks.isEmpty()) {
             recoveryFlightTasks(aircraft, aircraftUsability, originBunch.flightTasks)
         } else {
@@ -80,26 +84,32 @@ class InitialFlightTaskBunchGenerator(
                     } else {
                         RecoveryPolicy(time = actualTime)
                     }
-                    if (flightTask.recoveryEnabled(recoveryPolicy)) {
-                        continue
+                    val recoveryedFlightTask = if (recoveryPolicy.empty) {
+                        flightTask
+                    } else if (flightTask.recoveryEnabled(recoveryPolicy)) {
+                        flightTask.recovery(recoveryPolicy)
+                    } else {
+                        null
                     }
 
-                    if (currentLocation == flightTask.dep && flightTask.arr == lockedFlightTask.dep) {
-                        val thisConnectionTime = connectionTimeCalculator(aircraft, flightTask, lockedFlightTask)
-                        val thisDepartureTime = minimumDepartureTimeCalculator(actualTime.end, aircraft, lockedFlightTask, thisConnectionTime)
-                        if (thisDepartureTime == lockedFlightTask.time!!.begin) {
-                            flag = true
+                    if (recoveryedFlightTask != null) {
+                        if (currentLocation == recoveryedFlightTask.dep && recoveryedFlightTask.arr == lockedFlightTask.dep) {
+                            val thisConnectionTime = connectionTimeCalculator(aircraft, recoveryedFlightTask, lockedFlightTask)
+                            val thisDepartureTime = minimumDepartureTimeCalculator(actualTime.end, aircraft, lockedFlightTask, thisConnectionTime)
+                            if (thisDepartureTime == lockedFlightTask.time!!.begin) {
+                                flag = true
+                                softFlightTasks.add(flightTask)
+                                softFlightTasks.add(lockedFlightTask)
+                                currentTime = lockedFlightTask.time!!.end
+                                currentLocation = lockedFlightTask.arr
+                                break
+                            }
+                        } else if (currentLocation == flightTask.dep) {
                             softFlightTasks.add(flightTask)
-                            softFlightTasks.add(lockedFlightTask)
-                            currentTime = lockedFlightTask.time!!.end
-                            currentLocation = lockedFlightTask.arr
-                            break
+                            currentTime = actualTime.end
+                            currentLocation = flightTask.arr
+                            insertedFlightTasks.add(flightTask)
                         }
-                    } else if (currentLocation == flightTask.dep) {
-                        softFlightTasks.add(flightTask)
-                        currentTime = actualTime.end
-                        currentLocation = flightTask.arr
-                        insertedFlightTasks.add(flightTask)
                     }
                 }
 

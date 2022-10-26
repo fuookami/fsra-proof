@@ -18,7 +18,9 @@ import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.mod
 
 private data class AircraftCompilationShadowPriceKey(
     val aircraft: Aircraft
-) : ShadowPriceKey(AircraftCompilationShadowPriceKey::class)
+) : ShadowPriceKey(AircraftCompilationShadowPriceKey::class) {
+    override fun toString() = "Aircraft Compilation (${aircraft})"
+}
 
 class AircraftCompilationLimit(
     val aircrafts: List<Aircraft>,
@@ -33,7 +35,7 @@ class AircraftCompilationLimit(
         for (aircraft in aircrafts) {
             model.addConstraint(
                 compilation[aircraft]!! eq UInt64.one,
-                "${name}_${aircraft.regNo}"
+                "${name}_${aircraft}"
             )
         }
 
@@ -58,15 +60,12 @@ class AircraftCompilationLimit(
 
     override fun refresh(map: ShadowPriceMap, model: LinearMetaModel, shadowPrices: List<Flt64>): Try<Error> {
         for ((i, j) in model.indicesOfConstraintGroup(name)!!.withIndex()) {
-            val constraint = model.constraints[j]
-            if (constraint.name.startsWith(name)) {
-                map.put(
-                    ShadowPrice(
-                        key = AircraftCompilationShadowPriceKey(aircrafts[i]),
-                        price = shadowPrices[j]
-                    )
+            map.put(
+                ShadowPrice(
+                    key = AircraftCompilationShadowPriceKey(aircrafts[i]),
+                    price = shadowPrices[j]
                 )
-            }
+            )
         }
 
         return Ok(success)

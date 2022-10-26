@@ -17,10 +17,12 @@ import com.wintelia.fuookami.fsra.domain.rule_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.model.*
 
 private data class FlightTaskConnectionTimeShadowPriceKey(
-    val prevFlightTask: FlightTaskKey,
-    val succFlightTask: FlightTaskKey,
+    val prevFlightTask: FlightTask,
+    val succFlightTask: FlightTask,
     val aircraft: Aircraft
-) : ShadowPriceKey(FlightTaskConnectionTimeShadowPriceKey::class)
+) : ShadowPriceKey(FlightTaskConnectionTimeShadowPriceKey::class) {
+    override fun toString() = "Flight Task Connection Time ($prevFlightTask, $succFlightTask, $aircraft)"
+}
 
 private data class FlightTaskPair(
     val bunch: FlightTaskBunch,
@@ -93,8 +95,8 @@ class FlightTaskConnectionTimeLimit(
         return wrap { map, prevFlightTask: FlightTask?, flightTask: FlightTask?, aircraft: Aircraft? ->
             if (prevFlightTask != null && flightTask != null && aircraft != null) {
                 map[FlightTaskConnectionTimeShadowPriceKey(
-                    prevFlightTask = prevFlightTask.key,
-                    succFlightTask = flightTask.key,
+                    prevFlightTask = prevFlightTask.originTask,
+                    succFlightTask = flightTask.originTask,
                     aircraft = aircraft
                 )]?.price ?: Flt64.zero
             } else {
@@ -105,18 +107,15 @@ class FlightTaskConnectionTimeLimit(
 
     override fun refresh(map: ShadowPriceMap, model: LinearMetaModel, shadowPrices: List<Flt64>): Try<Error> {
         for ((i, j) in model.indicesOfConstraintGroup(name)!!.withIndex()) {
-            val constraint = model.constraints[j]
-            if (constraint.name.startsWith(name)) {
-                val key = FlightTaskConnectionTimeShadowPriceKey(
-                    prevFlightTask = pairs[i].prevFlightTask.key,
-                    succFlightTask = pairs[i].succFlightTask.key,
-                    aircraft = pairs[i].bunch.aircraft
-                )
-                map.map[key] = ShadowPrice(
-                    key = key,
-                    price = (map.map[key]?.price ?: Flt64.zero) + shadowPrices[j]
-                )
-            }
+            val key = FlightTaskConnectionTimeShadowPriceKey(
+                prevFlightTask = pairs[i].prevFlightTask.originTask,
+                succFlightTask = pairs[i].succFlightTask.originTask,
+                aircraft = pairs[i].bunch.aircraft
+            )
+            map.map[key] = ShadowPrice(
+                key = key,
+                price = (map.map[key]?.price ?: Flt64.zero) + shadowPrices[j]
+            )
         }
 
         return Ok(success)

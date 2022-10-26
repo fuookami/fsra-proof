@@ -710,12 +710,21 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 }
             }
         }
+        model.flush()
         mainProblemModelingTime += Clock.System.now() - beginTime
         return Ok(success)
     }
 
     private fun removeColumns(maximumReducedCost: Flt64, shadowPriceMap: ShadowPriceMap, model: LinearMetaModel, configuration: Configuration): Result<Flt64, Error> {
-        return flightRecoveryCompilationContext.removeColumns(maximumReducedCost, configuration.maximumColumnAmount, shadowPriceMap, fixedBunches, keptBunches, model)
+        return when (val ret = flightRecoveryCompilationContext.removeColumns(maximumReducedCost, configuration.maximumColumnAmount, shadowPriceMap, fixedBunches, keptBunches, model)) {
+            is Ok -> {
+                model.flush()
+                Ok(ret.value)
+            }
+            is Failed -> {
+                Failed(ret.error)
+            }
+        }
     }
 
     private fun fixBunch(iteration: UInt64, model: LinearMetaModel): Try<Error> {

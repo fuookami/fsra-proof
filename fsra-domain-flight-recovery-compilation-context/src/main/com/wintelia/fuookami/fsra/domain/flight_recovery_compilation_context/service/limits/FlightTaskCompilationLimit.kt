@@ -17,8 +17,10 @@ import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.mod
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.service.*
 
 private data class FlightTaskCompilationShadowPriceKey(
-    val flightTask: FlightTaskKey
-) : ShadowPriceKey(FlightTaskCompilationShadowPriceKey::class)
+    val flightTask: FlightTask
+) : ShadowPriceKey(FlightTaskCompilationShadowPriceKey::class) {
+    override fun toString() = "Flight Task Compilation (${flightTask})"
+}
 
 class FlightTaskCompilationLimit(
     private val flightTasks: List<FlightTask>,
@@ -52,7 +54,7 @@ class FlightTaskCompilationLimit(
     override fun extractor(): Extractor<ShadowPriceMap> {
         return wrap { map, _: FlightTask?, flightTask: FlightTask?, _: Aircraft? ->
             if (flightTask != null) {
-                map[FlightTaskCompilationShadowPriceKey(flightTask.key)]?.price ?: Flt64.zero
+                map[FlightTaskCompilationShadowPriceKey(flightTask.originTask)]?.price ?: Flt64.zero
             } else {
                 Flt64.zero
             }
@@ -61,15 +63,12 @@ class FlightTaskCompilationLimit(
 
     override fun refresh(map: ShadowPriceMap, model: LinearMetaModel, shadowPrices: List<Flt64>): Try<Error> {
         for ((i, j) in model.indicesOfConstraintGroup(name)!!.withIndex()) {
-            val constraint = model.constraints[j]
-            if (constraint.name.startsWith(name)) {
-                map.put(
-                    ShadowPrice(
-                        key = FlightTaskCompilationShadowPriceKey(flightTasks[i].key),
-                        price = shadowPrices[j]
-                    )
+            map.put(
+                ShadowPrice(
+                    key = FlightTaskCompilationShadowPriceKey(flightTasks[i].originTask),
+                    price = shadowPrices[j]
                 )
-            }
+            )
         }
 
         return Ok(success)

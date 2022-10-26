@@ -207,6 +207,7 @@ class AggregationInitializer {
                 type = aircraftTypes[type.type]!!,
                 code = type.minorType,
                 costPerHour = fee.costPerHour,
+                maxFlyTime = Duration.INFINITE,
                 routeFlyTime = routeFlyTime,
                 connectionTime = connectionTime
             )

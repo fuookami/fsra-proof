@@ -19,7 +19,9 @@ import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.mod
 private data class FleetBalanceShadowPriceKey(
     val airport: Airport,
     val aircraftMinorType: AircraftMinorType
-) : ShadowPriceKey(FleetBalanceShadowPriceKey::class)
+) : ShadowPriceKey(FleetBalanceShadowPriceKey::class) {
+    override fun toString() = "Fleet Balance (${airport}, ${aircraftMinorType})"
+}
 
 class FleetBalanceLimit(
     private val fleetBalance: FleetBalance,
@@ -37,7 +39,7 @@ class FleetBalanceLimit(
                 val limit = fleetBalance.limits[checkPoint]!!
                 model.addConstraint(
                     (fleet[checkPoint]!! + l[checkPoint]!!) geq limit.amount,
-                    "${name}_${checkPoint.airport.icao}_${checkPoint.aircraftMinorType.code}"
+                    "${name}_${checkPoint.airport}_${checkPoint.aircraftMinorType}"
                 )
             }
 
@@ -71,15 +73,12 @@ class FleetBalanceLimit(
 
     override fun refresh(map: ShadowPriceMap, model: LinearMetaModel, shadowPrices: List<Flt64>): Try<Error> {
         for ((i, j) in model.indicesOfConstraintGroup(name)!!.withIndex()) {
-            val constraint = model.constraints[j]
-            if (constraint.name.startsWith(name)) {
-                map.put(
-                    ShadowPrice(
-                        key = FleetBalanceShadowPriceKey(checkPoints[i].airport, checkPoints[i].aircraftMinorType),
-                        price = shadowPrices[j]
-                    )
+            map.put(
+                ShadowPrice(
+                    key = FleetBalanceShadowPriceKey(checkPoints[i].airport, checkPoints[i].aircraftMinorType),
+                    price = shadowPrices[j]
                 )
-            }
+            )
         }
 
         return Ok(success)

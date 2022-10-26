@@ -69,10 +69,11 @@ data class AircraftMinorType internal constructor(
     val type: AircraftType,
     val code: AircraftMinorTypeCode,
     val costPerHour: Flt64,
+    val maxFlyTime: Duration? = null,
     val routeFlyTime: Map<Route, Duration>,
     val connectionTime: Map<Airport, Duration>
 ) {
-    val maxRouteFlyType: Duration = routeFlyTime.asSequence().maxOf { it.value }
+    val maxRouteFlyType: Duration = maxFlyTime ?: routeFlyTime.asSequence().maxOf { it.value }
     val maxConnectionTime: Duration = connectionTime.asSequence().maxOf { it.value }
 
     companion object {
@@ -107,6 +108,8 @@ data class AircraftMinorType internal constructor(
 
         return true
     }
+
+    override fun toString() = "$code"
 }
 
 data class Aircraft internal constructor(
@@ -130,6 +133,8 @@ data class Aircraft internal constructor(
     init {
         pool[regNo] = this
     }
+
+    override fun toString() = "$regNo"
 }
 
 data class FlightHour(

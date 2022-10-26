@@ -65,6 +65,8 @@ data class Airport internal constructor(
 
         return true
     }
+
+    override fun toString() = "$icao"
 }
 
 data class Route(
