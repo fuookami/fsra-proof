@@ -125,7 +125,7 @@ class Flight internal constructor(
     override val time get() = recoveryTime ?: plan.time
 
     override fun recoveryEnabled(timeWindow: TimeRange): Boolean {
-        return plan.recoveryEnabled() && timeWindow.contains(scheduledTime!!.begin)
+        return plan.recoveryEnabled() && super.recoveryEnabled(timeWindow)
     }
 
     override fun recoveryNeeded(timeWindow: TimeRange): Boolean {

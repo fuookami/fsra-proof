@@ -176,7 +176,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                     if (newBunches.isEmpty()) {
                         logger.debug { "There is no bunch generated in global column generation of iteration $mainIteration." }
                         if (eq(iteration.optimalRate, Flt64.one)) {
-                            return tidyOutput(id, bestOutput, beginTime)
+                            return tidyOutput(id, bestOutput!!, beginTime)
                         }
                     }
                     val newBunchAmount = UInt64(newBunches.size.toULong())
@@ -348,6 +348,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 if (iteration.refreshIpObj(thisIpRet.obj)) {
                     when (val ret = analyzeSolution(input.plan, iteration.iteration, thisIpRet, model)) {
                         is Ok -> {
+                            bestOutput = ret.value
                             if (eq(thisIpRet.obj, Flt64.zero)) {
                                 return tidyOutput(id, bestOutput, beginTime)
                             }
@@ -374,7 +375,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 ++mainIteration
             }
 
-            return tidyOutput(id, bestOutput, beginTime)
+            return tidyOutput(id, bestOutput!!, beginTime)
         } catch (e: Exception) {
             print(e.stackTraceToString())
             return Output(id, Err(ErrorCode.ApplicationException, e.message))

@@ -102,9 +102,6 @@ class AOG internal constructor(
     override val dep get() = recoveryAirport ?: plan.dep
     override val arr get() = recoveryAirport ?: plan.arr
 
-    override fun recoveryEnabled(timeWindow: TimeRange) = true
-    override fun recoveryNeeded(timeWindow: TimeRange) = true
-
     override val recovered get() = recoveryAirport != null
     override val recoveryPolicy get() = RecoveryPolicy()
     override fun recoveryEnabled(policy: RecoveryPolicy): Boolean {

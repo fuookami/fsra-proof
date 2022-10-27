@@ -18,7 +18,7 @@ class FlightLink(
 ) {
     val linkPairs: List<FlightLink> = linkPairs.filter { it.prevTask.indexed && it.succTask.indexed }
     lateinit var link: LinearSymbols1
-    lateinit var k: UIntVariable1
+    lateinit var k: BinVariable1
 
     init {
         ManualIndexed.flush<FlightLink>()
@@ -38,7 +38,7 @@ class FlightLink(
             model.addSymbols(link)
 
             if (!this::k.isInitialized) {
-                k = UIntVariable1("k", Shape1(linkPairs.size))
+                k = BinVariable1("k", Shape1(linkPairs.size))
                 for (pair in linkPairs) {
                     k[pair]!!.name = "${k.name}_${pair}_${pair.index}"
                 }

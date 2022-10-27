@@ -44,7 +44,7 @@ class FlightRecoveryCompilationContext(
             ruleAggregation.linkMap,
             ruleAggregation.flowControls,
             {
-                flightTaskAggregation.enabled(it)
+                flightTaskAggregation.enabled(it, recoveryPlan)
                         && ruleAggregation.enabled(it)
                         && !(configuration.onlyWithPassenger && it.capacity is AircraftCapacity.Cargo)
                         && !(configuration.onlyWithCargo && it.capacity is AircraftCapacity.Passenger)

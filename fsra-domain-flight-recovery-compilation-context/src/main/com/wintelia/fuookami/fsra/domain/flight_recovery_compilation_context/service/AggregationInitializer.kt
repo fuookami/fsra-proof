@@ -47,12 +47,12 @@ class AggregationInitializer {
             }
 
             val aircraft = flightTask.aircraft ?: continue
-            val scheduledTime = flightTask.scheduledTime ?: continue
+            val time = flightTask.time ?: continue
             if (flightTask.recoveryNeeded(recoveryPlan.timeWindow)
                 && flightTask.type !is AOGFlightTask
             ) {
                 val aogTime = aogTimes[aircraft] ?: continue
-                if (aogTime.contains(scheduledTime.begin)) {
+                if (aogTime.contains(time.begin)) {
                     recoveryNeededFlightTasks.add(flightTask)
                     continue
                 }

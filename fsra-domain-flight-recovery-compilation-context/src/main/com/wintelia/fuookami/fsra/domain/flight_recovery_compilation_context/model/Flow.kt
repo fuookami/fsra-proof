@@ -80,6 +80,7 @@ class Flow(
                 m = UIntVariable1("m", Shape1(checkPoints.size))
                 for (checkPoint in checkPoints) {
                     m[checkPoint]!!.name = "${m.name}_${checkPoint}"
+                    m[checkPoint]!!.range.leq(checkPoint.capacity)
                 }
             }
             model.addVars(m)

@@ -108,7 +108,7 @@ class Transfer internal constructor(
     override val scheduledTime: TimeRange? = null
 
     override fun duration(aircraft: Aircraft): Duration {
-        return aircraft.routeFlyTime[dep, arr] ?: duration ?: aircraft.maxRouteFlyTime
+        return duration ?: aircraft.routeFlyTime[dep, arr] ?: aircraft.maxRouteFlyTime
     }
 
     fun enabled(aircraft: Aircraft): Boolean {
@@ -159,9 +159,6 @@ class TransferFlight internal constructor(
 
     override val aircraft get() = recoveryAircraft ?: plan.aircraft
     override val time get() = recoveryTime ?: plan.time
-
-    override fun recoveryEnabled(timeWindow: TimeRange) = true
-    override fun recoveryNeeded(timeWindow: TimeRange) = true
 
     override val recovered get() = recoveryAircraft != null || recoveryTime != null
     override val recoveryPolicy get() = RecoveryPolicy(recoveryAircraft, recoveryTime, null)

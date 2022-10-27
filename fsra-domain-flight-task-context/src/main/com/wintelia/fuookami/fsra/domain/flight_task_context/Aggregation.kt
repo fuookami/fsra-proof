@@ -1,5 +1,6 @@
 package com.wintelia.fuookami.fsra.domain.flight_task_context
 
+import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 
 class Aggregation(
@@ -25,7 +26,7 @@ class Aggregation(
         this.flightTasks = flightTasks
     }
 
-    fun enabled(aircraft: Aircraft): Boolean {
-        return aircraftUsability.containsKey(aircraft)
+    fun enabled(aircraft: Aircraft, recoveryPlan: RecoveryPlan): Boolean {
+        return aircraftUsability[aircraft]?.enabledTime?.let { it < recoveryPlan.recoveryTime.end } ?: false
     }
 }

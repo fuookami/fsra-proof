@@ -264,7 +264,7 @@ class Aggregation(
         if (flag && ret.isEmpty() && geq(bestValue, Flt64(1e-3))) {
             for ((i, xi) in compilation.x.withIndex()) {
                 for (x in xi) {
-                    if (eq(model.tokens.token(x!!)!!.result!!, bestValue)) {
+                    if (model.tokens.token(x!!)!!.result?.let{ eq(it, bestValue) } == true) {
                         ret.add(bunches(UInt64(i.toULong()))[x.index])
                         x.range.eq(UInt8.one)
                     }

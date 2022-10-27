@@ -22,6 +22,8 @@ data class Date(
     val value: Instant
 ) {
     companion object {
+        val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
+
         operator fun invoke(value: Instant): Date {
             return Date(value.toJavaInstant().truncatedTo(ChronoUnit.DAYS).toKotlinInstant())
         }
@@ -32,5 +34,6 @@ data class Date(
 
     fun localDate(timeZone: TimeZone = TimeZone.currentSystemDefault()) = value.toLocalDateTime(timeZone).date
 
+    override fun toString(): String = dateFormat.format(value.toJavaInstant())
     fun toShortString(): String = shortDateFormat.format(value.toJavaInstant())
 }

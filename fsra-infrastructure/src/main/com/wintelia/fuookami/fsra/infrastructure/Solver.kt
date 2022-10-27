@@ -60,8 +60,9 @@ fun solveLP(name: String, metaModel: LinearMetaModel, configuration: Configurati
     // metaModel.export("$name.opm")
     lateinit var dualResult: List<Flt64>
     val model = LinearTriadModel(LinearModel(metaModel))
-    model.linearRelax()
     // model.export("${name}_lp.lp", ModelFileFormat.LP)
+    model.linearRelax()
+    // model.export("${name}_lp_r.lp", ModelFileFormat.LP)
     val ret = when (configuration.solver) {
         "cplex" -> {
             val callBack = CplexSolverCallBack().analyzingSolution { cplex, _, constraints ->

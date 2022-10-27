@@ -9,6 +9,11 @@ import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.infrastructure.dto.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toJavaInstant
+import kotlinx.datetime.toJavaZoneId
+import kotlinx.datetime.toLocalDateTime
+import java.time.format.DateTimeFormatter
 
 class OutputAnalyzer(
     private val aggregation: Aggregation
@@ -172,6 +177,8 @@ class OutputAnalyzer(
     }
 
     private fun dumpFlight(recoveryPlan: RecoveryPlan, flight: FlightTask, canceled: Boolean): Result<RecoveryedFlightDTO, Error> {
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
+
         return Ok(
             RecoveryedFlightDTO(
                 recoveryPlanId = recoveryPlan.id,
@@ -202,17 +209,17 @@ class OutputAnalyzer(
                     flight.aircraft!!.regNo
                 },
                 date = flight.time?.let { Date(it.begin) }.toString(),
-                std = flight.scheduledTime?.begin?.toString(),
-                sta = flight.scheduledTime?.end?.toString(),
+                std = flight.scheduledTime?.begin?.toJavaInstant()?.let { formatter.format(it) },
+                sta = flight.scheduledTime?.end?.toJavaInstant()?.let { formatter.format(it) },
                 etd = if (canceled) {
                     null
                 } else {
-                    flight.time?.begin?.toString()
+                    flight.time?.begin?.toJavaInstant()?.let { formatter.format(it) }
                 },
                 eta = if (canceled) {
                     null
                 } else {
-                    flight.time?.end?.toString()
+                    flight.time?.end?.toJavaInstant()?.let { formatter.format(it) }
                 },
                 canceled = canceled,
                 straightened = false,   // todo: if implement straight flight
@@ -221,7 +228,7 @@ class OutputAnalyzer(
                 delayed = if (canceled) {
                     false
                 } else {
-                    flight.actualDelay != Duration.ZERO
+                    flight.delay != Duration.ZERO
                 },
                 advanced = if (canceled) {
                     false

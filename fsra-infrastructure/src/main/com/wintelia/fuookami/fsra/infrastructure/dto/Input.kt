@@ -162,8 +162,8 @@ data class FlightDTO(
     val passengerCargoType: String,     // "passenger" or "cargo"
 ) {
     companion object {
-        private val dateFormatter = DateTimeFormatter.ofPattern("yyyy/M/dd").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
-        private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
+        private val dateFormatter = DateTimeFormatter.ofPattern("yyyy/M/d").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
+        private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d H:m").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
     }
 
     val date get() = parseDate(dateStr, dateFormatter)

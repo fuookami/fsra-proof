@@ -41,6 +41,10 @@ class InitialFlightTaskBunchGenerator(
     }
 
     private fun softRecovery(aircraft: Aircraft, aircraftUsability: AircraftUsability, lockedFlightTasks: List<FlightTask>, originBunch: FlightTaskBunch): FlightTaskBunch? {
+        if (aircraft.regNo.no == "2299") {
+            println("1")
+        }
+
         val flightTasks = if (lockedFlightTasks.isEmpty()) {
             recoveryFlightTasks(aircraft, aircraftUsability, originBunch.flightTasks)
         } else {

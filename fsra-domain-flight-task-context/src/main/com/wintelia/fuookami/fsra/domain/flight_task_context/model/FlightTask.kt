@@ -96,7 +96,7 @@ abstract class FlightTaskPlan(
 
     open val duration: Duration? get() = time?.duration ?: scheduledTime?.duration
     open fun duration(aircraft: Aircraft): Duration {
-        return aircraft.routeFlyTime[dep, arr] ?: duration ?: aircraft.maxRouteFlyTime
+        return duration ?: aircraft.routeFlyTime[dep, arr] ?: aircraft.maxRouteFlyTime
     }
 
     open fun connectionTime(succTask: FlightTask?): Duration? {
@@ -222,7 +222,11 @@ abstract class FlightTask(
 
     // it is disabled to recovery if there is actual time or out time
     // it is necessary to be participated in the problem, but it is unallowed to set recovery policy
-    open fun recoveryEnabled(timeWindow: TimeRange): Boolean = true
+    open fun recoveryEnabled(timeWindow: TimeRange): Boolean {
+        return plan.time?.begin?.let { timeWindow.contains(it) }
+            ?: this.timeWindow?.let { timeWindow.withIntersection(it) }
+            ?: true
+    }
     open val maxDelay: Duration?
         get() = if (!delayEnabled) {
             0L.minutes
@@ -243,7 +247,8 @@ abstract class FlightTask(
     abstract val recovered: Boolean
     abstract val recoveryPolicy: RecoveryPolicy
     open fun recoveryNeeded(timeWindow: TimeRange): Boolean {
-        return time == null || timeWindow.withIntersection(time!!)
+        return recoveryEnabled(timeWindow)
+                && time == null || timeWindow.withIntersection(time!!)
     }
 
     open fun recoveryEnabled(policy: RecoveryPolicy): Boolean {

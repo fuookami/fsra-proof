@@ -49,7 +49,7 @@ class Iteration {
         }
 
         val currentDualObj = prevLpObj + Flt64(bestReducedCost.values.sumOf { it.toDouble() })
-        if (bestDualObj ls currentDualObj) {
+        if (bestDualObj ls currentDualObj && currentDualObj ls bestObj) {
             logger.debug { "best dual obj: $bestDualObj -> $currentDualObj" }
             bestDualObj = currentDualObj
             if (lowerBound ls currentDualObj) {
