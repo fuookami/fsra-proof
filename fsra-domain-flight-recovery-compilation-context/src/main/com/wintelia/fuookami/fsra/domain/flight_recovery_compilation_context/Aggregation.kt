@@ -172,7 +172,7 @@ class Aggregation(
             }
 
             val reducedCost = shadowPriceMap.reducedCost(bunch)
-            if (reducedCost ls maximumReducedCost
+            if (!ls(reducedCost, maximumReducedCost)
                 && !fixedBunches.contains(bunch)
                 && !keptBunches.contains(bunch)
             ) {
@@ -229,6 +229,8 @@ class Aggregation(
         val ret = HashSet<FlightTaskBunch>()
 
         var bestValue = Flt64.zero
+        var bestIteration = UInt64.zero
+        var bestIndex = 0
 
         val y = compilation.y
         for (token in model.tokens.tokens) {
@@ -249,6 +251,8 @@ class Aggregation(
 
                         if (token.result != null && geq(token.result!!, bestValue) && !fixedBunches.contains(bunch)) {
                             bestValue = token.result!!
+                            bestIteration = i
+                            bestIndex = token.variable.index
                         }
                         if (token.result != null && geq(token.result!!, bar) && !fixedBunches.contains(bunch)) {
                             ret.add(bunch)
@@ -262,14 +266,9 @@ class Aggregation(
         // if not fix any one bunch or cancel any flight
         // fix the best if the value greater than 1e-3
         if (flag && ret.isEmpty() && geq(bestValue, Flt64(1e-3))) {
-            for ((i, xi) in compilation.x.withIndex()) {
-                for (x in xi) {
-                    if (model.tokens.token(x!!)!!.result?.let{ eq(it, bestValue) } == true) {
-                        ret.add(bunches(UInt64(i.toULong()))[x.index])
-                        x.range.eq(UInt8.one)
-                    }
-                }
-            }
+            val xi = compilation.x[bestIteration.toInt()][bestIndex]!!
+            ret.add(bunches(bestIteration)[bestIndex])
+            xi.range.eq(UInt8.one)
         }
 
         return Ok(ret)

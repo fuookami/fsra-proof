@@ -188,6 +188,8 @@ class OutputAnalyzer(
                 } else {
                     ""
                 },
+                dep = flight.dep.icao,
+                arr = flight.arr.icao,
                 oldAcType = if (flight.originTask.aircraft != null) {
                     flight.originTask.aircraft!!.minorType.code
                 } else {
@@ -212,12 +214,18 @@ class OutputAnalyzer(
                 std = flight.scheduledTime?.begin?.toJavaInstant()?.let { formatter.format(it) },
                 sta = flight.scheduledTime?.end?.toJavaInstant()?.let { formatter.format(it) },
                 etd = if (canceled) {
-                    null
+                    when (flight) {
+                        is Flight -> { flight.plan.estimatedTime?.begin?.toJavaInstant()?.let { formatter.format(it) } }
+                        else -> { null }
+                    }
                 } else {
                     flight.time?.begin?.toJavaInstant()?.let { formatter.format(it) }
                 },
                 eta = if (canceled) {
-                    null
+                    when (flight) {
+                        is Flight -> { flight.plan.estimatedTime?.end?.toJavaInstant()?.let { formatter.format(it) } }
+                        else -> { null }
+                    }
                 } else {
                     flight.time?.end?.toJavaInstant()?.let { formatter.format(it) }
                 },

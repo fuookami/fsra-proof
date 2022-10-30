@@ -98,7 +98,7 @@ class BunchGenerationContext(
     private fun generateFlightTaskBunchSingleThread(aircrafts: List<Aircraft>, iteration: UInt64, shadowPriceMap: ShadowPriceMap): Result<List<FlightTaskBunch>, Error> {
         val bunches = ArrayList<FlightTaskBunch>()
         for (aircraft in aircrafts) {
-            logger.debug { "Sub-problem of ${aircraft.regNo} started." }
+            // logger.debug { "Sub-problem of ${aircraft.regNo} started." }
             val beginTime = Clock.System.now()
             val thisBunches = when (val ret = generators[aircraft]!!(iteration, shadowPriceMap)) {
                 is Ok -> {

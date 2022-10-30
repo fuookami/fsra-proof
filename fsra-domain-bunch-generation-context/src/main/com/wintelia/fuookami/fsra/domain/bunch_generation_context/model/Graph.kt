@@ -15,22 +15,30 @@ sealed class Node(val index: UInt64) {
 
 object RootNode : Node(root) {
     override val time = Instant.DISTANT_PAST
+
+    override fun toString() = "Root"
 }
 
 object EndNode : Node(end) {
     override val time = Instant.DISTANT_FUTURE
+
+    override fun toString() = "End"
 }
 
 class TaskNode(
     val task: FlightTask,
     override val time: Instant,
     index: UInt64
-) : Node(index)
+) : Node(index) {
+    override fun toString() = task.toString()
+}
 
 data class Edge(
     val from: Node,
     val to: Node
-)
+) {
+    override fun toString() = "$from -> $to"
+}
 
 class Graph(
     val nodes: MutableMap<UInt64, Node> = HashMap(),

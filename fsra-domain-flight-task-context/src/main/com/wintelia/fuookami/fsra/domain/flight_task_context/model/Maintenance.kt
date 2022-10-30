@@ -91,7 +91,9 @@ class MaintenancePlan internal constructor(
     override val arr = airport
     override val depBackup = airportBackup
     override fun actualArr(dep: Airport): Airport? {
-        return if (depBackup.contains(dep)) {
+        return if (dep == this.dep) {
+            arr
+        } else if (depBackup.contains(dep)) {
             dep
         } else {
             null

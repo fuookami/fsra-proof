@@ -10,6 +10,8 @@ data class RecoveryedFlightDTO(
     val recoveryPlanId: String,
     val id: String,
     val no: String,
+    val dep: ICAO,
+    val arr: ICAO,
     val oldAcType: AircraftMinorTypeCode?,
     val newAcType: AircraftMinorTypeCode?,
     val oldAcReg: AircraftRegisterNumber?,

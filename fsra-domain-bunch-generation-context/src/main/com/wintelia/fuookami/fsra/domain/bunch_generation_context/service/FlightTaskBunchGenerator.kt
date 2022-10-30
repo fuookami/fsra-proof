@@ -42,7 +42,7 @@ private data class LabelBuilder(
             shadowPrice = previousLabel.shadowPrice,
             delay = previousLabel.delay + recoveryFlightTask.actualDelay,
             arrivalTime = recoveryFlightTask.time!!.end,
-            flightHour = previousLabel.flightHour + recoveryFlightTask.flightHour!!,
+            flightHour = previousLabel.flightHour + (recoveryFlightTask.flightHour ?: FlightHour.zero),
             flightCycle = previousLabel.flightCycle + recoveryFlightTask.flightCycle,
             prevLabel = previousLabel,
             node = node,
@@ -223,6 +223,33 @@ class FlightTaskBunchGenerator(
     operator fun invoke(iteration: UInt64, shadowPriceMap: ShadowPriceMap): Result<List<FlightTaskBunch>, Error> {
         val labels: LabelMap = HashMap()
         initRootLabel(labels, shadowPriceMap)
+        val labelDeque = ArrayList<Label>()
+        labelDeque.addAll(labels[graph[Node.root]!!]!!)
+
+//        while (labelDeque.isNotEmpty()) {
+//            val prevLabel = labelDeque.first()
+//            labelDeque.removeFirst()
+//            val prevNode = prevLabel.node
+//            val edges = graph[prevNode].sortedBy { it.to.time }
+//
+//            for (edge in edges) {
+//                val succNode = edge.to
+//                val succLabels = getLabels(labels, succNode)
+//                if (succNode is EndNode) {
+//                    if (prevNode !is RootNode) {
+//                        val builder = LabelBuilder(succNode, prevLabel)
+//                        builder.shadowPrice += shadowPriceMap(prevLabel.flightTask, null, aircraft)
+//                        insertLabel(succLabels, Label(builder))
+//                    }
+//                } else if (!prevLabel.visited(succNode)) {
+//                    val succLabel = generateFlightTaskLabel(prevLabel, succNode, shadowPriceMap)
+//                    if (succLabel != null) {
+//                        insertLabel(succLabels, succLabel)
+//                        labelDeque.add(succLabel)
+//                    }
+//                }
+//            }
+//        }
 
         for (prevNode in nodes) {
             for (prevLabel in getLabels(labels, prevNode)) {
@@ -234,7 +261,7 @@ class FlightTaskBunchGenerator(
                         if (prevNode !is RootNode) {
                             val builder = LabelBuilder(succNode, prevLabel)
                             builder.shadowPrice += shadowPriceMap(prevLabel.flightTask, null, aircraft)
-                            insertLabel(succLabels, Label(builder), false)
+                            insertLabel(succLabels, Label(builder))
                         }
                     } else if (!prevLabel.visited(succNode)) {
                         val succLabel = generateFlightTaskLabel(prevLabel, succNode, shadowPriceMap)
@@ -265,13 +292,9 @@ class FlightTaskBunchGenerator(
 
     private fun generateFlightTaskLabel(prevLabel: Label, succNode: Node, shadowPriceMap: ShadowPriceMap): Label? {
         assert(succNode is TaskNode)
-        if (prevLabel.node !is RootNode && prevLabel.prevLabel!!.node !is RootNode) {
-            if ((succNode as TaskNode).task == prevLabel.prevLabel!!.originFlightTask) {
-                return null
-            }
-        }
+        succNode as TaskNode
 
-        val succTask = (succNode as TaskNode).task
+        val succTask = succNode.task
         assert((succTask.scheduledTime != null) xor (succTask.timeWindow != null))
 
         val minDepTime = getMinDepartureTime(prevLabel, succNode)
@@ -292,7 +315,7 @@ class FlightTaskBunchGenerator(
         }
         val recoveryTask = generateRecoveryFlightTask(prevArr, succTask, time) ?: return null
 
-        val flightHour = prevLabel.flightHour + recoveryTask.flightHour!!
+        val flightHour = prevLabel.flightHour + (recoveryTask.flightHour ?: FlightHour.zero)
         val flightCycle = prevLabel.flightCycle + recoveryTask.flightCycle
         val cost = if (prevLabel.node is RootNode) {
             costCalculator(aircraft, aircraftUsability.lastTask, recoveryTask, flightHour, flightCycle)
@@ -338,39 +361,40 @@ class FlightTaskBunchGenerator(
         }
     }
 
-    private fun insertLabel(labels: MutableList<Label>, label: Label, withDeletion: Boolean = true) {
-        if (withDeletion) {
-            val remainingLabels = ArrayList<Label>()
-            for (it in labels) {
-                if (it ls label) {
+    private fun insertLabel(labels: MutableList<Label>, label: Label) {
+        when (label.node) {
+            is TaskNode -> {
+                if (labels.any { it ls label }) {
                     return
-                } else if (!(label ls it)) {
-                    if (remainingLabels.size <= configuration.maximumLabelPerNode.toInt()) {
-                        remainingLabels.add(it)
-                    } else {
-                        break
+                }
+                labels.removeAll { label ls it }
+                if (labels.size > configuration.maximumLabelPerNode.toInt()) {
+                    for (i in configuration.maximumLabelPerNode.toInt() until labels.size) {
+                        labels.removeAt(i)
                     }
                 }
-            }
 
-            labels.clear()
-            labels.addAll(remainingLabels)
-        }
-
-        for (i in labels.indices) {
-            if (ls(label.reducedCost, labels[i].reducedCost)) {
-                labels.add(i, label)
-                return
+                for (i in labels.indices) {
+                    if (ls(label.reducedCost, labels[i].reducedCost)) {
+                        labels.add(i, label)
+                        return
+                    }
+                }
+                // add to tail
+                labels.add(label)
             }
+            is EndNode -> {
+                labels.add(label)
+            }
+            else -> { }
         }
-        // add to tail
-        labels.add(label)
     }
 
     // extract flight bunches of the best labels in end node
     private fun selectBunches(iteration: UInt64, labels: List<Label>): List<FlightTaskBunch> {
         val bunches = ArrayList<FlightTaskBunch>()
-        for (label in labels.asIterable().filter { it.isBetterBunch }) {
+        val sortedLabels = labels.asIterable().filter { it.isBetterBunch }.sortedBy { it.reducedCost }
+        for (label in sortedLabels) {
             val newBunch = label.generateBunch(iteration, aircraft, aircraftUsability, totalCostCalculator);
             if (newBunch != null) {
                 bunches.add(newBunch)

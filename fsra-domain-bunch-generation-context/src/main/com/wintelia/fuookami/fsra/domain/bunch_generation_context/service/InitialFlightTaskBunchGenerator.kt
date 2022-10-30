@@ -41,10 +41,6 @@ class InitialFlightTaskBunchGenerator(
     }
 
     private fun softRecovery(aircraft: Aircraft, aircraftUsability: AircraftUsability, lockedFlightTasks: List<FlightTask>, originBunch: FlightTaskBunch): FlightTaskBunch? {
-        if (aircraft.regNo.no == "2299") {
-            println("1")
-        }
-
         val flightTasks = if (lockedFlightTasks.isEmpty()) {
             recoveryFlightTasks(aircraft, aircraftUsability, originBunch.flightTasks)
         } else {
@@ -120,6 +116,45 @@ class InitialFlightTaskBunchGenerator(
                 }
             }
 
+            for (flightTask in originBunch.flightTasks) {
+                if (insertedFlightTasks.contains(flightTask)) {
+                    continue
+                }
+
+                val prevFlightTask = if (softFlightTasks.isEmpty()) {
+                    lastFlightTask
+                } else {
+                    softFlightTasks.last()
+                }
+
+                val connectionTime = if (prevFlightTask != null) {
+                    connectionTimeCalculator(aircraft, prevFlightTask, flightTask)
+                } else {
+                    Duration.ZERO
+                }
+                val departureTime = minimumDepartureTimeCalculator(currentTime, aircraft, flightTask, connectionTime)
+                val actualTime = TimeRange(departureTime, departureTime + connectionTime)
+                val recoveryPolicy = if (actualTime == flightTask.scheduledTime!!) {
+                    RecoveryPolicy()
+                } else {
+                    RecoveryPolicy(time = actualTime)
+                }
+                val recoveryedFlightTask = if (recoveryPolicy.empty) {
+                    flightTask
+                } else if (flightTask.recoveryEnabled(recoveryPolicy)) {
+                    flightTask.recovery(recoveryPolicy)
+                } else {
+                    null
+                }
+
+                if (recoveryedFlightTask != null && currentLocation == flightTask.dep) {
+                    softFlightTasks.add(flightTask)
+                    insertedFlightTasks.add(flightTask)
+                    currentTime = actualTime.end
+                    currentLocation = flightTask.arr
+                }
+            }
+
             recoveryFlightTasks(aircraft, aircraftUsability, softFlightTasks)
         }
 
@@ -136,6 +171,10 @@ class InitialFlightTaskBunchGenerator(
     }
 
     private fun recoveryFlightTasks(aircraft: Aircraft, aircraftUsability: AircraftUsability, lockedFlightTasks: List<FlightTask>): List<FlightTask> {
+        if (aircraft.regNo.no == "1661") {
+            println("1")
+        }
+
         val flightTasks = ArrayList<FlightTask>()
         if (lockedFlightTasks.isEmpty()) {
             return flightTasks
@@ -180,8 +219,8 @@ class InitialFlightTaskBunchGenerator(
                 if (!feasibilityJudger(aircraft, prevFlightTask, recoveryedFlightTask, config)) {
                     continue
                 }
-                flightTasks.add(flightTask)
-                time += flightTask.duration(aircraft)
+                flightTasks.add(recoveryedFlightTask)
+                time += recoveryedFlightTask.duration(aircraft)
             }
         }
 

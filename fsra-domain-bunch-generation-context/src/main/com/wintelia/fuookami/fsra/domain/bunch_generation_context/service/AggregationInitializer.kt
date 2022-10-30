@@ -19,6 +19,13 @@ import com.wintelia.fuookami.fsra.infrastructure.Configuration
 import kotlin.time.Duration
 
 class AggregationInitializer {
+    companion object {
+        val config = FlightTaskFeasibilityJudger.Config(
+            checkEnabledTime = false,
+            timeExtractor = FlightTask::time
+        )
+    }
+
     private val logger = logger()
 
     operator fun invoke(
@@ -42,7 +49,7 @@ class AggregationInitializer {
         }
         val flightTaskGroups = groupFlightTasks(flightTasks)
         val graphGenerator = RouteGraphGenerator(reverse, configuration) { aircraft: Aircraft, prevFlightTask: FlightTask?, succFlightTask: FlightTask ->
-            flightTaskFeasibilityJudger(aircraft, prevFlightTask, succFlightTask)
+            flightTaskFeasibilityJudger(aircraft, prevFlightTask, succFlightTask, config)
         }
         val graphs = when (val ret = if (configuration.multiThread) {
             generateGraphMultiThread(aircrafts, aircraftUsability, flightTaskGroups, graphGenerator)
@@ -94,7 +101,7 @@ class AggregationInitializer {
             }
         }
         for ((_, thisFlightTasks) in flightTaskGroups) {
-            thisFlightTasks.sortBy { it.scheduledTime?.begin ?: it.timeWindow?.begin ?: Instant.DISTANT_FUTURE }
+            thisFlightTasks.sortBy { it.time?.begin ?: it.timeWindow?.begin ?: Instant.DISTANT_FUTURE }
         }
         return flightTaskGroups
     }

@@ -51,9 +51,9 @@ class FlightTaskReverse private constructor(
         }
 
         fun reverseEnabled(prevFlightTask: FlightTask, succFlightTask: FlightTask, lock: Lock, timeDifferenceLimit: Duration): Boolean {
-            if (!prevFlightTask.isFlight || !succFlightTask.isFlight) {
-                return false
-            }
+//            if (!prevFlightTask.isFlight || !succFlightTask.isFlight) {
+//                return false
+//            }
             if (prevFlightTask.dep != succFlightTask.arr) {
                 return false
             }
