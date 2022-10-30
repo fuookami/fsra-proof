@@ -218,45 +218,25 @@ class FlightTaskBunchGenerator(
     }
 
     private val enabledTime by aircraftUsability::enabledTime
-    private val nodes = sortNodes(graph)
+    private val nodes = if (!configuration.withOrderChange) { sortNodes(graph) } else { emptyList() }
 
     operator fun invoke(iteration: UInt64, shadowPriceMap: ShadowPriceMap): Result<List<FlightTaskBunch>, Error> {
         val labels: LabelMap = HashMap()
         initRootLabel(labels, shadowPriceMap)
-        val labelDeque = ArrayList<Label>()
-        labelDeque.addAll(labels[graph[Node.root]!!]!!)
 
-//        while (labelDeque.isNotEmpty()) {
-//            val prevLabel = labelDeque.first()
-//            labelDeque.removeFirst()
-//            val prevNode = prevLabel.node
-//            val edges = graph[prevNode].sortedBy { it.to.time }
-//
-//            for (edge in edges) {
-//                val succNode = edge.to
-//                val succLabels = getLabels(labels, succNode)
-//                if (succNode is EndNode) {
-//                    if (prevNode !is RootNode) {
-//                        val builder = LabelBuilder(succNode, prevLabel)
-//                        builder.shadowPrice += shadowPriceMap(prevLabel.flightTask, null, aircraft)
-//                        insertLabel(succLabels, Label(builder))
-//                    }
-//                } else if (!prevLabel.visited(succNode)) {
-//                    val succLabel = generateFlightTaskLabel(prevLabel, succNode, shadowPriceMap)
-//                    if (succLabel != null) {
-//                        insertLabel(succLabels, succLabel)
-//                        labelDeque.add(succLabel)
-//                    }
-//                }
-//            }
-//        }
+        if (configuration.withOrderChange) {
+            val labelDeque = ArrayList<Label>()
+            labelDeque.addAll(labels[graph[Node.root]!!]!!)
 
-        for (prevNode in nodes) {
-            for (prevLabel in getLabels(labels, prevNode)) {
-                for (edge in graph[prevNode]) {
+            while (labelDeque.isNotEmpty()) {
+                val prevLabel = labelDeque.first()
+                labelDeque.removeFirst()
+                val prevNode = prevLabel.node
+                val edges = graph[prevNode].sortedBy { it.to.time }
+
+                for (edge in edges) {
                     val succNode = edge.to
                     val succLabels = getLabels(labels, succNode)
-
                     if (succNode is EndNode) {
                         if (prevNode !is RootNode) {
                             val builder = LabelBuilder(succNode, prevLabel)
@@ -267,6 +247,30 @@ class FlightTaskBunchGenerator(
                         val succLabel = generateFlightTaskLabel(prevLabel, succNode, shadowPriceMap)
                         if (succLabel != null) {
                             insertLabel(succLabels, succLabel)
+                            labelDeque.add(succLabel)
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            for (prevNode in nodes) {
+                for (prevLabel in getLabels(labels, prevNode)) {
+                    for (edge in graph[prevNode]) {
+                        val succNode = edge.to
+                        val succLabels = getLabels(labels, succNode)
+
+                        if (succNode is EndNode) {
+                            if (prevNode !is RootNode) {
+                                val builder = LabelBuilder(succNode, prevLabel)
+                                builder.shadowPrice += shadowPriceMap(prevLabel.flightTask, null, aircraft)
+                                insertLabel(succLabels, Label(builder))
+                            }
+                        } else if (!prevLabel.visited(succNode)) {
+                            val succLabel = generateFlightTaskLabel(prevLabel, succNode, shadowPriceMap)
+                            if (succLabel != null) {
+                                insertLabel(succLabels, succLabel)
+                            }
                         }
                     }
                 }
