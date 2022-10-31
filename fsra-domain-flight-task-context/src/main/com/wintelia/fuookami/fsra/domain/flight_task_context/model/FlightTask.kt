@@ -125,7 +125,7 @@ abstract class FlightTaskPlan(
     val terminalChangeEnabled: Boolean get() = !status.contains(FlightTaskStatus.NotTerminalChange)
 
     open val weight: Flt64 get() = Flt64.one
-    val strongLimitIgnored: Boolean get() = !status.contains(FlightTaskStatus.StrongLimitIgnored)
+    val strongLimitIgnored: Boolean get() = status.contains(FlightTaskStatus.StrongLimitIgnored)
 }
 
 data class FlightTaskKey(

@@ -26,7 +26,7 @@ class ConnectionTimeCalculator(
     }
 
     operator fun invoke(aircraft: Aircraft, flightTask: FlightTask, succFlightTask: FlightTask?): Duration {
-        if (succFlightTask == null) {
+        return if (succFlightTask == null) {
             return Duration.ZERO
         } else {
             val connectionTimeIfStopover = flightLinkMap.connectionTimeIfStopover(flightTask, succFlightTask)
@@ -40,11 +40,10 @@ class ConnectionTimeCalculator(
                 flightTask.connectionTime(aircraft, succFlightTask)
             }
         }
-        return Duration.ZERO
     }
 
     private fun connectionTime(flightTask: FlightTask, succFlightTask: FlightTask, standardConnectionTime: Duration): Duration {
-        val connectionTime = maxOf(Duration.ZERO, (succFlightTask.time?.begin ?: Instant.DISTANT_PAST) - flightTask.time!!.end)
+        val connectionTime = maxOf(Duration.ZERO, (succFlightTask.time?.begin ?: Instant.DISTANT_PAST) - (flightTask.time?.end ?: Instant.DISTANT_PAST))
         return minOf(standardConnectionTime, connectionTime)
     }
 }
