@@ -45,7 +45,12 @@ class OutputAnalyzer(
                 if (recoveryedFlightTask != null) {
                     if (recoveryedFlightTask.recovered) {
                         if (recoveryedFlightTask.isFlight) {
-                            recoveryedFlights.add(recoveryedFlightTask)
+                            val policy = recoveryedFlightTask.recoveryPolicy
+                            if (policy.aircraft != null || policy.route != null) {
+                                recoveryedFlights.add(recoveryedFlightTask)
+                            } else if (policy.time != null && policy.time != recoveryedFlightTask.scheduledTime && policy.time != recoveryedFlightTask.plan.time) {
+                                recoveryedFlights.add(recoveryedFlightTask)
+                            }
                         } else {
                             recoveryedMaintenances.add(recoveryedFlightTask)
                         }

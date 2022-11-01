@@ -221,7 +221,12 @@ class AggregationInitializer {
             generatedAircraft.add(bunch.aircraft)
             bunches.add(newBunch)
 
-            logger.info { "Initial bunch of ${aircraft.regNo} generated: ${newBunch.size} tasks, origin: ${bunch.size} tasks."}
+            val restTaskAmount = bunch.size - newBunch.size
+            if (restTaskAmount > 0) {
+                logger.info { "Initial bunch of ${aircraft.regNo} generated: ${newBunch.size} tasks, origin: ${bunch.size} tasks, rest: $restTaskAmount tasks, cost: ${String.format("%.2f", newBunch.cost.sum!!.toDouble())}."}
+            } else {
+                logger.info { "Initial bunch of ${aircraft.regNo} generated: ${newBunch.size} tasks, origin: ${bunch.size} tasks, cost: ${String.format("%.2f", newBunch.cost.sum!!.toDouble())}."}
+            }
         }
 
         for (aircraft in aircrafts) {
@@ -234,7 +239,12 @@ class AggregationInitializer {
             val newBunch = generator.emptyBunch(aircraft, aircraftUsability[aircraft]!!, lockedFlightTasks)
             if (newBunch != null) {
                 bunches.add(newBunch)
-                logger.info { "Initial bunch of ${aircraft.regNo} generated: ${newBunch.size} tasks, origin: ${bunch?.size ?: 0} tasks."}
+                val restTaskAmount = (bunch?.size ?: 0) - newBunch.size
+                if (restTaskAmount > 0) {
+                    logger.info { "Initial bunch of ${aircraft.regNo} generated: ${newBunch.size} tasks, origin: ${bunch?.size ?: 0} tasks, rest: $restTaskAmount tasks, cost: ${String.format("%.2f", newBunch.cost.sum!!)}."}
+                } else {
+                    logger.info { "Initial bunch of ${aircraft.regNo} generated: ${newBunch.size} tasks, origin: ${bunch?.size ?: 0} tasks, cost: ${String.format("%.2f", newBunch.cost.sum!!)}."}
+                }
             } else {
                 logger.info { "Failed to generate initial bunch of ${aircraft.regNo}, origin: ${bunch?.size ?: 0} tasks. "}
             }

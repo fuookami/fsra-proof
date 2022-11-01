@@ -31,7 +31,7 @@ class AggregationInitializer {
         val aogTimes = HashMap<Aircraft, TimeRange>()
         for (task in flightTasks) {
             if (task.type is AOGFlightTask) {
-                aogTimes[task.aircraft!!] = task.scheduledTime!!
+                aogTimes[task.aircraft!!] = task.time!!
             }
         }
 

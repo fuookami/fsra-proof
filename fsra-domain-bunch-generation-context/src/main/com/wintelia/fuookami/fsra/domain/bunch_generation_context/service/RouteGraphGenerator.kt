@@ -62,7 +62,9 @@ class RouteGraphGenerator(
             }
         } else if (configuration.withOrderChange) {
             assert(node is TaskNode)
-            val prevFlightTask = (node as TaskNode).task
+            node as TaskNode
+
+            val prevFlightTask = node.task
             for (flightTask in flightTasks) {
                 if (feasibilityJudger(aircraft, prevFlightTask, flightTask)
                     // && !isConnected(graph, nodeMap, flightTask, prevFlightTask)
@@ -80,7 +82,9 @@ class RouteGraphGenerator(
             graph.put(node, EndNode)
         } else {
             assert(node is TaskNode)
-            val prevFlightTask = (node as TaskNode).task
+            node as TaskNode
+
+            val prevFlightTask = node.task
             for (flightTask in flightTasks) {
                 if (feasibilityJudger(aircraft, prevFlightTask, flightTask)) {
                     insertFlightTask(graph, nodes, nodeMap, node, flightTask)
