@@ -1,11 +1,12 @@
 package com.wintelia.fuookami.fsra.domain.passenger_context.model
 
+import java.util.*
 import fuookami.ospf.kotlin.utils.math.*
 import fuookami.ospf.kotlin.utils.concept.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 
 class Passenger(
-    val id: String,
+    val id: String = UUID.randomUUID().toString(),
     val num: UInt64,
     val flights: List<Pair<FlightTask, PassengerClass>>
 ) {

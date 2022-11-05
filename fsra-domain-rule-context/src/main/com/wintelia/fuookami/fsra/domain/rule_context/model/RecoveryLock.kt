@@ -11,7 +11,7 @@ class RecoveryLock {
 
 class Lock(
     val recoveryLocks: Map<FlightTaskKey, RecoveryLock> = emptyMap(),
-    val lockedCancelFlightTasks: Set<FlightTaskKey> = emptySet()
+    val lockedCancelFlightTasks: Set<FlightTask> = emptySet()
 ) {
     fun lockedTime(flightTask: FlightTask): Instant? {
         return recoveryLocks[flightTask.key]?.lockedTime

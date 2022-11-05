@@ -31,10 +31,10 @@ class FlightRecoveryAlgorithmPassengerTransport(
     private val flightTaskContext: FlightTaskContext = FlightTaskContext()
     private val ruleContext: RuleContext = RuleContext(flightTaskContext)
     private val flightRecoveryCompilationContext: FlightRecoveryCompilationContext = FlightRecoveryCompilationContext(flightTaskContext, ruleContext)
-    private val bunchGenerationContext: BunchGenerationContext = BunchGenerationContext(flightTaskContext, ruleContext)
     private val passengerContext: PassengerContext = PassengerContext()
     private val cargoContext: CargoContext = CargoContext()
     private val crewContext: CrewContext = CrewContext()
+    private val bunchGenerationContext: BunchGenerationContext = BunchGenerationContext(flightTaskContext, ruleContext, passengerContext)
 
     private var fixedBunches = HashSet<FlightTaskBunch>()
     private var keptBunches = HashSet<FlightTaskBunch>()
@@ -414,15 +414,8 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 return Failed(ret.error)
             }
         }
-        when (val ret =
-            bunchGenerationContext.init(flightRecoveryCompilationContext.recoveryNeededAircrafts, flightRecoveryCompilationContext.recoveryNeededFlightTasks, configuration)) {
-            is Ok -> {}
-            is Failed -> {
-                return Failed(ret.error)
-            }
-        }
         if (configuration.withPassenger) {
-            when (val ret = passengerContext.init(input)) {
+            when (val ret = passengerContext.init(flightRecoveryCompilationContext.recoveryNeededFlightTasks, input)) {
                 is Ok -> {}
                 is Failed -> {
                     return Failed(ret.error)
@@ -443,6 +436,13 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 is Failed -> {
                     return Failed(ret.error)
                 }
+            }
+        }
+        when (val ret =
+            bunchGenerationContext.init(flightRecoveryCompilationContext.recoveryNeededAircrafts, flightRecoveryCompilationContext.recoveryNeededFlightTasks, configuration)) {
+            is Ok -> {}
+            is Failed -> {
+                return Failed(ret.error)
             }
         }
         return Ok(success)
@@ -486,7 +486,8 @@ class FlightRecoveryAlgorithmPassengerTransport(
 
     private fun construct(recoveryPlan: RecoveryPlan, model: LinearMetaModel, configuration: Configuration, parameter: Parameter): Try<Error> {
         val beginTime = Clock.System.now()
-        when (val ret = flightRecoveryCompilationContext.construct(recoveryPlan, model, configuration, parameter)) {
+        val passengerCancelCostCalculator = { flight: FlightTask -> passengerContext.cancelCost(flight).value ?: Flt64.zero }
+        when (val ret = flightRecoveryCompilationContext.construct(recoveryPlan, model, configuration, parameter, passengerCancelCostCalculator) ) {
             is Ok -> {}
             is Failed -> {
                 return Failed(ret.error)

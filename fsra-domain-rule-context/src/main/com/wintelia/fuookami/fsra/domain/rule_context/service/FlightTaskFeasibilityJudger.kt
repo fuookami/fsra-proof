@@ -62,7 +62,7 @@ class FlightTaskFeasibilityJudger(
     }
 
     private fun checkCancelLockFlights(aircraft: Aircraft, prevFlightTask: FlightTask?, flightTask: FlightTask): Boolean {
-        return !aggregation.lock.lockedCancelFlightTasks.contains(flightTask.key)
+        return !aggregation.lock.lockedCancelFlightTasks.contains(flightTask.originTask)
     }
 
     private fun checkEnabledAircrafts(aircraft: Aircraft, prevFlightTask: FlightTask?, flightTask: FlightTask): Boolean {

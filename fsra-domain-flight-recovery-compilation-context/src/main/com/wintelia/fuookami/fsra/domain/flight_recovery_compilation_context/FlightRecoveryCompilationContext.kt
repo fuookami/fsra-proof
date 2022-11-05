@@ -70,14 +70,18 @@ class FlightRecoveryCompilationContext(
         return aggregation.register(ruleAggregation.lock, model, configuration)
     }
 
-    fun construct(recoveryPlan: RecoveryPlan, model: LinearMetaModel, configuration: Configuration, parameter: Parameter): Try<Error> {
+    fun construct(recoveryPlan: RecoveryPlan, model: LinearMetaModel, configuration: Configuration, parameter: Parameter, cancelCostCalculator: CancelCostCalculator? = null): Try<Error> {
         assert(this::aggregation.isInitialized)
         if (!this::pipelineList.isInitialized) {
             val ruleAggregation = ruleContext.aggregation
 
             val generator = PipelineListGenerator(aggregation)
             pipelineList = when (val ret = generator(
-                { ruleContext.cancelCost(it).value ?: Flt64.infinity },
+                {  flightTask: FlightTask ->
+                    var cost = ruleContext.cancelCost(flightTask).value ?: Flt64.infinity
+                    cancelCostCalculator?.let { calculator -> cost += calculator(flightTask) }
+                    cost
+                },
                 { prevFlightTask, flightTask -> ruleContext.delayCost(prevFlightTask, flightTask).value ?: Flt64.infinity },
                 ruleAggregation.linkMap,
                 recoveryPlan,

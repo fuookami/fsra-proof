@@ -139,7 +139,7 @@ class CostCalculator(
 
     fun cancelCost(flightTask: FlightTask): CostItem {
         var cost = Flt64.zero
-        if (!aggregation.lock.lockedCancelFlightTasks.contains(flightTask.key)) {
+        if (!aggregation.lock.lockedCancelFlightTasks.contains(flightTask.originTask)) {
             cost += when (flightTask.type) {
                 is FlightFlightTask -> {
                     flightTask.weight * if (!flightTask.cancelEnabled) {
@@ -176,7 +176,7 @@ class CostCalculator(
         var cost = Flt64.zero
         val delay = flightTask.actualDelay
         if (delay != Duration.ZERO
-        // todo: check if it is not locked with time
+            // todo: check if it is not locked with time
         ) {
             cost = when (flightTask.type) {
                 is FlightFlightTask -> {

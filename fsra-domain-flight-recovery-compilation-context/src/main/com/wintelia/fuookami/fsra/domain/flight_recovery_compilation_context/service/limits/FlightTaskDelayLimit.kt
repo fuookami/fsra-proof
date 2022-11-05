@@ -51,6 +51,7 @@ class FlightTaskDelayLimit(
             )
         }
 
+        // todo: logic error, delay cost is based on delay
         val obj = LinearPolynomial()
         for (task in flightTasks) {
             obj += delayCostCalculator(null, task) * delay[task]!!

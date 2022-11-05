@@ -7,25 +7,29 @@ import kotlinx.coroutines.channels.*
 import org.apache.logging.log4j.kotlin.*
 import fuookami.ospf.kotlin.utils.math.*
 import fuookami.ospf.kotlin.utils.error.*
+import fuookami.ospf.kotlin.utils.concept.*
 import fuookami.ospf.kotlin.utils.parallel.*
 import fuookami.ospf.kotlin.utils.functional.*
+import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.FlightTaskContext
 import com.wintelia.fuookami.fsra.domain.rule_context.RuleContext
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
+import com.wintelia.fuookami.fsra.domain.passenger_context.PassengerContext
 import com.wintelia.fuookami.fsra.domain.bunch_generation_context.service.*
-import com.wintelia.fuookami.fsra.infrastructure.Configuration
-import fuookami.ospf.kotlin.utils.concept.ManualIndexed
 
 class BunchGenerationContext(
     private val flightTaskContext: FlightTaskContext,
-    private val ruleContext: RuleContext
+    private val ruleContext: RuleContext,
+    private val passengerContext: PassengerContext
 ) {
     private val logger = logger()
 
     private lateinit var aggregation: Aggregation
     private lateinit var feasibilityJudger: FlightTaskFeasibilityJudger
     private lateinit var generators: Map<Aircraft, FlightTaskBunchGenerator>
+    private lateinit var costCalculator: CostCalculator
+    private lateinit var totalCostCalculator: TotalCostCalculator
     val initialFlightBunches get() = aggregation.initialFlightBunches
 
     fun init(aircrafts: List<Aircraft>, flightTasks: List<FlightTask>, configuration: Configuration): Try<Error> {
@@ -37,11 +41,46 @@ class BunchGenerationContext(
             connectionTimeCalculator = ruleContext::connectionTime,
             ruleChecker = ruleContext::feasible
         )
+        costCalculator = if (configuration.withPassenger) {
+            { aircraft: Aircraft, prevTask: FlightTask?, task: FlightTask, flightHour: FlightHour, flightCycle: FlightCycle ->
+                val cost = ruleContext.cost(aircraft, prevTask, task, flightHour, flightCycle)
+                cost?.let { it += passengerContext.delayCost(prevTask, task) }
+                cost
+            }
+        } else {
+            { aircraft: Aircraft, prevTask: FlightTask?, task: FlightTask, flightHour: FlightHour, flightCycle: FlightCycle ->
+                ruleContext.cost(aircraft, prevTask, task, flightHour, flightCycle)
+            }
+        }
+        totalCostCalculator = if (configuration.withPassenger) {
+            { aircraft: Aircraft, tasks: List<FlightTask> ->
+                val cost = ruleContext.cost(aircraft, tasks)
+                cost?.let {
+                    for (i in flightTasks.indices) {
+                        val prevFlightTask = if (i == 0) {
+                            null
+                        } else {
+                            flightTasks[i - 1]
+                        }
+
+                        cost += passengerContext.delayCost(prevFlightTask, flightTasks[i])
+                        if (!cost.valid) {
+                            return@let cost
+                        }
+                    }
+                }
+                cost
+            }
+        } else {
+            { aircraft: Aircraft, tasks: List<FlightTask> ->
+                ruleContext.cost(aircraft, tasks)
+            }
+        }
         val initialFlightTaskBunchGenerator = InitialFlightTaskBunchGenerator(
             feasibilityJudger = feasibilityJudger,
             connectionTimeCalculator = ruleContext::connectionTime,
             minimumDepartureTimeCalculator = ruleContext::minimumDepartureTime,
-            costCalculator = ruleContext::cost
+            costCalculator = totalCostCalculator
         )
         val initializer = AggregationInitializer()
         aggregation = when (val ret = initializer(
@@ -71,8 +110,8 @@ class BunchGenerationContext(
                 graph = aggregation.graphs[aircraft]!!,
                 connectionTimeCalculator = ruleContext::connectionTime,
                 minimumDepartureTimeCalculator = ruleContext::minimumDepartureTime,
-                costCalculator = ruleContext::cost,
-                totalCostCalculator = ruleContext::cost,
+                costCalculator = costCalculator,
+                totalCostCalculator = totalCostCalculator,
                 configuration
             )
         }

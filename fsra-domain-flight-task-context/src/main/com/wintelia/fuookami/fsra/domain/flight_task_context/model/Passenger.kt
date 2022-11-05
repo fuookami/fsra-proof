@@ -13,6 +13,13 @@ enum class PassengerClass: Indexed {
         override fun toShortString() = "E"
     };
 
-    abstract fun toShortString(): String
     override val index: Int get() = this.ordinal
+
+    companion object {
+        operator fun invoke(cls: com.wintelia.fuookami.fsra.infrastructure.PassengerClass): PassengerClass {
+            return PassengerClass.valueOf(cls.cls)
+        }
+    }
+
+    abstract fun toShortString(): String
 }

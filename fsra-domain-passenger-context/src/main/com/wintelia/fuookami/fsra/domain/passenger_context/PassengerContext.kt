@@ -7,9 +7,19 @@ import fuookami.ospf.kotlin.core.frontend.model.mechanism.*
 import com.wintelia.fuookami.fsra.infrastructure.dto.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
+import com.wintelia.fuookami.fsra.domain.passenger_context.service.*
+import com.wintelia.fuookami.fsra.infrastructure.CostItem
 
 class PassengerContext {
-    fun init(input: Input): Try<Error> {
+    lateinit var aggregation: Aggregation
+    private lateinit var costCalculator: CostCalculator
+
+    fun init(flightTasks: List<FlightTask>, input: Input): Try<Error> {
+        val initializer = AggregationInitializer()
+        aggregation = when (val ret = initializer(flightTasks, input)) {
+            is Ok -> { ret.value }
+            is Failed -> { return Failed(ret.error) }
+        }
         return Ok(success)
     }
 
@@ -27,5 +37,13 @@ class PassengerContext {
 
     fun addColumns(iteration: UInt64, bunches: List<FlightTaskBunch>): Try<Error> {
         return Ok(success)
+    }
+
+    fun cancelCost(flightTask: FlightTask): CostItem {
+        return costCalculator.cancelCost(flightTask)
+    }
+
+    fun delayCost(prevFlightTask: FlightTask?, flightTask: FlightTask): CostItem {
+        return costCalculator.delayCost(prevFlightTask, flightTask)
     }
 }

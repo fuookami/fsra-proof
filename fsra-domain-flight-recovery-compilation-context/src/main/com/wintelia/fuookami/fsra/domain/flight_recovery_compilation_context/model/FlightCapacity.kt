@@ -15,25 +15,28 @@ class FlightCapacity(
     val withPassenger: Boolean = false,
     val withCargo: Boolean = false
 ) {
-    lateinit var passenger: Map<PassengerClass, LinearSymbols1>
+    lateinit var passenger: LinearSymbols2
     lateinit var cargo: LinearSymbols1
 
     fun register(flightTasks: List<FlightTask>, model: LinearMetaModel): Try<Error> {
         if (withPassenger) {
             if (!this::passenger.isInitialized) {
-                passenger = PassengerClass.values().map { cls ->
-                    val passengerCapacity = LinearSymbols1("${cls}_capacity", Shape1(flightTasks.size))
-                    flightTasks.asSequence()
-                        .filter { it.capacity is AircraftCapacity.Passenger }
-                        .forEach {
-                            passengerCapacity[it]!!.name = "${passengerCapacity.name}_${it.name}"
+                passenger = LinearSymbols2("passenger_capacity", Shape2(flightTasks.size, PassengerClass.values().size))
+                for (task in flightTasks) {
+                    if (task.capacity is AircraftCapacity.Passenger) {
+                        for (cls in PassengerClass.values()) {
+                            passenger[task, cls]!!.name = "${passenger.name}_${task.name}_${cls.toShortString()}"
                         }
-                    return@map Pair(cls, passengerCapacity)
-                }.toMap()
+                    }
+                }
             }
-            flightTasks.asSequence()
-                .filter { it.capacity is AircraftCapacity.Passenger }
-                .forEach { PassengerClass.values().forEach { cls -> model.addSymbol(passenger[cls]!![it]!!) } }
+            for (task in flightTasks) {
+                if (task.capacity is AircraftCapacity.Passenger) {
+                    for (cls in PassengerClass.values()) {
+                        model.addSymbol(passenger[task, cls]!!)
+                    }
+                }
+            }
         }
 
         if (withCargo) {
@@ -69,7 +72,7 @@ class FlightCapacity(
                     when (val aircraftCapacity = actualTask.capacity) {
                         is AircraftCapacity.Passenger -> {
                             PassengerClass.values().forEach { cls ->
-                                val capacity = passenger[cls]!![task]!! as LinearSymbol
+                                val capacity = passenger[task, cls]!! as LinearSymbol
                                 capacity.flush()
                                 (capacity.polynomial as LinearPolynomial) += aircraftCapacity[cls] * xi[bunch]!!
                             }
@@ -81,7 +84,7 @@ class FlightCapacity(
             }
             for (task in flightTasks) {
                 PassengerClass.values().forEach { cls ->
-                    (passenger[cls]!![task]!! as LinearSymbol).cells
+                    (passenger[task, cls]!! as LinearSymbol).cells
                 }
             }
         }

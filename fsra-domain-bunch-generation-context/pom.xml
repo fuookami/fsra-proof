@@ -29,6 +29,11 @@
             <artifactId>fsra-domain-rule-context</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.wintelia.fuookami</groupId>
+            <artifactId>fsra-domain-passenger-context</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 
 </project>
