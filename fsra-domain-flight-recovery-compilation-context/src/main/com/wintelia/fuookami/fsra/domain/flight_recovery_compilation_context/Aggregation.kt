@@ -309,7 +309,7 @@ class Aggregation(
     fun flush(iteration: UInt64, lock: Lock): Try<Error> {
         val y = compilation.y
         for (flightTask in recoveryNeededFlightTasks) {
-            if (flightTask.cancelEnabled && !lock.lockedCancelFlightTasks.contains(flightTask.key)) {
+            if (flightTask.cancelEnabled && !lock.lockedCancelFlightTasks.contains(flightTask.originTask)) {
                 y[flightTask]!!.range.set(ValueRange(Binary.minimum, Binary.maximum, UInt8))
             }
 

@@ -7,6 +7,8 @@ import fuookami.ospf.kotlin.utils.math.*
 import fuookami.ospf.kotlin.utils.error.*
 import fuookami.ospf.kotlin.utils.functional.*
 import fuookami.ospf.kotlin.core.frontend.model.mechanism.*
+import fuookami.ospf.kotlin.core.backend.solver.config.*
+import fuookami.ospf.kotlin.core.backend.solver.output.LinearSolverOutput
 import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.infrastructure.dto.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
@@ -18,8 +20,6 @@ import com.wintelia.fuookami.fsra.domain.bunch_generation_context.BunchGeneratio
 import com.wintelia.fuookami.fsra.domain.passenger_context.PassengerContext
 import com.wintelia.fuookami.fsra.domain.cargo_context.CargoContext
 import com.wintelia.fuookami.fsra.domain.crew_context.CrewContext
-import fuookami.ospf.kotlin.core.backend.solver.config.LinearSolverConfig
-import fuookami.ospf.kotlin.core.backend.solver.output.LinearSolverOutput
 
 class FlightRecoveryAlgorithmPassengerTransport(
     private val heartBeatCallBack: ((String, Flt64) -> Unit)? = null,
@@ -31,7 +31,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
     private val flightTaskContext: FlightTaskContext = FlightTaskContext()
     private val ruleContext: RuleContext = RuleContext(flightTaskContext)
     private val flightRecoveryCompilationContext: FlightRecoveryCompilationContext = FlightRecoveryCompilationContext(flightTaskContext, ruleContext)
-    private val passengerContext: PassengerContext = PassengerContext()
+    private val passengerContext: PassengerContext = PassengerContext(flightRecoveryCompilationContext)
     private val cargoContext: CargoContext = CargoContext()
     private val crewContext: CrewContext = CrewContext()
     private val bunchGenerationContext: BunchGenerationContext = BunchGenerationContext(flightTaskContext, ruleContext, passengerContext)
@@ -494,7 +494,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
             }
         }
         if (configuration.withPassenger) {
-            when (val ret = passengerContext.construct(model)) {
+            when (val ret = passengerContext.construct(model, parameter)) {
                 is Ok -> {}
                 is Failed -> {
                     return Failed(ret.error)

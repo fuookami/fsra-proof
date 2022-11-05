@@ -4,10 +4,9 @@ import fuookami.ospf.kotlin.utils.math.*
 import fuookami.ospf.kotlin.utils.error.*
 import fuookami.ospf.kotlin.utils.functional.*
 import fuookami.ospf.kotlin.core.frontend.model.mechanism.*
-import fuookami.ospf.kotlin.framework.model.CGPipeline
 import fuookami.ospf.kotlin.framework.model.invoke
+import fuookami.ospf.kotlin.framework.model.CGPipeline
 import com.wintelia.fuookami.fsra.infrastructure.*
-import com.wintelia.fuookami.fsra.infrastructure.dto.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.FlightTaskContext
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
@@ -97,15 +96,7 @@ class FlightRecoveryCompilationContext(
                 }
             }
         }
-        return when (val ret = pipelineList(model)) {
-            is Ok -> {
-                Ok(success)
-            }
-
-            is Failed -> {
-                Failed(ret.error)
-            }
-        }
+        return pipelineList(model)
     }
 
     fun analyzeSolution(recoveryPlan: RecoveryPlan, iteration: UInt64, model: LinearMetaModel): Result<OutputAnalyzer.Output, Error> {
