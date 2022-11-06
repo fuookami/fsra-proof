@@ -17,6 +17,7 @@ import com.wintelia.fuookami.fsra.domain.passenger_context.model.*
 
 private data class PassengerFlightCapacityShadowPriceKey(
     val flight: FlightTask,
+    val cls: PassengerClass,
 ) : ShadowPriceKey(PassengerFlightCapacityShadowPriceKey::class) {
     override fun toString() = "Passenger Flight Capacity ($flight)"
 }
@@ -46,7 +47,7 @@ class PassengerFlightCapacityLimit(
     override fun extractor(): Extractor<ShadowPriceMap> {
         return wrap { map, _: FlightTask?, flightTask: FlightTask?, _: Aircraft? ->
             if (flightTask != null) {
-                map[PassengerFlightCapacityShadowPriceKey(flightTask.originTask)]?.price ?: Flt64.zero
+                Flt64(PassengerClass.values().sumOf { (map[PassengerFlightCapacityShadowPriceKey(flightTask.originTask, it)]?.price ?: Flt64.zero).toDouble() })
             } else {
                 Flt64.zero
             }
@@ -54,13 +55,21 @@ class PassengerFlightCapacityLimit(
     }
 
     override fun refresh(map: ShadowPriceMap, model: LinearMetaModel, shadowPrices: List<Flt64>): Try<Error> {
-        for ((i, j) in model.indicesOfConstraintGroup(name)!!.withIndex()) {
+        var p = 0
+        var q = 0
+        for ((_, j) in model.indicesOfConstraintGroup(name)!!.withIndex()) {
             map.put(
                 ShadowPrice(
-                    key = PassengerFlightCapacityShadowPriceKey(flights[i].originTask),
+                    key = PassengerFlightCapacityShadowPriceKey(flights[p].originTask, PassengerClass.values()[q]),
                     price = shadowPrices[j]
                 )
             )
+            ++q
+
+            if (q == PassengerClass.values().size) {
+                q = 0
+                ++p
+            }
         }
 
         return Ok(success)

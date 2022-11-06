@@ -43,9 +43,14 @@ class BunchGenerationContext(
         )
         costCalculator = if (configuration.withPassenger) {
             { aircraft: Aircraft, prevTask: FlightTask?, task: FlightTask, flightHour: FlightHour, flightCycle: FlightCycle ->
-                val cost = ruleContext.cost(aircraft, prevTask, task, flightHour, flightCycle)
-                cost?.let { it += passengerContext.delayCost(prevTask, task) }
-                cost
+                val cost1 = ruleContext.cost(aircraft, prevTask, task, flightHour, flightCycle)
+                val cost2 = passengerContext.cost(aircraft, prevTask, task)
+                if (cost1 != null && cost2 != null) {
+                    cost1 += cost2
+                    cost1
+                } else {
+                    null
+                }
             }
         } else {
             { aircraft: Aircraft, prevTask: FlightTask?, task: FlightTask, flightHour: FlightHour, flightCycle: FlightCycle ->
@@ -54,22 +59,14 @@ class BunchGenerationContext(
         }
         totalCostCalculator = if (configuration.withPassenger) {
             { aircraft: Aircraft, tasks: List<FlightTask> ->
-                val cost = ruleContext.cost(aircraft, tasks)
-                cost?.let {
-                    for (i in flightTasks.indices) {
-                        val prevFlightTask = if (i == 0) {
-                            null
-                        } else {
-                            flightTasks[i - 1]
-                        }
-
-                        cost += passengerContext.delayCost(prevFlightTask, flightTasks[i])
-                        if (!cost.valid) {
-                            return@let cost
-                        }
-                    }
+                val cost1 = ruleContext.cost(aircraft, tasks)
+                val cost2 = passengerContext.cost(aircraft, tasks)
+                if (cost1 != null && cost2 != null) {
+                    cost1 += cost2
+                    cost1
+                } else {
+                    null
                 }
-                cost
             }
         } else {
             { aircraft: Aircraft, tasks: List<FlightTask> ->

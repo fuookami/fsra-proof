@@ -5,6 +5,7 @@ import fuookami.ospf.kotlin.utils.math.*
 import fuookami.ospf.kotlin.utils.error.*
 import com.wintelia.fuookami.fsra.infrastructure.*
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class RecoveryedFlightDTO(
     val recoveryPlanId: String,
@@ -22,17 +23,74 @@ data class RecoveryedFlightDTO(
     val etd: String?,                           // DateTime
     val eta: String?,                           // DateTime
 
-    val canceled: Boolean,
-    val straightened: Boolean,
-    val transfer: Boolean,
-    val additional: Boolean,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    val delayTime: String = "0 m",
 
-    val delayed: Boolean,
-    val advanced: Boolean,
-    val aircraftChanged: Boolean,
-    val aircraftMinorTypeChanged: Boolean,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var oldFirstClassCapacity: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var firstClassCapacity: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var oldFirstClassAmount: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var firstClassAmount: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var firstClassCanceledAmount: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var firstClassFromBusinessClassAmount: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var firstClassFromEconomyClassAmount: UInt64 = UInt64.zero,
+
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var oldBusinessClassCapacity: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var businessClassCapacity: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var oldBusinessClassAmount: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var businessClassAmount: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var businessClassCanceledAmount: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var businessClassFromFirstClassAmount: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var businessClassFromEconomyClassAmount: UInt64 = UInt64.zero,
+
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var oldEconomyClassCapacity: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var economyClassCapacity: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var oldEconomyClassAmount: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var economyClassAmount: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var economyClassCanceledAmount: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var economyClassFromFirstClassAmount: UInt64 = UInt64.zero,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    var economyClassFromBusinessClassAmount: UInt64 = UInt64.zero,
+
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    val canceled: Boolean = false,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    val straightened: Boolean = false,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    val transfer: Boolean = false,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    val additional: Boolean = false,
+
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    val delayed: Boolean = false,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    val advanced: Boolean = false,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    val aircraftChanged: Boolean = false,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    val aircraftMinorTypeChanged: Boolean = false,
 )
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class RecoveryedMaintenanceDTO(
     val recoveryPlanId: String,
@@ -45,9 +103,12 @@ data class RecoveryedMaintenanceDTO(
     val estimatedEndTime: String?,              // DateTime
     val estimatedAirport: ICAO?,
 
-    val canceled: Boolean,
-    val delayed: Boolean,
-    val airportChanged: Boolean,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    val canceled: Boolean = false,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    val delayed: Boolean = false,
+    @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS)
+    val airportChanged: Boolean = false,
 )
 
 @Serializable

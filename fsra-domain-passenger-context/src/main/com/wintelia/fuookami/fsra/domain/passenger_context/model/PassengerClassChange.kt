@@ -20,18 +20,18 @@ class PassengerClassChange(
                 for (pf in passengerFlights) {
                     for (cls in PassengerClass.values()) {
                         val variable = pcc[pf, cls]!!
-                        variable.name = "${pcc.name}_${pf}_${cls}"
-                        if (cls.ordinal <= pf.cls.ordinal) {
+                        variable.name = "${pcc.name}_${pf}_${cls.toShortString()}"
+                        if (cls.ordinal == pf.cls.ordinal) {
                             variable.range.eq(UInt64.zero)
                         } else {
-                            variable.range.leq(pf.passenger.num)
+                            variable.range.leq(pf.passenger.amount)
                         }
                     }
                 }
             }
             for (pf in passengerFlights) {
                 for (cls in PassengerClass.values()) {
-                    if (cls.ordinal > pf.cls.ordinal) {
+                    if (cls.ordinal != pf.cls.ordinal) {
                         model.addVar(pcc[pf, cls]!!)
                     }
                 }

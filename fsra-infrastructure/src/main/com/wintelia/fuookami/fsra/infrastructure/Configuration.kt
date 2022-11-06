@@ -19,13 +19,13 @@ data class FreeAircraftSelectorConfiguration(
 
 data class Configuration(
     val withRedundancy: Boolean = false,
-    val withPassenger: Boolean = false,
+    val withPassenger: Boolean = true,
     val withCargo: Boolean = false,
     val withCrew: Boolean = false,
     val withOrderChange: Boolean = false,
 
     val solver: String = "cplex",
-    val multiThread: Boolean = true,
+    val multiThread: Boolean = false,
     val badReducedAmount: UInt64 = UInt64(20UL),
     val maximumLabelPerNode: UInt64 = UInt64(10000UL),
     val maximumColumnGeneratedPerAircraft: UInt64 = UInt64(60UL),

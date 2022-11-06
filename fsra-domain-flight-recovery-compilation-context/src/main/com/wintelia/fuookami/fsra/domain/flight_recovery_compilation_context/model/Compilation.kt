@@ -29,7 +29,7 @@ class Compilation {
             flightTasks.forEach {
                 y[it]!!.name = "${y.name}_${it.name}_${it.index}"
 
-                if (lock.lockedCancelFlightTasks.contains(it.key)) {
+                if (lock.lockedCancelFlightTasks.contains(it.originTask)) {
                     y[it]!!.range.eq(UInt8.zero)
                 }
             }

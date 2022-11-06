@@ -7,7 +7,7 @@ import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 
 class Passenger(
     val id: String = UUID.randomUUID().toString(),
-    val num: UInt64,
+    val amount: UInt64,
     val flights: List<Pair<FlightTask, PassengerClass>>
 ) {
     private val _flightTaskKeys = flights.associate { Pair(it.first.key, it.second) }
@@ -46,6 +46,7 @@ data class PassengerFlight(
     val flight: FlightTask
 ): AutoIndexed(PassengerFlight::class) {
     val cls = passenger.classOf(flight)
+    val amount = passenger.amount
 
     override fun hashCode(): Int {
         return passenger.hashCode() xor flight.hashCode()
@@ -61,5 +62,5 @@ data class PassengerFlight(
         return true
     }
 
-    override fun toString() = "${flight.name}_${passenger.classOf(flight).toShortString()}_${passenger.num}_${index}"
+    override fun toString() = "${flight.name}_${passenger.classOf(flight).toShortString()}_${passenger.amount}_${index}"
 }

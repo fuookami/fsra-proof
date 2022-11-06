@@ -15,6 +15,8 @@ sealed class AircraftCapacity {
     class Passenger(
         private val capacity: Map<PassengerClass, UInt64>
     ) : AircraftCapacity() {
+        val total = UInt64(capacity.values.sumOf { it.toInt() }.toULong())
+
         operator fun get(cls: PassengerClass) = capacity[cls] ?: UInt64.zero
 
         fun enabled(payload: Map<PassengerClass, UInt64>) = payload.asSequence().all { this[it.key] >= it.value }
@@ -133,6 +135,13 @@ data class Aircraft internal constructor(
 
     init {
         pool[regNo] = this
+    }
+
+    fun capacity(cls: PassengerClass): UInt64 {
+        return when (val capacity = this.capacity) {
+            is AircraftCapacity.Passenger -> { capacity[cls] }
+            else -> { UInt64.zero }
+        }
     }
 
     override fun toString() = "$regNo"

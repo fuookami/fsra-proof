@@ -14,18 +14,18 @@ class AggregationInitializer {
         for (flight in flights) {
             val dto = input.flights.find { it.id == flight.actualId } ?: continue
             passengers.add(Passenger(
-                num = dto.firstClassNum,
+                amount = dto.firstClassNum,
                 flights = listOf(Pair(flight, PassengerClass.First))
             ))
             passengers.add(
                 Passenger(
-                num = dto.businessClassNum,
+                amount = dto.businessClassNum,
                 flights = listOf(Pair(flight, PassengerClass.Business))
             )
             )
             passengers.add(
                 Passenger(
-                num = dto.economyClassNum,
+                amount = dto.economyClassNum,
                 flights = listOf(Pair(flight, PassengerClass.Economy))
             ))
         }

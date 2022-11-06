@@ -14,10 +14,10 @@ class PassengerCancel(
     fun register(model: LinearMetaModel): Try<Error> {
         if (passengerFlights.isNotEmpty()) {
             if (!this::pc.isInitialized) {
-                pc = UIntVariable1("pu", Shape1(passengerFlights.size))
+                pc = UIntVariable1("pc", Shape1(passengerFlights.size))
                 for (pf in passengerFlights) {
                     pc[pf]!!.name = "${pc.name}_$pf"
-                    pc[pf]!!.range.leq(pf.passenger.num)
+                    pc[pf]!!.range.leq(pf.passenger.amount)
                 }
             }
             model.addVars(pc)

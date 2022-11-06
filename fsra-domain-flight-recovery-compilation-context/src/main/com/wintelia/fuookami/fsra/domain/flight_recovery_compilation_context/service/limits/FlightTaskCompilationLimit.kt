@@ -44,7 +44,8 @@ class FlightTaskCompilationLimit(
 
         val cancelCostPoly = LinearPolynomial()
         for (flightTask in flightTasks) {
-            cancelCostPoly += cancelCostCalculator(flightTask) * y[flightTask]!!
+            val cost = cancelCostCalculator(flightTask)
+            cancelCostPoly += cost * y[flightTask]!!
         }
         model.minimize(cancelCostPoly, "flight task cancel")
 

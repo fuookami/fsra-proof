@@ -25,7 +25,7 @@ class FlightCapacity(
                 for (task in flightTasks) {
                     if (task.capacity is AircraftCapacity.Passenger) {
                         for (cls in PassengerClass.values()) {
-                            passenger[task, cls]!!.name = "${passenger.name}_${task.name}_${cls.toShortString()}"
+                            passenger[task, cls] = LinearSymbol(LinearPolynomial(), "${passenger.name}_${task.name}_${cls.toShortString()}_${task.index}")
                         }
                     }
                 }
@@ -44,7 +44,7 @@ class FlightCapacity(
                 cargo = LinearSymbols1("cargo_capacity", Shape1(flightTasks.size))
                 flightTasks.asSequence()
                     .filter { it.capacity is AircraftCapacity.Cargo }
-                    .forEach { cargo[it]!!.name = "${cargo.name}_${it.name}" }
+                    .forEach { cargo[it] = LinearSymbol(LinearPolynomial(), "${cargo.name}_${it.name}_${it.index}") }
             }
             flightTasks.asSequence()
                 .filter { it.capacity is AircraftCapacity.Cargo }
@@ -83,8 +83,10 @@ class FlightCapacity(
                 }
             }
             for (task in flightTasks) {
-                PassengerClass.values().forEach { cls ->
-                    (passenger[task, cls]!! as LinearSymbol).cells
+                if (task.capacity is AircraftCapacity.Passenger) {
+                    PassengerClass.values().forEach { cls ->
+                        (passenger[task, cls]!! as LinearSymbol).cells
+                    }
                 }
             }
         }
@@ -106,7 +108,9 @@ class FlightCapacity(
                 }
             }
             for (task in flightTasks) {
-                (cargo[task]!! as LinearSymbol).cells
+                if (task.capacity is AircraftCapacity.Cargo) {
+                    (cargo[task]!! as LinearSymbol).cells
+                }
             }
         }
 

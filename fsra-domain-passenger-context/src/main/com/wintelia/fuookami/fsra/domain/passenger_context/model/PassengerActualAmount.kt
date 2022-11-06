@@ -26,11 +26,11 @@ class PassengerActualAmount(
                 for ((i, flight) in flights.withIndex()) {
                     val poly = PassengerClass.values().associateWith { LinearPolynomial() }
                     for (pf in passengerGroup[flight]!!) {
-                        poly[pf.cls]!! += pf.passenger.num
+                        poly[pf.cls]!! += pf.amount
                         poly[pf.cls]!! -= pc[pf]!!
 
                         for (cls in PassengerClass.values()) {
-                            if (cls > pf.cls) {
+                            if (cls != pf.cls) {
                                 poly[cls]!! += pcc[pf, cls]!!
                                 poly[pf.cls]!! -= pcc[pf, cls]!!
                             }
@@ -38,7 +38,7 @@ class PassengerActualAmount(
                     }
 
                     for (cls in PassengerClass.values()) {
-                        pa[i, cls.ordinal] = LinearSymbol(poly[cls]!!, "pa_${cls.toShortString()}_${flight.name}")
+                        pa[i, cls.ordinal] = LinearSymbol(poly[cls]!!, "pa_${cls.toShortString()}_${flight.name}_${flight.index}")
                     }
                 }
                 model.addSymbols(pa)

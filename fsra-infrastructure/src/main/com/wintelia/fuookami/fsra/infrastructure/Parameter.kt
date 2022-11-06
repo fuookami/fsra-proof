@@ -111,7 +111,10 @@ data class Parameter(
         passengerClassChange = listOf(
             Triple(PassengerClass("First"), PassengerClass("Business"), parameter["DEGRADE_FIRST_BUSINESS"]!!.value),
             Triple(PassengerClass("First"), PassengerClass("Economy"), parameter["DEGRADE_FIRST_ECONOMY"]!!.value),
+            Triple(PassengerClass("Business"), PassengerClass("First"), Flt64(0.01)),
             Triple(PassengerClass("Business"), PassengerClass("Economy"), parameter["DEGRADE_BUSINESS_ECONOMY"]!!.value),
+            Triple(PassengerClass("Economy"), PassengerClass("First"), parameter["DEGRADE_FIRST_ECONOMY"]!!.value),
+            Triple(PassengerClass("Economy"), PassengerClass("Business"), parameter["DEGRADE_BUSINESS_ECONOMY"]!!.value),
         )
     )
 }

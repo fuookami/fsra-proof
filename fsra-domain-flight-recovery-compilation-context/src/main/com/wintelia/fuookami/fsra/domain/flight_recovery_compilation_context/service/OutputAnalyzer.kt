@@ -1,6 +1,8 @@
 package com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.service
 
+import java.time.format.*
 import kotlin.time.*
+import kotlinx.datetime.*
 import fuookami.ospf.kotlin.utils.math.*
 import fuookami.ospf.kotlin.utils.error.*
 import fuookami.ospf.kotlin.utils.functional.*
@@ -9,17 +11,12 @@ import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.infrastructure.dto.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toJavaInstant
-import kotlinx.datetime.toJavaZoneId
-import kotlinx.datetime.toLocalDateTime
-import java.time.format.DateTimeFormatter
 
 class OutputAnalyzer(
     private val aggregation: Aggregation
 ) {
     data class Output(
-        val recoveryedFlights: List<RecoveryedFlightDTO>,
+        val recoveryedFlights: List<Pair<RecoveryedFlightDTO, FlightTask?>>,
         val recoveryedMaintenances: List<RecoveryedMaintenanceDTO>
     )
 
@@ -118,12 +115,12 @@ class OutputAnalyzer(
         recoveryPlan: RecoveryPlan,
         recoveryedFlights: List<FlightTask>,
         canceledFlights: List<FlightTask>
-    ): Result<List<RecoveryedFlightDTO>, Error> {
-        val flights = ArrayList<RecoveryedFlightDTO>()
+    ): Result<List<Pair<RecoveryedFlightDTO, FlightTask?>>, Error> {
+        val flights = ArrayList<Pair<RecoveryedFlightDTO, FlightTask?>>()
         for (recoveryedFlight in recoveryedFlights) {
             when (val ret = dumpFlight(recoveryPlan, recoveryedFlight, false)) {
                 is Ok -> {
-                    flights.add(ret.value)
+                    flights.add(Pair(ret.value, recoveryedFlight))
                 }
 
                 is Failed -> {
@@ -139,7 +136,7 @@ class OutputAnalyzer(
 
             when (val ret = dumpFlight(recoveryPlan, canceledFlight, true)) {
                 is Ok -> {
-                    flights.add(ret.value)
+                    flights.add(Pair(ret.value, null))
                 }
 
                 is Failed -> {
@@ -182,7 +179,7 @@ class OutputAnalyzer(
     }
 
     private fun dumpFlight(recoveryPlan: RecoveryPlan, flight: FlightTask, canceled: Boolean): Result<RecoveryedFlightDTO, Error> {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
+        val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
 
         return Ok(
             RecoveryedFlightDTO(
@@ -216,24 +213,25 @@ class OutputAnalyzer(
                     flight.aircraft!!.regNo
                 },
                 date = flight.time?.let { Date(it.begin) }.toString(),
-                std = flight.scheduledTime?.begin?.toJavaInstant()?.let { formatter.format(it) },
-                sta = flight.scheduledTime?.end?.toJavaInstant()?.let { formatter.format(it) },
+                std = flight.scheduledTime?.begin?.toJavaInstant()?.let { dateTimeFormatter.format(it) },
+                sta = flight.scheduledTime?.end?.toJavaInstant()?.let { dateTimeFormatter.format(it) },
                 etd = if (canceled) {
                     when (flight) {
-                        is Flight -> { flight.plan.estimatedTime?.begin?.toJavaInstant()?.let { formatter.format(it) } }
+                        is Flight -> { flight.plan.estimatedTime?.begin?.toJavaInstant()?.let { dateTimeFormatter.format(it) } }
                         else -> { null }
                     }
                 } else {
-                    flight.time?.begin?.toJavaInstant()?.let { formatter.format(it) }
+                    flight.time?.begin?.toJavaInstant()?.let { dateTimeFormatter.format(it) }
                 },
                 eta = if (canceled) {
                     when (flight) {
-                        is Flight -> { flight.plan.estimatedTime?.end?.toJavaInstant()?.let { formatter.format(it) } }
+                        is Flight -> { flight.plan.estimatedTime?.end?.toJavaInstant()?.let { dateTimeFormatter.format(it) } }
                         else -> { null }
                     }
                 } else {
-                    flight.time?.end?.toJavaInstant()?.let { formatter.format(it) }
+                    flight.time?.end?.toJavaInstant()?.let { dateTimeFormatter.format(it) }
                 },
+                delayTime = flight.delay.toString(),
                 canceled = canceled,
                 straightened = false,   // todo: if implement straight flight
                 transfer = flight.type is TransferFlightFlightTask,

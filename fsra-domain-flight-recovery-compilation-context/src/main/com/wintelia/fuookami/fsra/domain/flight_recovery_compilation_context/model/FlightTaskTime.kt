@@ -48,9 +48,9 @@ class FlightTaskTime(
             etd = LinearSymbols1("etd", Shape1(flightTasks.size))
             flightTasks.forEach {
                 etd[it] = if (withRedundancy) {
-                    LinearSymbol(LinearPolynomial(redundancy[it]!!), "${etd.name}_${it.name}")
+                    LinearSymbol(LinearPolynomial(redundancy[it]!!), "${etd.name}_${it.name}_${it.index}")
                 } else {
-                    LinearSymbol(LinearPolynomial(), "${etd.name}_${it.name}")
+                    LinearSymbol(LinearPolynomial(), "${etd.name}_${it.name}_${it.index}")
                 }
             }
         }
@@ -60,9 +60,9 @@ class FlightTaskTime(
             eta = LinearSymbols1("eta", Shape1(flightTasks.size))
             flightTasks.forEach {
                 eta[it] = if (withRedundancy) {
-                    LinearSymbol(LinearPolynomial(redundancy[it]!!), "${eta.name}_${it.name}")
+                    LinearSymbol(LinearPolynomial(redundancy[it]!!), "${eta.name}_${it.name}_${it.index}")
                 } else {
-                    LinearSymbol(LinearPolynomial(), "${eta.name}_${it.name}")
+                    LinearSymbol(LinearPolynomial(), "${eta.name}_${it.name}_${it.index}")
                 }
             }
         }

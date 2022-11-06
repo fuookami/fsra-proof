@@ -10,22 +10,27 @@ import com.wintelia.fuookami.fsra.infrastructure.*
 import com.wintelia.fuookami.fsra.infrastructure.dto.*
 import com.wintelia.fuookami.fsra.domain.flight_task_context.model.*
 import com.wintelia.fuookami.fsra.domain.rule_context.model.*
-import com.wintelia.fuookami.fsra.domain.passenger_context.service.*
+import com.wintelia.fuookami.fsra.domain.rule_context.*
 import com.wintelia.fuookami.fsra.domain.flight_recovery_compilation_context.*
+import com.wintelia.fuookami.fsra.domain.passenger_context.service.*
+import com.wintelia.fuookami.fsra.domain.passenger_context.service.OutputAnalyzer
 
 class PassengerContext(
+    val ruleContext: RuleContext,
     val flightRecoveryCompilationContext: FlightRecoveryCompilationContext
 ) {
     lateinit var aggregation: Aggregation
     private lateinit var pipelineList: CGPipelineList<LinearMetaModel, ShadowPriceMap>
     private lateinit var costCalculator: CostCalculator
 
-    fun init(flightTasks: List<FlightTask>, input: Input): Try<Error> {
+    fun init(flightTasks: List<FlightTask>, input: Input, parameter: Parameter): Try<Error> {
         val initializer = AggregationInitializer()
         aggregation = when (val ret = initializer(flightTasks, input)) {
             is Ok -> { ret.value }
             is Failed -> { return Failed(ret.error) }
         }
+        val ruleAggregation = ruleContext.aggregation
+        costCalculator = CostCalculator(aggregation.passengerGroup, ruleAggregation.lock.lockedCancelFlightTasks, parameter)
         return Ok(success)
     }
 
@@ -63,9 +68,26 @@ class PassengerContext(
         return Ok(success)
     }
 
+    fun analyzeSolution(recoveryPlan: RecoveryPlan, recoveryedFlights: List<Pair<RecoveryedFlightDTO, FlightTask?>>, iteration: UInt64, model: LinearMetaModel): Result<OutputAnalyzer.Output, Error> {
+        val analyzer = OutputAnalyzer(aggregation)
+        return analyzer(recoveryPlan, recoveryedFlights, iteration, model)
+    }
+
     fun addColumns(iteration: UInt64, bunches: List<FlightTaskBunch>): Try<Error> {
         // nothing to do
         return Ok(success)
+    }
+
+    fun cost(bunch: FlightTaskBunch): Cost? {
+        return costCalculator(bunch)
+    }
+
+    fun cost(aircraft: Aircraft, flightTasks: List<FlightTask>): Cost? {
+        return costCalculator(aircraft, flightTasks)
+    }
+
+    fun cost(aircraft: Aircraft, prevFlightTask: FlightTask?, flightTask: FlightTask): Cost? {
+        return costCalculator(aircraft, prevFlightTask, flightTask)
     }
 
     fun cancelCost(flightTask: FlightTask): CostItem {

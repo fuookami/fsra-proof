@@ -11,13 +11,51 @@ class CostCalculator(
     val lockedCancelFlightTasks: Set<FlightTask>,
     val parameter: Parameter
 ) {
+    operator fun invoke(bunch: FlightTaskBunch): Cost? {
+        return this(bunch.aircraft, bunch.flightTasks, bunch.lastTask)
+    }
+
+    operator fun invoke(aircraft: Aircraft, flightTasks: List<FlightTask>, lastFightTask: FlightTask? = null): Cost? {
+        val cost = Cost()
+        for (i in flightTasks.indices) {
+            val prevFlightTask = if (i == 0) {
+                lastFightTask
+            } else {
+                flightTasks[i - 1]
+            }
+
+            cost += this(aircraft, prevFlightTask, flightTasks[i]) ?: return null
+            if (!cost.valid) {
+                return cost
+            }
+        }
+
+        return cost
+    }
+
+    operator fun invoke(aircraft: Aircraft, prevFlightTask: FlightTask?, flightTask: FlightTask): Cost? {
+        val calculators = arrayListOf(
+            { delayCost(prevFlightTask, flightTask) },
+            { aircraftChangeCost(aircraft, prevFlightTask, flightTask) }
+        )
+
+        val cost = Cost()
+        for (calc in calculators) {
+            cost += calc()
+            if (!cost.valid) {
+                return null
+            }
+        }
+        return cost
+    }
+
     fun cancelCost(flightTask: FlightTask): CostItem {
         var cost = Flt64.zero
         if (flightTask.type is FlightFlightTask
             && !lockedCancelFlightTasks.contains(flightTask.originTask)
         ) {
             passengerGroup[flightTask]?.forEach {
-                cost += flightTask.weight * parameter.passengerCancel * it.passenger.num.toFlt64()
+                cost += flightTask.weight * parameter.passengerCancel * it.passenger.amount.toFlt64()
             }
         }
         return CostItem("passenger cancel", cost)
@@ -32,7 +70,7 @@ class CostCalculator(
         ) {
             val delayHours = Flt64(delay.toDouble(DurationUnit.HOURS))
             passengerGroup[flightTask]?.forEach {
-                cost += flightTask.weight * if (delayHours leq Flt64.one) {
+                cost += it.amount.toFlt64() * flightTask.weight * if (delayHours leq Flt64.one) {
                     parameter.passengerDelay1H
                 } else if (delayHours leq Flt64(4.0)) {
                     parameter.passengerDelay4H
@@ -44,5 +82,18 @@ class CostCalculator(
             }
         }
         return CostItem("passenger delay", cost)
+    }
+
+    fun aircraftChangeCost(aircraft: Aircraft, prevFlightTask: FlightTask?, flightTask: FlightTask): CostItem {
+        var cost = Flt64.zero
+        val originTotalAmount = passengerGroup[flightTask]?.sumOf { it.amount.toInt() }?.let { UInt64(it.toULong()) } ?: UInt64.zero
+        val totalAmount = when (val ret = aircraft.capacity) {
+            is AircraftCapacity.Passenger -> { ret.total }
+            else -> { UInt64.zero }
+        }
+        if (originTotalAmount > totalAmount) {
+            cost += (originTotalAmount - totalAmount).toFlt64() * parameter.passengerCancel
+        }
+        return CostItem("passenger cancel by aircraft change", cost)
     }
 }

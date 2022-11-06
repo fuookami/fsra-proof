@@ -23,8 +23,8 @@ class PassengerClassChangeLimit(
         val poly = LinearPolynomial()
         for (pf in passengerFlights) {
             for (cls in PassengerClass.values()) {
-                if (cls.ordinal > pf.cls.ordinal) {
-                    val cost = parameter.passengerClassChange.find { PassengerClass(it.first) == cls && PassengerClass(it.second) == pf.cls }?.third
+                if (cls.ordinal != pf.cls.ordinal) {
+                    val cost = parameter.passengerClassChange.find { PassengerClass(it.first) == pf.cls && PassengerClass(it.second) == cls }?.third
                     if (cost != null) {
                         poly += cost * pcc[pf, cls]!!
                     }

@@ -31,7 +31,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
     private val flightTaskContext: FlightTaskContext = FlightTaskContext()
     private val ruleContext: RuleContext = RuleContext(flightTaskContext)
     private val flightRecoveryCompilationContext: FlightRecoveryCompilationContext = FlightRecoveryCompilationContext(flightTaskContext, ruleContext)
-    private val passengerContext: PassengerContext = PassengerContext(flightRecoveryCompilationContext)
+    private val passengerContext: PassengerContext = PassengerContext(ruleContext, flightRecoveryCompilationContext)
     private val cargoContext: CargoContext = CargoContext()
     private val crewContext: CrewContext = CrewContext()
     private val bunchGenerationContext: BunchGenerationContext = BunchGenerationContext(flightTaskContext, ruleContext, passengerContext)
@@ -415,7 +415,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
             }
         }
         if (configuration.withPassenger) {
-            when (val ret = passengerContext.init(flightRecoveryCompilationContext.recoveryNeededFlightTasks, input)) {
+            when (val ret = passengerContext.init(flightRecoveryCompilationContext.recoveryNeededFlightTasks, input, parameter)) {
                 is Ok -> {}
                 is Failed -> {
                     return Failed(ret.error)
@@ -486,7 +486,11 @@ class FlightRecoveryAlgorithmPassengerTransport(
 
     private fun construct(recoveryPlan: RecoveryPlan, model: LinearMetaModel, configuration: Configuration, parameter: Parameter): Try<Error> {
         val beginTime = Clock.System.now()
-        val passengerCancelCostCalculator = { flight: FlightTask -> passengerContext.cancelCost(flight).value ?: Flt64.zero }
+        val passengerCancelCostCalculator = if (configuration.withPassenger) {
+            { flight: FlightTask -> passengerContext.cancelCost(flight).value ?: Flt64.zero }
+        } else {
+            null
+        }
         when (val ret = flightRecoveryCompilationContext.construct(recoveryPlan, model, configuration, parameter, passengerCancelCostCalculator) ) {
             is Ok -> {}
             is Failed -> {
@@ -670,6 +674,15 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 return Failed(ret.error)
             }
         }
+        val (flightWithPassenger) = when (val ret = passengerContext.analyzeSolution(recoveryPlan, flights, iteration, model)) {
+            is Ok -> {
+                ret.value
+            }
+
+            is Failed -> {
+                return Failed(ret.error)
+            }
+        }
         return Ok(
             Output(
                 recoveryPlanId = recoveryPlan.id,
@@ -677,7 +690,7 @@ class FlightRecoveryAlgorithmPassengerTransport(
                 errorCode = null,
                 errorMessage = null,
                 obj = solverOutput.obj,
-                flights = flights,
+                flights = flightWithPassenger,
                 maintenances = maintenances
             )
         )
