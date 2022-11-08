@@ -25,7 +25,7 @@ data class Configuration(
     val withOrderChange: Boolean = false,
 
     val solver: String = "cplex",
-    val multiThread: Boolean = false,
+    val multiThread: Boolean = true,
     val badReducedAmount: UInt64 = UInt64(20UL),
     val maximumLabelPerNode: UInt64 = UInt64(10000UL),
     val maximumColumnGeneratedPerAircraft: UInt64 = UInt64(60UL),

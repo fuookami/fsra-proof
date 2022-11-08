@@ -364,12 +364,12 @@ data class AirportFlowControlDTO(
     val beginTimeStr: String,       // DateTime
     @SerialName("end_close_time")
     val endTimeStr: String,         // DateTime
-    @SerialName("affect_time")
+    @SerialName("affect_type")
     val type: CString,              // ”起飞“、”降落“、”停机“ 或 "起降"
     val capacity: UInt64
 ) {
     companion object {
-        private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
+        private val formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm").withZone(TimeZone.currentSystemDefault().toJavaZoneId())
     }
 
     val beginTime get() = parseDateTime(beginTimeStr, formatter)

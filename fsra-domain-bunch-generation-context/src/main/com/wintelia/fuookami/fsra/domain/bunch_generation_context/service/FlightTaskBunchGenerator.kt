@@ -40,7 +40,7 @@ private data class LabelBuilder(
         operator fun invoke(node: Node, previousLabel: Label, recoveryFlightTask: FlightTask) = LabelBuilder(
             cost = previousLabel.cost.copy(),
             shadowPrice = previousLabel.shadowPrice,
-            delay = previousLabel.delay + recoveryFlightTask.actualDelay,
+            delay = previousLabel.delay + recoveryFlightTask.delay,
             arrivalTime = recoveryFlightTask.time!!.end,
             flightHour = previousLabel.flightHour + (recoveryFlightTask.flightHour ?: FlightHour.zero),
             flightCycle = previousLabel.flightCycle + recoveryFlightTask.flightCycle,

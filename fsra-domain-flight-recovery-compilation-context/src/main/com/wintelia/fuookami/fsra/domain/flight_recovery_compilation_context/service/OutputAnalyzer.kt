@@ -231,7 +231,7 @@ class OutputAnalyzer(
                 } else {
                     flight.time?.end?.toJavaInstant()?.let { dateTimeFormatter.format(it) }
                 },
-                delayTime = flight.delay.toString(),
+                delayTime = flight.actualDelay.toString(),
                 canceled = canceled,
                 straightened = false,   // todo: if implement straight flight
                 transfer = flight.type is TransferFlightFlightTask,
@@ -239,12 +239,12 @@ class OutputAnalyzer(
                 delayed = if (canceled) {
                     false
                 } else {
-                    flight.delay != Duration.ZERO
+                    flight.actualDelay != Duration.ZERO
                 },
                 advanced = if (canceled) {
                     false
                 } else {
-                    flight.advance != Duration.ZERO
+                    flight.actualAdvance != Duration.ZERO
                 },
                 aircraftChanged = if (canceled) {
                     false

@@ -174,7 +174,7 @@ class CostCalculator(
 
     fun delayCost(prevFlightTask: FlightTask?, flightTask: FlightTask): CostItem {
         var cost = Flt64.zero
-        val delay = flightTask.actualDelay
+        val delay = flightTask.delay
         if (delay != Duration.ZERO
             // todo: check if it is not locked with time
         ) {
